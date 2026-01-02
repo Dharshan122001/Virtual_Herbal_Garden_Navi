@@ -1,25 +1,18 @@
 # 🌿 Virtual Herbal Garden
 
-Virtual Herbal Garden is a full-stack web application that helps users explore medicinal plants, identify plants from images, and learn about herbal uses with the help of AI.  
+Virtual Herbal Garden is a full-stack web application that helps users explore medicinal plants, identify plant name from images, and learn about herbal uses with the help of AI.  
 The project uses **React (Vite)** on the frontend and **FastAPI microservices** on the backend, with AI integrations for plant identification and herbal guidance.
 
 ---
 
 ## 🚀 Features
 
-### 🌱 Plant Explorer
-- Browse a curated list of medicinal plants
-- Search plants by name
-- View plant details (description, uses, scientific name)
-- Bookmark favorite plants (authenticated users)
+### 🌱 Plant Explorer                                                                      ### 🔍 Plant Identification (AI)
+- Browse a curated list of medicinal plants                                                 - Upload an image of a plant
+- Search plants by name                                                                     - Plant identified using **PlantNet API**
+- View plant details using **Groq API** (description, uses, scientific name)                - AI (Groq LLM) generates:
+- Bookmark favorite plants (authenticated users)                                                 - Plant Name
 
-### 🔍 Plant Identification (AI)
-- Upload an image of a plant
-- Plant identified using **PlantNet API**
-- AI (Groq LLM) generates:
-  - Plant description
-  - Common usage
-  - Safety & precautions
 
 ### 🤖 AI Herbal Assistant
 - Chat with an AI assistant
