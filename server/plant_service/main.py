@@ -11,15 +11,18 @@ from common.utils import setup_cors
 
 from pathlib import Path
 from dotenv import load_dotenv
+
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 env_path = BASE_DIR / ".env"
+load_dotenv(dotenv_path=env_path)
 
 # 2. Force Load
 
 
 app = FastAPI(title="Herbal Garden - Plant Service")
 setup_cors(app)
-load_dotenv(dotenv_path=env_path)
+
 
 # --- Plant Catalog Endpoints ---
 @app.get("/")
