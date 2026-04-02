@@ -1,36 +1,26 @@
-# Logs
-/clinet/logs
-/clinet/*.log
-/clinet/npm-debug.log*
-/clinet/yarn-debug.log*
-/clinet/yarn-error.log*
-/clinet/pnpm-debug.log*
-/clinet/lerna-debug.log*
+# General
+.DS_Store
+.vscode/
+*.sql
+*.log
 
-/clinet/node_modules
-/clinet/dist
-/clinet/dist-ssr
-/clinet/*.local
+# Client
+client/node_modules/
+client/dist/
+client/dist-ssr/
+client/.env
+client/*.local
 
-# Editor directories and files
-/clinet/.vscode/*
-/clinet/!.vscode/extensions.json
-/clinet/.idea
-/clinet/.DS_Store
-/clinet/*.suo
-/clinet/*.ntvs*
-/clinet/*.njsproj
-/clinet/*.sln
-/clinet/*.sw?
-/clinet/.env
-/server/.env
-/server/__pycache__
-server/*service-account*.json
-server/virtual-herbal-garden-*.json
+# Server
+server/.env
+server/**/__pycache__/
+server/**/*.py[cod]
+server/venv/
+server/.venv/
+
+# Sensitive Files (JSON/Tokens)
+server/*.json
 server/gmail_token.py
 server/token.json
-server/*.json
 gmail.txt
-server/.envserver/.env
-client/.env
-server/.env
+herbal_garden_dump.sql

@@ -1,22 +1,33 @@
-FROM nginx:alpine
+# Stage 1: Build Stage
+FROM node:20-alpine AS build-stage
 
-# 1. Clean
-RUN rm -rf /usr/share/nginx/html/*
+# Set working directory
+WORKDIR /app
 
-# 2. Copy the dist folder
-COPY dist /usr/share/nginx/html
+# Copy package files first (to leverage Docker cache)
+COPY package*.json ./
 
-# 3. Copy config and entrypoint
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+# Install dependencies
+RUN npm install
 
-# 4. Permissions
-RUN chmod +x /usr/local/bin/entrypoint.sh
-# Ensure the nginx user can write to the config file location
-RUN touch /usr/share/nginx/html/config.js && chmod 666 /usr/share/nginx/html/config.js
+# Copy the rest of the frontend source code
+COPY . .
 
+# Build the React/Vite app
+RUN npm run build
+
+# Stage 2: Production Stage (Nginx)
+FROM nginx:stable-alpine
+
+# Copy the build output from the previous stage to Nginx
+# Vite usually builds into the 'dist' folder
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+
+# Copy your custom nginx config (make sure this file exists in /client)
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port 80
 EXPOSE 80
 
-# 5. Use the absolute path
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
