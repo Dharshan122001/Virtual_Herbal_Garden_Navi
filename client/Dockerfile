@@ -1,33 +1,32 @@
-# Stage 1: Build Stage
+# --- Stage 1: Build the React App ---
 FROM node:20-alpine AS build-stage
-
-# Set working directory
 WORKDIR /app
-
-# Copy package files first (to leverage Docker cache)
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install
-
-# Copy the rest of the frontend source code
 COPY . .
-
-# Build the React/Vite app
 RUN npm run build
 
-# Stage 2: Production Stage (Nginx)
-FROM nginx:stable-alpine
+# --- Stage 2: Serve with Nginx ---
+FROM nginx:alpine
 
-# Copy the build output from the previous stage to Nginx
-# Vite usually builds into the 'dist' folder
+# 1. Clean default files
+RUN rm -rf /usr/share/nginx/html/*
+
+# 2. Copy the 'dist' folder from the build-stage
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 
-# Copy your custom nginx config (make sure this file exists in /client)
+# 3. Copy your custom config and entrypoint
+# We overwrite the main nginx.conf as per your old file
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
-# Expose port 80
+# 4. Permissions and Setup
+RUN chmod +x /usr/local/bin/entrypoint.sh
+# Create the config.js for runtime environment variables
+RUN touch /usr/share/nginx/html/config.js && chmod 666 /usr/share/nginx/html/config.js
+
 EXPOSE 80
 
-# Start Nginx
+# 5. Execution
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
