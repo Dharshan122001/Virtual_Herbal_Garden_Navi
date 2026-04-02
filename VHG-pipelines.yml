@@ -1,0 +1,63 @@
+trigger:
+  branches:
+    include:
+      - fresh
+
+variables:
+  dockerRegistryServiceConnection: 'DockerHubConn'
+  # Define the two different tags here
+  frontendTag: '1.0.1'
+  backendTag: 'latest'
+
+stages:
+- stage: Build_and_Push_All
+  displayName: "Build and Push All Services"
+  jobs:
+  - job: BuildAll
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+
+    # 1. Build FRONTEND (using 1.0.1)
+    - task: Docker@2
+      displayName: "Frontend: Build and Push (1.0.1)"
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: 'dharshan3690/navi-frontend'
+        command: 'buildAndPush'
+        dockerfile: 'client/Dockerfile'
+        buildContext: 'client/'
+        tags: '$(frontendTag)'
+
+    # 2. Build PLANT SERVICE (using latest)
+    - task: Docker@2
+      displayName: "Plant: Build and Push (latest)"
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: 'dharshan3690/plant-service'
+        command: 'buildAndPush'
+        dockerfile: 'server/plant_service/Dockerfile'
+        buildContext: 'server/'
+        tags: '$(backendTag)'
+
+    # 3. Build AUTH SERVICE (using latest)
+    - task: Docker@2
+      displayName: "Auth: Build and Push (latest)"
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: 'dharshan3690/auth-service'
+        command: 'buildAndPush'
+        dockerfile: 'server/auth_service/Dockerfile'
+        buildContext: 'server/'
+        tags: '$(backendTag)'
+
+    # 4. Build AI SERVICE (using latest)
+    - task: Docker@2
+      displayName: "AI: Build and Push (latest)"
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: 'dharshan3690/ai-service'
+        command: 'buildAndPush'
+        dockerfile: 'server/ai_service/Dockerfile'
+        buildContext: 'server/'
+        tags: '$(backendTag)'
