@@ -4,6 +4,7 @@ import axios from "axios";
 import { FaBookmark, FaRegBookmark } from "react-icons/fa";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { PLANT_SERVICE_URL, AI_SERVICE_URL } from "../apiConfig";
 
 function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
   const { plantId } = useParams();
@@ -18,9 +19,6 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
   const [aiError, setAiError] = useState(null);
   const [activeQuery, setActiveQuery] = useState(null);
 
-  const PLANT_API = import.meta.env.VITE_PLANT_API;
-  const AI_API = import.meta.env.VITE_AI_API;
-
   const token = localStorage.getItem("token");
   const dbUser = JSON.parse(localStorage.getItem("user") || "null");
   const isBookmarked = userBookmarks.has(plantIdNum);
@@ -28,7 +26,7 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
   const fetchPlantDetail = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${PLANT_API}/plants/${plantIdNum}`);
+      const res = await axios.get(`${PLANT_SERVICE_URL}/plants/${plantIdNum}`);
       setPlant(res.data);
       setError(null);
     } catch {
@@ -48,9 +46,9 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
       if (isBookmarked) {
-        await axios.delete(`${PLANT_API}/bookmarks/${dbUser.email}/${plantIdNum}`, config);
+        await axios.delete(`${PLANT_SERVICE_URL}/bookmarks/${dbUser.email}/${plantIdNum}`, config);
       } else {
-        await axios.post(`${PLANT_API}/bookmarks/`, { email: dbUser.email, plant_id: plantIdNum }, config);
+        await axios.post(`${PLANT_SERVICE_URL}/bookmarks/`, { email: dbUser.email, plant_id: plantIdNum }, config);
       }
       onBookmarkToggled?.(plantIdNum, isBookmarked);
     } catch (err) {
@@ -72,7 +70,7 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
     };
 
     try {
-      const res = await axios.post(`${AI_API}/ai/chat`, { message: prompts[queryType] });
+      const res = await axios.post(`${AI_SERVICE_URL}/ai/chat`, { message: prompts[queryType] });
       setAiResponse(res.data.response);
     } catch (err) {
       setAiError("Failed to get AI response.");

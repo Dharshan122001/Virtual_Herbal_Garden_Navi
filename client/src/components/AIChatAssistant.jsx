@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { AI_SERVICE_URL } from "../apiConfig";
 
 function AIChatAssistant() {
   const [messages, setMessages] = useState([]);
@@ -11,7 +12,6 @@ function AIChatAssistant() {
   const [error, setError] = useState(null);
 
   const messagesEndRef = useRef(null);
-  const API_BASE_URL = import.meta.env.VITE_AI_API;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -28,7 +28,7 @@ function AIChatAssistant() {
     setError(null);
 
     try {
-      const res = await axios.post(`${API_BASE_URL}/ai/chat`, {
+      const res = await axios.post(`${AI_SERVICE_URL}/ai/chat`, {
         message: userMsg.text,
       });
 

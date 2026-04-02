@@ -19,3 +19,14 @@ google-api-python-client
 google-auth
 google-auth-oauthlib
 
+# --- DATA MIGRATION & UTILS ---
+pandas==2.2.3
+openpyxl  # Optional: if you ever need to export to Excel instead of CSV
+
+# --- DATABASE DRIVERS ---
+psycopg2-binary==2.9.10  # You already have this, but ensure it's here
+sqlalchemy==2.0.41      # You already have this
+
+# --- GOOGLE AUTH FIXES ---
+# (Adding these ensures the Google APIs you're using don't crash)
+google-auth-httplib2

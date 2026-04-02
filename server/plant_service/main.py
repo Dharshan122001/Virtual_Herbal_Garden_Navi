@@ -13,6 +13,13 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 
+import os
+import subprocess
+from fastapi.responses import FileResponse
+import io
+from fastapi.responses import StreamingResponse
+
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 env_path = BASE_DIR / ".env"
 load_dotenv(dotenv_path=env_path)
@@ -128,3 +135,44 @@ def remove_bookmark(email: str, plant_id: int, db: Session = Depends(get_db)):
     if not result:
         raise HTTPException(status_code=404, detail="Bookmark not found for this user and plant")
     return
+
+
+
+
+@app.get("/system/backup-db")
+def backup_database(db: Session = Depends(get_db)):
+    """
+    Backup using Pure Python/SQL (No pg_dump required).
+    """
+    try:
+        # Get all table names in the public schema
+        result = db.execute(text(
+            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
+        ))
+        tables = [row[0] for row in result.fetchall()]
+        
+        output = io.StringIO()
+        output.write("-- Emergency Data Rescue Dump\n")
+        
+        for table in tables:
+            output.write(f"\n-- Table: {table}\n")
+            # Select all rows from the table
+            rows = db.execute(text(f"SELECT * FROM public.{table}")).fetchall()
+            
+            if rows:
+                # Get column names
+                columns = rows[0]._fields
+                for row in rows:
+                    vals = [f"'{str(v)}'" if v is not None else "NULL" for v in row]
+                    insert_stmt = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(vals)});\n"
+                    output.write(insert_stmt)
+                    
+        output.seek(0)
+        return StreamingResponse(
+            io.BytesIO(output.getvalue().encode()),
+            media_type="application/sql",
+            headers={"Content-Disposition": "attachment; filename=emergency_dump.sql"}
+        )
+
+    except Exception as e:
+        return {"error": f"Python-only backup failed: {str(e)}"}

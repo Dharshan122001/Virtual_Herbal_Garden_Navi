@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import PlantCard from "./PlantCard";
 import { FaSearch } from "react-icons/fa";
+import { PLANT_SERVICE_URL } from "../apiConfig";
 
 function PlantList({ userBookmarks, onBookmarkToggled, showBookmarkedOnly }) {
   const [plants, setPlants] = useState([]);
@@ -9,20 +10,18 @@ function PlantList({ userBookmarks, onBookmarkToggled, showBookmarkedOnly }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [submittedSearchTerm, setSubmittedSearchTerm] = useState("");
 
-  const API_BASE_URL = import.meta.env.VITE_PLANT_API;
-
   const fetchPlants = useCallback(async () => {
     setLoading(true);
     try {
       const params = submittedSearchTerm
         ? { search_query: submittedSearchTerm }
         : {};
-      const res = await axios.get(`${API_BASE_URL}/plants`, { params });
+      const res = await axios.get(`${PLANT_SERVICE_URL}/plants`, { params });
       setPlants(res.data);
     } finally {
       setLoading(false);
     }
-  }, [submittedSearchTerm, API_BASE_URL]);
+  }, [submittedSearchTerm, PLANT_SERVICE_URL]);
 
   useEffect(() => {
     fetchPlants();

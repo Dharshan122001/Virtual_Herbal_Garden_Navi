@@ -2,9 +2,10 @@ import React from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { FaBookmark, FaRegBookmark } from 'react-icons/fa';
+import { PLANT_SERVICE_URL } from "../apiConfig";
 
 function PlantCard({ plant, userBookmarks, onBookmarkToggled }) {
-    const API_BASE_URL = import.meta.env.VITE_PLANT_API;
+
     const isBookmarked = userBookmarks.has(plant.plant_id);
     
     const token = localStorage.getItem('token');
@@ -28,13 +29,13 @@ function PlantCard({ plant, userBookmarks, onBookmarkToggled }) {
             const userEmail = dbUser.email; 
 
             if (isBookmarked) {
-                await axios.delete(`${API_BASE_URL}/bookmarks/${userEmail}/${plant.plant_id}`, config);
+                await axios.delete(`${PLANT_SERVICE_URL}/bookmarks/${userEmail}/${plant.plant_id}`, config);
             } else {
                 const bookmarkData = {
                     plant_id: plant.plant_id,
                     email: userEmail 
                 };
-                await axios.post(`${API_BASE_URL}/bookmarks/`, bookmarkData, config);
+                await axios.post(`${PLANT_SERVICE_URL}/bookmarks/`, bookmarkData, config);
             }
 
             if (onBookmarkToggled) {

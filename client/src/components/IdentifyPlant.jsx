@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { AI_SERVICE_URL } from "../apiConfig";
 
 function IdentifyPlant() {
   const [image, setImage] = useState(null);
@@ -8,7 +9,6 @@ function IdentifyPlant() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const API_BASE_URL = import.meta.env.VITE_AI_API;
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -41,7 +41,7 @@ function IdentifyPlant() {
 
     try {
       const res = await axios.post(
-        `${API_BASE_URL}/ai/identify`,
+        `${AI_SERVICE_URL}/ai/identify`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );

@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict jfBgYarkEsTvODpN1I9lTozKXjHDiZhh5Zbs9cPdvNNimkbh338axjrCVqea2C9
+\restrict PlbsEfSARfbH9MRpW46kmo172cF6shzMvQoRPKBOGgPTPCbTRbArXCc7dzjDM62
 
--- Dumped from database version 17.4
--- Dumped by pg_dump version 17.7 (Ubuntu 17.7-3.pgdg22.04+1)
+-- Dumped from database version 17.8 (a284a84)
+-- Dumped by pg_dump version 18.3
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -20,74 +20,76 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: auth; Type: SCHEMA; Schema: -; Owner: -
+-- Name: auth; Type: SCHEMA; Schema: -; Owner: neondb_owner
 --
 
 CREATE SCHEMA auth;
 
 
+ALTER SCHEMA auth OWNER TO neondb_owner;
+
 --
--- Name: extensions; Type: SCHEMA; Schema: -; Owner: -
+-- Name: extensions; Type: SCHEMA; Schema: -; Owner: neondb_owner
 --
 
 CREATE SCHEMA extensions;
 
 
+ALTER SCHEMA extensions OWNER TO neondb_owner;
+
 --
--- Name: graphql; Type: SCHEMA; Schema: -; Owner: -
+-- Name: graphql; Type: SCHEMA; Schema: -; Owner: neondb_owner
 --
 
 CREATE SCHEMA graphql;
 
 
+ALTER SCHEMA graphql OWNER TO neondb_owner;
+
 --
--- Name: graphql_public; Type: SCHEMA; Schema: -; Owner: -
+-- Name: graphql_public; Type: SCHEMA; Schema: -; Owner: neondb_owner
 --
 
 CREATE SCHEMA graphql_public;
 
 
+ALTER SCHEMA graphql_public OWNER TO neondb_owner;
+
 --
--- Name: pgbouncer; Type: SCHEMA; Schema: -; Owner: -
+-- Name: pgbouncer; Type: SCHEMA; Schema: -; Owner: neondb_owner
 --
 
 CREATE SCHEMA pgbouncer;
 
 
+ALTER SCHEMA pgbouncer OWNER TO neondb_owner;
+
 --
--- Name: realtime; Type: SCHEMA; Schema: -; Owner: -
+-- Name: realtime; Type: SCHEMA; Schema: -; Owner: neondb_owner
 --
 
 CREATE SCHEMA realtime;
 
 
+ALTER SCHEMA realtime OWNER TO neondb_owner;
+
 --
--- Name: storage; Type: SCHEMA; Schema: -; Owner: -
+-- Name: storage; Type: SCHEMA; Schema: -; Owner: neondb_owner
 --
 
 CREATE SCHEMA storage;
 
 
+ALTER SCHEMA storage OWNER TO neondb_owner;
+
 --
--- Name: vault; Type: SCHEMA; Schema: -; Owner: -
+-- Name: vault; Type: SCHEMA; Schema: -; Owner: neondb_owner
 --
 
 CREATE SCHEMA vault;
 
 
---
--- Name: pg_graphql; Type: EXTENSION; Schema: -; Owner: -
---
-
-CREATE EXTENSION IF NOT EXISTS pg_graphql WITH SCHEMA graphql;
-
-
---
--- Name: EXTENSION pg_graphql; Type: COMMENT; Schema: -; Owner: -
---
-
-COMMENT ON EXTENSION pg_graphql IS 'pg_graphql: GraphQL support';
-
+ALTER SCHEMA vault OWNER TO neondb_owner;
 
 --
 -- Name: pg_stat_statements; Type: EXTENSION; Schema: -; Owner: -
@@ -97,7 +99,7 @@ CREATE EXTENSION IF NOT EXISTS pg_stat_statements WITH SCHEMA extensions;
 
 
 --
--- Name: EXTENSION pg_stat_statements; Type: COMMENT; Schema: -; Owner: -
+-- Name: EXTENSION pg_stat_statements; Type: COMMENT; Schema: -; Owner: 
 --
 
 COMMENT ON EXTENSION pg_stat_statements IS 'track planning and execution statistics of all SQL statements executed';
@@ -111,24 +113,10 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
 
 
 --
--- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: -
+-- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: 
 --
 
 COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
-
-
---
--- Name: supabase_vault; Type: EXTENSION; Schema: -; Owner: -
---
-
-CREATE EXTENSION IF NOT EXISTS supabase_vault WITH SCHEMA vault;
-
-
---
--- Name: EXTENSION supabase_vault; Type: COMMENT; Schema: -; Owner: -
---
-
-COMMENT ON EXTENSION supabase_vault IS 'Supabase Vault Extension';
 
 
 --
@@ -139,14 +127,14 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA extensions;
 
 
 --
--- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: -
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
 --
 
 COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
 
 
 --
--- Name: aal_level; Type: TYPE; Schema: auth; Owner: -
+-- Name: aal_level; Type: TYPE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TYPE auth.aal_level AS ENUM (
@@ -156,8 +144,10 @@ CREATE TYPE auth.aal_level AS ENUM (
 );
 
 
+ALTER TYPE auth.aal_level OWNER TO neondb_owner;
+
 --
--- Name: code_challenge_method; Type: TYPE; Schema: auth; Owner: -
+-- Name: code_challenge_method; Type: TYPE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TYPE auth.code_challenge_method AS ENUM (
@@ -166,8 +156,10 @@ CREATE TYPE auth.code_challenge_method AS ENUM (
 );
 
 
+ALTER TYPE auth.code_challenge_method OWNER TO neondb_owner;
+
 --
--- Name: factor_status; Type: TYPE; Schema: auth; Owner: -
+-- Name: factor_status; Type: TYPE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TYPE auth.factor_status AS ENUM (
@@ -176,8 +168,10 @@ CREATE TYPE auth.factor_status AS ENUM (
 );
 
 
+ALTER TYPE auth.factor_status OWNER TO neondb_owner;
+
 --
--- Name: factor_type; Type: TYPE; Schema: auth; Owner: -
+-- Name: factor_type; Type: TYPE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TYPE auth.factor_type AS ENUM (
@@ -187,8 +181,10 @@ CREATE TYPE auth.factor_type AS ENUM (
 );
 
 
+ALTER TYPE auth.factor_type OWNER TO neondb_owner;
+
 --
--- Name: oauth_authorization_status; Type: TYPE; Schema: auth; Owner: -
+-- Name: oauth_authorization_status; Type: TYPE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TYPE auth.oauth_authorization_status AS ENUM (
@@ -199,8 +195,10 @@ CREATE TYPE auth.oauth_authorization_status AS ENUM (
 );
 
 
+ALTER TYPE auth.oauth_authorization_status OWNER TO neondb_owner;
+
 --
--- Name: oauth_client_type; Type: TYPE; Schema: auth; Owner: -
+-- Name: oauth_client_type; Type: TYPE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TYPE auth.oauth_client_type AS ENUM (
@@ -209,8 +207,10 @@ CREATE TYPE auth.oauth_client_type AS ENUM (
 );
 
 
+ALTER TYPE auth.oauth_client_type OWNER TO neondb_owner;
+
 --
--- Name: oauth_registration_type; Type: TYPE; Schema: auth; Owner: -
+-- Name: oauth_registration_type; Type: TYPE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TYPE auth.oauth_registration_type AS ENUM (
@@ -219,8 +219,10 @@ CREATE TYPE auth.oauth_registration_type AS ENUM (
 );
 
 
+ALTER TYPE auth.oauth_registration_type OWNER TO neondb_owner;
+
 --
--- Name: oauth_response_type; Type: TYPE; Schema: auth; Owner: -
+-- Name: oauth_response_type; Type: TYPE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TYPE auth.oauth_response_type AS ENUM (
@@ -228,8 +230,10 @@ CREATE TYPE auth.oauth_response_type AS ENUM (
 );
 
 
+ALTER TYPE auth.oauth_response_type OWNER TO neondb_owner;
+
 --
--- Name: one_time_token_type; Type: TYPE; Schema: auth; Owner: -
+-- Name: one_time_token_type; Type: TYPE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TYPE auth.one_time_token_type AS ENUM (
@@ -242,8 +246,10 @@ CREATE TYPE auth.one_time_token_type AS ENUM (
 );
 
 
+ALTER TYPE auth.one_time_token_type OWNER TO neondb_owner;
+
 --
--- Name: action; Type: TYPE; Schema: realtime; Owner: -
+-- Name: action; Type: TYPE; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE TYPE realtime.action AS ENUM (
@@ -255,8 +261,10 @@ CREATE TYPE realtime.action AS ENUM (
 );
 
 
+ALTER TYPE realtime.action OWNER TO neondb_owner;
+
 --
--- Name: equality_op; Type: TYPE; Schema: realtime; Owner: -
+-- Name: equality_op; Type: TYPE; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE TYPE realtime.equality_op AS ENUM (
@@ -270,8 +278,10 @@ CREATE TYPE realtime.equality_op AS ENUM (
 );
 
 
+ALTER TYPE realtime.equality_op OWNER TO neondb_owner;
+
 --
--- Name: user_defined_filter; Type: TYPE; Schema: realtime; Owner: -
+-- Name: user_defined_filter; Type: TYPE; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE TYPE realtime.user_defined_filter AS (
@@ -281,8 +291,10 @@ CREATE TYPE realtime.user_defined_filter AS (
 );
 
 
+ALTER TYPE realtime.user_defined_filter OWNER TO neondb_owner;
+
 --
--- Name: wal_column; Type: TYPE; Schema: realtime; Owner: -
+-- Name: wal_column; Type: TYPE; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE TYPE realtime.wal_column AS (
@@ -295,8 +307,10 @@ CREATE TYPE realtime.wal_column AS (
 );
 
 
+ALTER TYPE realtime.wal_column OWNER TO neondb_owner;
+
 --
--- Name: wal_rls; Type: TYPE; Schema: realtime; Owner: -
+-- Name: wal_rls; Type: TYPE; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE TYPE realtime.wal_rls AS (
@@ -307,8 +321,10 @@ CREATE TYPE realtime.wal_rls AS (
 );
 
 
+ALTER TYPE realtime.wal_rls OWNER TO neondb_owner;
+
 --
--- Name: buckettype; Type: TYPE; Schema: storage; Owner: -
+-- Name: buckettype; Type: TYPE; Schema: storage; Owner: neondb_owner
 --
 
 CREATE TYPE storage.buckettype AS ENUM (
@@ -318,8 +334,10 @@ CREATE TYPE storage.buckettype AS ENUM (
 );
 
 
+ALTER TYPE storage.buckettype OWNER TO neondb_owner;
+
 --
--- Name: email(); Type: FUNCTION; Schema: auth; Owner: -
+-- Name: email(); Type: FUNCTION; Schema: auth; Owner: neondb_owner
 --
 
 CREATE FUNCTION auth.email() RETURNS text
@@ -333,15 +351,17 @@ CREATE FUNCTION auth.email() RETURNS text
 $$;
 
 
+ALTER FUNCTION auth.email() OWNER TO neondb_owner;
+
 --
--- Name: FUNCTION email(); Type: COMMENT; Schema: auth; Owner: -
+-- Name: FUNCTION email(); Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON FUNCTION auth.email() IS 'Deprecated. Use auth.jwt() -> ''email'' instead.';
 
 
 --
--- Name: jwt(); Type: FUNCTION; Schema: auth; Owner: -
+-- Name: jwt(); Type: FUNCTION; Schema: auth; Owner: neondb_owner
 --
 
 CREATE FUNCTION auth.jwt() RETURNS jsonb
@@ -355,8 +375,10 @@ CREATE FUNCTION auth.jwt() RETURNS jsonb
 $$;
 
 
+ALTER FUNCTION auth.jwt() OWNER TO neondb_owner;
+
 --
--- Name: role(); Type: FUNCTION; Schema: auth; Owner: -
+-- Name: role(); Type: FUNCTION; Schema: auth; Owner: neondb_owner
 --
 
 CREATE FUNCTION auth.role() RETURNS text
@@ -370,15 +392,17 @@ CREATE FUNCTION auth.role() RETURNS text
 $$;
 
 
+ALTER FUNCTION auth.role() OWNER TO neondb_owner;
+
 --
--- Name: FUNCTION role(); Type: COMMENT; Schema: auth; Owner: -
+-- Name: FUNCTION role(); Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON FUNCTION auth.role() IS 'Deprecated. Use auth.jwt() -> ''role'' instead.';
 
 
 --
--- Name: uid(); Type: FUNCTION; Schema: auth; Owner: -
+-- Name: uid(); Type: FUNCTION; Schema: auth; Owner: neondb_owner
 --
 
 CREATE FUNCTION auth.uid() RETURNS uuid
@@ -392,15 +416,17 @@ CREATE FUNCTION auth.uid() RETURNS uuid
 $$;
 
 
+ALTER FUNCTION auth.uid() OWNER TO neondb_owner;
+
 --
--- Name: FUNCTION uid(); Type: COMMENT; Schema: auth; Owner: -
+-- Name: FUNCTION uid(); Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON FUNCTION auth.uid() IS 'Deprecated. Use auth.jwt() -> ''sub'' instead.';
 
 
 --
--- Name: grant_pg_cron_access(); Type: FUNCTION; Schema: extensions; Owner: -
+-- Name: grant_pg_cron_access(); Type: FUNCTION; Schema: extensions; Owner: neondb_owner
 --
 
 CREATE FUNCTION extensions.grant_pg_cron_access() RETURNS event_trigger
@@ -436,15 +462,17 @@ END;
 $$;
 
 
+ALTER FUNCTION extensions.grant_pg_cron_access() OWNER TO neondb_owner;
+
 --
--- Name: FUNCTION grant_pg_cron_access(); Type: COMMENT; Schema: extensions; Owner: -
+-- Name: FUNCTION grant_pg_cron_access(); Type: COMMENT; Schema: extensions; Owner: neondb_owner
 --
 
 COMMENT ON FUNCTION extensions.grant_pg_cron_access() IS 'Grants access to pg_cron';
 
 
 --
--- Name: grant_pg_graphql_access(); Type: FUNCTION; Schema: extensions; Owner: -
+-- Name: grant_pg_graphql_access(); Type: FUNCTION; Schema: extensions; Owner: neondb_owner
 --
 
 CREATE FUNCTION extensions.grant_pg_graphql_access() RETURNS event_trigger
@@ -501,15 +529,17 @@ END;
 $_$;
 
 
+ALTER FUNCTION extensions.grant_pg_graphql_access() OWNER TO neondb_owner;
+
 --
--- Name: FUNCTION grant_pg_graphql_access(); Type: COMMENT; Schema: extensions; Owner: -
+-- Name: FUNCTION grant_pg_graphql_access(); Type: COMMENT; Schema: extensions; Owner: neondb_owner
 --
 
 COMMENT ON FUNCTION extensions.grant_pg_graphql_access() IS 'Grants access to pg_graphql';
 
 
 --
--- Name: grant_pg_net_access(); Type: FUNCTION; Schema: extensions; Owner: -
+-- Name: grant_pg_net_access(); Type: FUNCTION; Schema: extensions; Owner: neondb_owner
 --
 
 CREATE FUNCTION extensions.grant_pg_net_access() RETURNS event_trigger
@@ -559,15 +589,17 @@ END;
 $$;
 
 
+ALTER FUNCTION extensions.grant_pg_net_access() OWNER TO neondb_owner;
+
 --
--- Name: FUNCTION grant_pg_net_access(); Type: COMMENT; Schema: extensions; Owner: -
+-- Name: FUNCTION grant_pg_net_access(); Type: COMMENT; Schema: extensions; Owner: neondb_owner
 --
 
 COMMENT ON FUNCTION extensions.grant_pg_net_access() IS 'Grants access to pg_net';
 
 
 --
--- Name: pgrst_ddl_watch(); Type: FUNCTION; Schema: extensions; Owner: -
+-- Name: pgrst_ddl_watch(); Type: FUNCTION; Schema: extensions; Owner: neondb_owner
 --
 
 CREATE FUNCTION extensions.pgrst_ddl_watch() RETURNS event_trigger
@@ -599,8 +631,10 @@ BEGIN
 END; $$;
 
 
+ALTER FUNCTION extensions.pgrst_ddl_watch() OWNER TO neondb_owner;
+
 --
--- Name: pgrst_drop_watch(); Type: FUNCTION; Schema: extensions; Owner: -
+-- Name: pgrst_drop_watch(); Type: FUNCTION; Schema: extensions; Owner: neondb_owner
 --
 
 CREATE FUNCTION extensions.pgrst_drop_watch() RETURNS event_trigger
@@ -630,8 +664,10 @@ BEGIN
 END; $$;
 
 
+ALTER FUNCTION extensions.pgrst_drop_watch() OWNER TO neondb_owner;
+
 --
--- Name: set_graphql_placeholder(); Type: FUNCTION; Schema: extensions; Owner: -
+-- Name: set_graphql_placeholder(); Type: FUNCTION; Schema: extensions; Owner: neondb_owner
 --
 
 CREATE FUNCTION extensions.set_graphql_placeholder() RETURNS event_trigger
@@ -687,15 +723,17 @@ CREATE FUNCTION extensions.set_graphql_placeholder() RETURNS event_trigger
 $_$;
 
 
+ALTER FUNCTION extensions.set_graphql_placeholder() OWNER TO neondb_owner;
+
 --
--- Name: FUNCTION set_graphql_placeholder(); Type: COMMENT; Schema: extensions; Owner: -
+-- Name: FUNCTION set_graphql_placeholder(); Type: COMMENT; Schema: extensions; Owner: neondb_owner
 --
 
 COMMENT ON FUNCTION extensions.set_graphql_placeholder() IS 'Reintroduces placeholder function for graphql_public.graphql';
 
 
 --
--- Name: get_auth(text); Type: FUNCTION; Schema: pgbouncer; Owner: -
+-- Name: get_auth(text); Type: FUNCTION; Schema: pgbouncer; Owner: neondb_owner
 --
 
 CREATE FUNCTION pgbouncer.get_auth(p_usename text) RETURNS TABLE(username text, password text)
@@ -717,8 +755,10 @@ end;
 $_$;
 
 
+ALTER FUNCTION pgbouncer.get_auth(p_usename text) OWNER TO neondb_owner;
+
 --
--- Name: apply_rls(jsonb, integer); Type: FUNCTION; Schema: realtime; Owner: -
+-- Name: apply_rls(jsonb, integer); Type: FUNCTION; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE FUNCTION realtime.apply_rls(wal jsonb, max_record_bytes integer DEFAULT (1024 * 1024)) RETURNS SETOF realtime.wal_rls
@@ -1022,8 +1062,10 @@ end;
 $$;
 
 
+ALTER FUNCTION realtime.apply_rls(wal jsonb, max_record_bytes integer) OWNER TO neondb_owner;
+
 --
--- Name: broadcast_changes(text, text, text, text, text, record, record, text); Type: FUNCTION; Schema: realtime; Owner: -
+-- Name: broadcast_changes(text, text, text, text, text, record, record, text); Type: FUNCTION; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE FUNCTION realtime.broadcast_changes(topic_name text, event_name text, operation text, table_name text, table_schema text, new record, old record, level text DEFAULT 'ROW'::text) RETURNS void
@@ -1051,8 +1093,10 @@ END;
 $$;
 
 
+ALTER FUNCTION realtime.broadcast_changes(topic_name text, event_name text, operation text, table_name text, table_schema text, new record, old record, level text) OWNER TO neondb_owner;
+
 --
--- Name: build_prepared_statement_sql(text, regclass, realtime.wal_column[]); Type: FUNCTION; Schema: realtime; Owner: -
+-- Name: build_prepared_statement_sql(text, regclass, realtime.wal_column[]); Type: FUNCTION; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE FUNCTION realtime.build_prepared_statement_sql(prepared_statement_name text, entity regclass, columns realtime.wal_column[]) RETURNS text
@@ -1084,8 +1128,10 @@ CREATE FUNCTION realtime.build_prepared_statement_sql(prepared_statement_name te
       $$;
 
 
+ALTER FUNCTION realtime.build_prepared_statement_sql(prepared_statement_name text, entity regclass, columns realtime.wal_column[]) OWNER TO neondb_owner;
+
 --
--- Name: cast(text, regtype); Type: FUNCTION; Schema: realtime; Owner: -
+-- Name: cast(text, regtype); Type: FUNCTION; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE FUNCTION realtime."cast"(val text, type_ regtype) RETURNS jsonb
@@ -1100,8 +1146,10 @@ CREATE FUNCTION realtime."cast"(val text, type_ regtype) RETURNS jsonb
     $$;
 
 
+ALTER FUNCTION realtime."cast"(val text, type_ regtype) OWNER TO neondb_owner;
+
 --
--- Name: check_equality_op(realtime.equality_op, regtype, text, text); Type: FUNCTION; Schema: realtime; Owner: -
+-- Name: check_equality_op(realtime.equality_op, regtype, text, text); Type: FUNCTION; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE FUNCTION realtime.check_equality_op(op realtime.equality_op, type_ regtype, val_1 text, val_2 text) RETURNS boolean
@@ -1139,8 +1187,10 @@ CREATE FUNCTION realtime.check_equality_op(op realtime.equality_op, type_ regtyp
       $$;
 
 
+ALTER FUNCTION realtime.check_equality_op(op realtime.equality_op, type_ regtype, val_1 text, val_2 text) OWNER TO neondb_owner;
+
 --
--- Name: is_visible_through_filters(realtime.wal_column[], realtime.user_defined_filter[]); Type: FUNCTION; Schema: realtime; Owner: -
+-- Name: is_visible_through_filters(realtime.wal_column[], realtime.user_defined_filter[]); Type: FUNCTION; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE FUNCTION realtime.is_visible_through_filters(columns realtime.wal_column[], filters realtime.user_defined_filter[]) RETURNS boolean
@@ -1175,74 +1225,10 @@ CREATE FUNCTION realtime.is_visible_through_filters(columns realtime.wal_column[
     $_$;
 
 
---
--- Name: list_changes(name, name, integer, integer); Type: FUNCTION; Schema: realtime; Owner: -
---
-
-CREATE FUNCTION realtime.list_changes(publication name, slot_name name, max_changes integer, max_record_bytes integer) RETURNS SETOF realtime.wal_rls
-    LANGUAGE sql
-    SET log_min_messages TO 'fatal'
-    AS $$
-      with pub as (
-        select
-          concat_ws(
-            ',',
-            case when bool_or(pubinsert) then 'insert' else null end,
-            case when bool_or(pubupdate) then 'update' else null end,
-            case when bool_or(pubdelete) then 'delete' else null end
-          ) as w2j_actions,
-          coalesce(
-            string_agg(
-              realtime.quote_wal2json(format('%I.%I', schemaname, tablename)::regclass),
-              ','
-            ) filter (where ppt.tablename is not null and ppt.tablename not like '% %'),
-            ''
-          ) w2j_add_tables
-        from
-          pg_publication pp
-          left join pg_publication_tables ppt
-            on pp.pubname = ppt.pubname
-        where
-          pp.pubname = publication
-        group by
-          pp.pubname
-        limit 1
-      ),
-      w2j as (
-        select
-          x.*, pub.w2j_add_tables
-        from
-          pub,
-          pg_logical_slot_get_changes(
-            slot_name, null, max_changes,
-            'include-pk', 'true',
-            'include-transaction', 'false',
-            'include-timestamp', 'true',
-            'include-type-oids', 'true',
-            'format-version', '2',
-            'actions', pub.w2j_actions,
-            'add-tables', pub.w2j_add_tables
-          ) x
-      )
-      select
-        xyz.wal,
-        xyz.is_rls_enabled,
-        xyz.subscription_ids,
-        xyz.errors
-      from
-        w2j,
-        realtime.apply_rls(
-          wal := w2j.data::jsonb,
-          max_record_bytes := max_record_bytes
-        ) xyz(wal, is_rls_enabled, subscription_ids, errors)
-      where
-        w2j.w2j_add_tables <> ''
-        and xyz.subscription_ids[1] is not null
-    $$;
-
+ALTER FUNCTION realtime.is_visible_through_filters(columns realtime.wal_column[], filters realtime.user_defined_filter[]) OWNER TO neondb_owner;
 
 --
--- Name: quote_wal2json(regclass); Type: FUNCTION; Schema: realtime; Owner: -
+-- Name: quote_wal2json(regclass); Type: FUNCTION; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE FUNCTION realtime.quote_wal2json(entity regclass) RETURNS text
@@ -1279,8 +1265,10 @@ CREATE FUNCTION realtime.quote_wal2json(entity regclass) RETURNS text
     $$;
 
 
+ALTER FUNCTION realtime.quote_wal2json(entity regclass) OWNER TO neondb_owner;
+
 --
--- Name: send(jsonb, text, text, boolean); Type: FUNCTION; Schema: realtime; Owner: -
+-- Name: send(jsonb, text, text, boolean); Type: FUNCTION; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE FUNCTION realtime.send(payload jsonb, event text, topic text, private boolean DEFAULT true) RETURNS void
@@ -1316,8 +1304,10 @@ END;
 $$;
 
 
+ALTER FUNCTION realtime.send(payload jsonb, event text, topic text, private boolean) OWNER TO neondb_owner;
+
 --
--- Name: subscription_check_filters(); Type: FUNCTION; Schema: realtime; Owner: -
+-- Name: subscription_check_filters(); Type: FUNCTION; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE FUNCTION realtime.subscription_check_filters() RETURNS trigger
@@ -1390,8 +1380,10 @@ CREATE FUNCTION realtime.subscription_check_filters() RETURNS trigger
     $$;
 
 
+ALTER FUNCTION realtime.subscription_check_filters() OWNER TO neondb_owner;
+
 --
--- Name: to_regrole(text); Type: FUNCTION; Schema: realtime; Owner: -
+-- Name: to_regrole(text); Type: FUNCTION; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE FUNCTION realtime.to_regrole(role_name text) RETURNS regrole
@@ -1399,8 +1391,10 @@ CREATE FUNCTION realtime.to_regrole(role_name text) RETURNS regrole
     AS $$ select role_name::regrole $$;
 
 
+ALTER FUNCTION realtime.to_regrole(role_name text) OWNER TO neondb_owner;
+
 --
--- Name: topic(); Type: FUNCTION; Schema: realtime; Owner: -
+-- Name: topic(); Type: FUNCTION; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE FUNCTION realtime.topic() RETURNS text
@@ -1410,8 +1404,10 @@ select nullif(current_setting('realtime.topic', true), '')::text;
 $$;
 
 
+ALTER FUNCTION realtime.topic() OWNER TO neondb_owner;
+
 --
--- Name: add_prefixes(text, text); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: add_prefixes(text, text); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.add_prefixes(_bucket_id text, _name text) RETURNS void
@@ -1430,8 +1426,10 @@ END;
 $$;
 
 
+ALTER FUNCTION storage.add_prefixes(_bucket_id text, _name text) OWNER TO neondb_owner;
+
 --
--- Name: can_insert_object(text, text, uuid, jsonb); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: can_insert_object(text, text, uuid, jsonb); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.can_insert_object(bucketid text, name text, owner uuid, metadata jsonb) RETURNS void
@@ -1447,8 +1445,10 @@ END
 $$;
 
 
+ALTER FUNCTION storage.can_insert_object(bucketid text, name text, owner uuid, metadata jsonb) OWNER TO neondb_owner;
+
 --
--- Name: delete_leaf_prefixes(text[], text[]); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: delete_leaf_prefixes(text[], text[]); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.delete_leaf_prefixes(bucket_ids text[], names text[]) RETURNS void
@@ -1512,8 +1512,10 @@ END;
 $$;
 
 
+ALTER FUNCTION storage.delete_leaf_prefixes(bucket_ids text[], names text[]) OWNER TO neondb_owner;
+
 --
--- Name: delete_prefix(text, text); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: delete_prefix(text, text); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.delete_prefix(_bucket_id text, _name text) RETURNS boolean
@@ -1548,8 +1550,10 @@ END;
 $$;
 
 
+ALTER FUNCTION storage.delete_prefix(_bucket_id text, _name text) OWNER TO neondb_owner;
+
 --
--- Name: delete_prefix_hierarchy_trigger(); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: delete_prefix_hierarchy_trigger(); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.delete_prefix_hierarchy_trigger() RETURNS trigger
@@ -1569,8 +1573,10 @@ END;
 $$;
 
 
+ALTER FUNCTION storage.delete_prefix_hierarchy_trigger() OWNER TO neondb_owner;
+
 --
--- Name: enforce_bucket_name_length(); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: enforce_bucket_name_length(); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.enforce_bucket_name_length() RETURNS trigger
@@ -1585,8 +1591,10 @@ end;
 $$;
 
 
+ALTER FUNCTION storage.enforce_bucket_name_length() OWNER TO neondb_owner;
+
 --
--- Name: extension(text); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: extension(text); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.extension(name text) RETURNS text
@@ -1603,8 +1611,10 @@ END
 $$;
 
 
+ALTER FUNCTION storage.extension(name text) OWNER TO neondb_owner;
+
 --
--- Name: filename(text); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: filename(text); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.filename(name text) RETURNS text
@@ -1619,8 +1629,10 @@ END
 $$;
 
 
+ALTER FUNCTION storage.filename(name text) OWNER TO neondb_owner;
+
 --
--- Name: foldername(text); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: foldername(text); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.foldername(name text) RETURNS text[]
@@ -1637,8 +1649,10 @@ END
 $$;
 
 
+ALTER FUNCTION storage.foldername(name text) OWNER TO neondb_owner;
+
 --
--- Name: get_level(text); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: get_level(text); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.get_level(name text) RETURNS integer
@@ -1648,8 +1662,10 @@ SELECT array_length(string_to_array("name", '/'), 1);
 $$;
 
 
+ALTER FUNCTION storage.get_level(name text) OWNER TO neondb_owner;
+
 --
--- Name: get_prefix(text); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: get_prefix(text); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.get_prefix(name text) RETURNS text
@@ -1664,8 +1680,10 @@ SELECT
 $_$;
 
 
+ALTER FUNCTION storage.get_prefix(name text) OWNER TO neondb_owner;
+
 --
--- Name: get_prefixes(text); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: get_prefixes(text); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.get_prefixes(name text) RETURNS text[]
@@ -1691,8 +1709,10 @@ END;
 $$;
 
 
+ALTER FUNCTION storage.get_prefixes(name text) OWNER TO neondb_owner;
+
 --
--- Name: get_size_by_bucket(); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: get_size_by_bucket(); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.get_size_by_bucket() RETURNS TABLE(size bigint, bucket_id text)
@@ -1707,8 +1727,10 @@ END
 $$;
 
 
+ALTER FUNCTION storage.get_size_by_bucket() OWNER TO neondb_owner;
+
 --
--- Name: list_multipart_uploads_with_delimiter(text, text, text, integer, text, text); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: list_multipart_uploads_with_delimiter(text, text, text, integer, text, text); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.list_multipart_uploads_with_delimiter(bucket_id text, prefix_param text, delimiter_param text, max_keys integer DEFAULT 100, next_key_token text DEFAULT ''::text, next_upload_token text DEFAULT ''::text) RETURNS TABLE(key text, id text, created_at timestamp with time zone)
@@ -1753,8 +1775,10 @@ END;
 $_$;
 
 
+ALTER FUNCTION storage.list_multipart_uploads_with_delimiter(bucket_id text, prefix_param text, delimiter_param text, max_keys integer, next_key_token text, next_upload_token text) OWNER TO neondb_owner;
+
 --
--- Name: list_objects_with_delimiter(text, text, text, integer, text, text); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: list_objects_with_delimiter(text, text, text, integer, text, text); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.list_objects_with_delimiter(bucket_id text, prefix_param text, delimiter_param text, max_keys integer DEFAULT 100, start_after text DEFAULT ''::text, next_token text DEFAULT ''::text) RETURNS TABLE(name text, id uuid, metadata jsonb, updated_at timestamp with time zone)
@@ -1797,8 +1821,10 @@ END;
 $_$;
 
 
+ALTER FUNCTION storage.list_objects_with_delimiter(bucket_id text, prefix_param text, delimiter_param text, max_keys integer, start_after text, next_token text) OWNER TO neondb_owner;
+
 --
--- Name: lock_top_prefixes(text[], text[]); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: lock_top_prefixes(text[], text[]); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.lock_top_prefixes(bucket_ids text[], names text[]) RETURNS void
@@ -1821,8 +1847,10 @@ END;
 $$;
 
 
+ALTER FUNCTION storage.lock_top_prefixes(bucket_ids text[], names text[]) OWNER TO neondb_owner;
+
 --
--- Name: objects_delete_cleanup(); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: objects_delete_cleanup(); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.objects_delete_cleanup() RETURNS trigger
@@ -1852,8 +1880,10 @@ END;
 $$;
 
 
+ALTER FUNCTION storage.objects_delete_cleanup() OWNER TO neondb_owner;
+
 --
--- Name: objects_insert_prefix_trigger(); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: objects_insert_prefix_trigger(); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.objects_insert_prefix_trigger() RETURNS trigger
@@ -1868,8 +1898,10 @@ END;
 $$;
 
 
+ALTER FUNCTION storage.objects_insert_prefix_trigger() OWNER TO neondb_owner;
+
 --
--- Name: objects_update_cleanup(); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: objects_update_cleanup(); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.objects_update_cleanup() RETURNS trigger
@@ -1960,8 +1992,10 @@ END;
 $$;
 
 
+ALTER FUNCTION storage.objects_update_cleanup() OWNER TO neondb_owner;
+
 --
--- Name: objects_update_level_trigger(); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: objects_update_level_trigger(); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.objects_update_level_trigger() RETURNS trigger
@@ -1978,8 +2012,10 @@ END;
 $$;
 
 
+ALTER FUNCTION storage.objects_update_level_trigger() OWNER TO neondb_owner;
+
 --
--- Name: objects_update_prefix_trigger(); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: objects_update_prefix_trigger(); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.objects_update_prefix_trigger() RETURNS trigger
@@ -2020,8 +2056,10 @@ END;
 $$;
 
 
+ALTER FUNCTION storage.objects_update_prefix_trigger() OWNER TO neondb_owner;
+
 --
--- Name: operation(); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: operation(); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.operation() RETURNS text
@@ -2033,8 +2071,10 @@ END;
 $$;
 
 
+ALTER FUNCTION storage.operation() OWNER TO neondb_owner;
+
 --
--- Name: prefixes_delete_cleanup(); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: prefixes_delete_cleanup(); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.prefixes_delete_cleanup() RETURNS trigger
@@ -2064,8 +2104,10 @@ END;
 $$;
 
 
+ALTER FUNCTION storage.prefixes_delete_cleanup() OWNER TO neondb_owner;
+
 --
--- Name: prefixes_insert_trigger(); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: prefixes_insert_trigger(); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.prefixes_insert_trigger() RETURNS trigger
@@ -2078,8 +2120,10 @@ END;
 $$;
 
 
+ALTER FUNCTION storage.prefixes_insert_trigger() OWNER TO neondb_owner;
+
 --
--- Name: search(text, text, integer, integer, integer, text, text, text); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: search(text, text, integer, integer, integer, text, text, text); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.search(prefix text, bucketname text, limits integer DEFAULT 100, levels integer DEFAULT 1, offsets integer DEFAULT 0, search text DEFAULT ''::text, sortcolumn text DEFAULT 'name'::text, sortorder text DEFAULT 'asc'::text) RETURNS TABLE(name text, id uuid, updated_at timestamp with time zone, created_at timestamp with time zone, last_accessed_at timestamp with time zone, metadata jsonb)
@@ -2102,8 +2146,10 @@ end;
 $$;
 
 
+ALTER FUNCTION storage.search(prefix text, bucketname text, limits integer, levels integer, offsets integer, search text, sortcolumn text, sortorder text) OWNER TO neondb_owner;
+
 --
--- Name: search_legacy_v1(text, text, integer, integer, integer, text, text, text); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: search_legacy_v1(text, text, integer, integer, integer, text, text, text); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.search_legacy_v1(prefix text, bucketname text, limits integer DEFAULT 100, levels integer DEFAULT 1, offsets integer DEFAULT 0, search text DEFAULT ''::text, sortcolumn text DEFAULT 'name'::text, sortorder text DEFAULT 'asc'::text) RETURNS TABLE(name text, id uuid, updated_at timestamp with time zone, created_at timestamp with time zone, last_accessed_at timestamp with time zone, metadata jsonb)
@@ -2171,8 +2217,10 @@ end;
 $_$;
 
 
+ALTER FUNCTION storage.search_legacy_v1(prefix text, bucketname text, limits integer, levels integer, offsets integer, search text, sortcolumn text, sortorder text) OWNER TO neondb_owner;
+
 --
--- Name: search_v1_optimised(text, text, integer, integer, integer, text, text, text); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: search_v1_optimised(text, text, integer, integer, integer, text, text, text); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.search_v1_optimised(prefix text, bucketname text, limits integer DEFAULT 100, levels integer DEFAULT 1, offsets integer DEFAULT 0, search text DEFAULT ''::text, sortcolumn text DEFAULT 'name'::text, sortorder text DEFAULT 'asc'::text) RETURNS TABLE(name text, id uuid, updated_at timestamp with time zone, created_at timestamp with time zone, last_accessed_at timestamp with time zone, metadata jsonb)
@@ -2239,8 +2287,10 @@ end;
 $_$;
 
 
+ALTER FUNCTION storage.search_v1_optimised(prefix text, bucketname text, limits integer, levels integer, offsets integer, search text, sortcolumn text, sortorder text) OWNER TO neondb_owner;
+
 --
--- Name: search_v2(text, text, integer, integer, text, text, text, text); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: search_v2(text, text, integer, integer, text, text, text, text); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.search_v2(prefix text, bucket_name text, limits integer DEFAULT 100, levels integer DEFAULT 1, start_after text DEFAULT ''::text, sort_order text DEFAULT 'asc'::text, sort_column text DEFAULT 'name'::text, sort_column_after text DEFAULT ''::text) RETURNS TABLE(key text, name text, id uuid, updated_at timestamp with time zone, created_at timestamp with time zone, last_accessed_at timestamp with time zone, metadata jsonb)
@@ -2335,8 +2385,10 @@ END;
 $_$;
 
 
+ALTER FUNCTION storage.search_v2(prefix text, bucket_name text, limits integer, levels integer, start_after text, sort_order text, sort_column text, sort_column_after text) OWNER TO neondb_owner;
+
 --
--- Name: update_updated_at_column(); Type: FUNCTION; Schema: storage; Owner: -
+-- Name: update_updated_at_column(); Type: FUNCTION; Schema: storage; Owner: neondb_owner
 --
 
 CREATE FUNCTION storage.update_updated_at_column() RETURNS trigger
@@ -2349,12 +2401,14 @@ END;
 $$;
 
 
+ALTER FUNCTION storage.update_updated_at_column() OWNER TO neondb_owner;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- Name: audit_log_entries; Type: TABLE; Schema: auth; Owner: -
+-- Name: audit_log_entries; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.audit_log_entries (
@@ -2366,15 +2420,17 @@ CREATE TABLE auth.audit_log_entries (
 );
 
 
+ALTER TABLE auth.audit_log_entries OWNER TO neondb_owner;
+
 --
--- Name: TABLE audit_log_entries; Type: COMMENT; Schema: auth; Owner: -
+-- Name: TABLE audit_log_entries; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON TABLE auth.audit_log_entries IS 'Auth: Audit trail for user actions.';
 
 
 --
--- Name: flow_state; Type: TABLE; Schema: auth; Owner: -
+-- Name: flow_state; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.flow_state (
@@ -2393,15 +2449,17 @@ CREATE TABLE auth.flow_state (
 );
 
 
+ALTER TABLE auth.flow_state OWNER TO neondb_owner;
+
 --
--- Name: TABLE flow_state; Type: COMMENT; Schema: auth; Owner: -
+-- Name: TABLE flow_state; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON TABLE auth.flow_state IS 'stores metadata for pkce logins';
 
 
 --
--- Name: identities; Type: TABLE; Schema: auth; Owner: -
+-- Name: identities; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.identities (
@@ -2417,22 +2475,24 @@ CREATE TABLE auth.identities (
 );
 
 
+ALTER TABLE auth.identities OWNER TO neondb_owner;
+
 --
--- Name: TABLE identities; Type: COMMENT; Schema: auth; Owner: -
+-- Name: TABLE identities; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON TABLE auth.identities IS 'Auth: Stores identities associated to a user.';
 
 
 --
--- Name: COLUMN identities.email; Type: COMMENT; Schema: auth; Owner: -
+-- Name: COLUMN identities.email; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON COLUMN auth.identities.email IS 'Auth: Email is a generated column that references the optional email property in the identity_data';
 
 
 --
--- Name: instances; Type: TABLE; Schema: auth; Owner: -
+-- Name: instances; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.instances (
@@ -2444,15 +2504,17 @@ CREATE TABLE auth.instances (
 );
 
 
+ALTER TABLE auth.instances OWNER TO neondb_owner;
+
 --
--- Name: TABLE instances; Type: COMMENT; Schema: auth; Owner: -
+-- Name: TABLE instances; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON TABLE auth.instances IS 'Auth: Manages users across multiple sites.';
 
 
 --
--- Name: mfa_amr_claims; Type: TABLE; Schema: auth; Owner: -
+-- Name: mfa_amr_claims; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.mfa_amr_claims (
@@ -2464,15 +2526,17 @@ CREATE TABLE auth.mfa_amr_claims (
 );
 
 
+ALTER TABLE auth.mfa_amr_claims OWNER TO neondb_owner;
+
 --
--- Name: TABLE mfa_amr_claims; Type: COMMENT; Schema: auth; Owner: -
+-- Name: TABLE mfa_amr_claims; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON TABLE auth.mfa_amr_claims IS 'auth: stores authenticator method reference claims for multi factor authentication';
 
 
 --
--- Name: mfa_challenges; Type: TABLE; Schema: auth; Owner: -
+-- Name: mfa_challenges; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.mfa_challenges (
@@ -2486,15 +2550,17 @@ CREATE TABLE auth.mfa_challenges (
 );
 
 
+ALTER TABLE auth.mfa_challenges OWNER TO neondb_owner;
+
 --
--- Name: TABLE mfa_challenges; Type: COMMENT; Schema: auth; Owner: -
+-- Name: TABLE mfa_challenges; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON TABLE auth.mfa_challenges IS 'auth: stores metadata about challenge requests made';
 
 
 --
--- Name: mfa_factors; Type: TABLE; Schema: auth; Owner: -
+-- Name: mfa_factors; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.mfa_factors (
@@ -2514,22 +2580,24 @@ CREATE TABLE auth.mfa_factors (
 );
 
 
+ALTER TABLE auth.mfa_factors OWNER TO neondb_owner;
+
 --
--- Name: TABLE mfa_factors; Type: COMMENT; Schema: auth; Owner: -
+-- Name: TABLE mfa_factors; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON TABLE auth.mfa_factors IS 'auth: stores metadata about factors';
 
 
 --
--- Name: COLUMN mfa_factors.last_webauthn_challenge_data; Type: COMMENT; Schema: auth; Owner: -
+-- Name: COLUMN mfa_factors.last_webauthn_challenge_data; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON COLUMN auth.mfa_factors.last_webauthn_challenge_data IS 'Stores the latest WebAuthn challenge data including attestation/assertion for customer verification';
 
 
 --
--- Name: oauth_authorizations; Type: TABLE; Schema: auth; Owner: -
+-- Name: oauth_authorizations; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.oauth_authorizations (
@@ -2561,8 +2629,10 @@ CREATE TABLE auth.oauth_authorizations (
 );
 
 
+ALTER TABLE auth.oauth_authorizations OWNER TO neondb_owner;
+
 --
--- Name: oauth_client_states; Type: TABLE; Schema: auth; Owner: -
+-- Name: oauth_client_states; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.oauth_client_states (
@@ -2573,15 +2643,17 @@ CREATE TABLE auth.oauth_client_states (
 );
 
 
+ALTER TABLE auth.oauth_client_states OWNER TO neondb_owner;
+
 --
--- Name: TABLE oauth_client_states; Type: COMMENT; Schema: auth; Owner: -
+-- Name: TABLE oauth_client_states; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON TABLE auth.oauth_client_states IS 'Stores OAuth states for third-party provider authentication flows where Supabase acts as the OAuth client.';
 
 
 --
--- Name: oauth_clients; Type: TABLE; Schema: auth; Owner: -
+-- Name: oauth_clients; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.oauth_clients (
@@ -2603,8 +2675,10 @@ CREATE TABLE auth.oauth_clients (
 );
 
 
+ALTER TABLE auth.oauth_clients OWNER TO neondb_owner;
+
 --
--- Name: oauth_consents; Type: TABLE; Schema: auth; Owner: -
+-- Name: oauth_consents; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.oauth_consents (
@@ -2620,8 +2694,10 @@ CREATE TABLE auth.oauth_consents (
 );
 
 
+ALTER TABLE auth.oauth_consents OWNER TO neondb_owner;
+
 --
--- Name: one_time_tokens; Type: TABLE; Schema: auth; Owner: -
+-- Name: one_time_tokens; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.one_time_tokens (
@@ -2636,8 +2712,10 @@ CREATE TABLE auth.one_time_tokens (
 );
 
 
+ALTER TABLE auth.one_time_tokens OWNER TO neondb_owner;
+
 --
--- Name: refresh_tokens; Type: TABLE; Schema: auth; Owner: -
+-- Name: refresh_tokens; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.refresh_tokens (
@@ -2653,15 +2731,17 @@ CREATE TABLE auth.refresh_tokens (
 );
 
 
+ALTER TABLE auth.refresh_tokens OWNER TO neondb_owner;
+
 --
--- Name: TABLE refresh_tokens; Type: COMMENT; Schema: auth; Owner: -
+-- Name: TABLE refresh_tokens; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON TABLE auth.refresh_tokens IS 'Auth: Store of tokens used to refresh JWT tokens once they expire.';
 
 
 --
--- Name: refresh_tokens_id_seq; Type: SEQUENCE; Schema: auth; Owner: -
+-- Name: refresh_tokens_id_seq; Type: SEQUENCE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE SEQUENCE auth.refresh_tokens_id_seq
@@ -2672,15 +2752,17 @@ CREATE SEQUENCE auth.refresh_tokens_id_seq
     CACHE 1;
 
 
+ALTER SEQUENCE auth.refresh_tokens_id_seq OWNER TO neondb_owner;
+
 --
--- Name: refresh_tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: auth; Owner: -
+-- Name: refresh_tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: auth; Owner: neondb_owner
 --
 
 ALTER SEQUENCE auth.refresh_tokens_id_seq OWNED BY auth.refresh_tokens.id;
 
 
 --
--- Name: saml_providers; Type: TABLE; Schema: auth; Owner: -
+-- Name: saml_providers; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.saml_providers (
@@ -2699,15 +2781,17 @@ CREATE TABLE auth.saml_providers (
 );
 
 
+ALTER TABLE auth.saml_providers OWNER TO neondb_owner;
+
 --
--- Name: TABLE saml_providers; Type: COMMENT; Schema: auth; Owner: -
+-- Name: TABLE saml_providers; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON TABLE auth.saml_providers IS 'Auth: Manages SAML Identity Provider connections.';
 
 
 --
--- Name: saml_relay_states; Type: TABLE; Schema: auth; Owner: -
+-- Name: saml_relay_states; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.saml_relay_states (
@@ -2723,15 +2807,17 @@ CREATE TABLE auth.saml_relay_states (
 );
 
 
+ALTER TABLE auth.saml_relay_states OWNER TO neondb_owner;
+
 --
--- Name: TABLE saml_relay_states; Type: COMMENT; Schema: auth; Owner: -
+-- Name: TABLE saml_relay_states; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON TABLE auth.saml_relay_states IS 'Auth: Contains SAML Relay State information for each Service Provider initiated login.';
 
 
 --
--- Name: schema_migrations; Type: TABLE; Schema: auth; Owner: -
+-- Name: schema_migrations; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.schema_migrations (
@@ -2739,15 +2825,17 @@ CREATE TABLE auth.schema_migrations (
 );
 
 
+ALTER TABLE auth.schema_migrations OWNER TO neondb_owner;
+
 --
--- Name: TABLE schema_migrations; Type: COMMENT; Schema: auth; Owner: -
+-- Name: TABLE schema_migrations; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON TABLE auth.schema_migrations IS 'Auth: Manages updates to the auth system.';
 
 
 --
--- Name: sessions; Type: TABLE; Schema: auth; Owner: -
+-- Name: sessions; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.sessions (
@@ -2770,36 +2858,38 @@ CREATE TABLE auth.sessions (
 );
 
 
+ALTER TABLE auth.sessions OWNER TO neondb_owner;
+
 --
--- Name: TABLE sessions; Type: COMMENT; Schema: auth; Owner: -
+-- Name: TABLE sessions; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON TABLE auth.sessions IS 'Auth: Stores session data associated to a user.';
 
 
 --
--- Name: COLUMN sessions.not_after; Type: COMMENT; Schema: auth; Owner: -
+-- Name: COLUMN sessions.not_after; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON COLUMN auth.sessions.not_after IS 'Auth: Not after is a nullable column that contains a timestamp after which the session should be regarded as expired.';
 
 
 --
--- Name: COLUMN sessions.refresh_token_hmac_key; Type: COMMENT; Schema: auth; Owner: -
+-- Name: COLUMN sessions.refresh_token_hmac_key; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON COLUMN auth.sessions.refresh_token_hmac_key IS 'Holds a HMAC-SHA256 key used to sign refresh tokens for this session.';
 
 
 --
--- Name: COLUMN sessions.refresh_token_counter; Type: COMMENT; Schema: auth; Owner: -
+-- Name: COLUMN sessions.refresh_token_counter; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON COLUMN auth.sessions.refresh_token_counter IS 'Holds the ID (counter) of the last issued refresh token.';
 
 
 --
--- Name: sso_domains; Type: TABLE; Schema: auth; Owner: -
+-- Name: sso_domains; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.sso_domains (
@@ -2812,15 +2902,17 @@ CREATE TABLE auth.sso_domains (
 );
 
 
+ALTER TABLE auth.sso_domains OWNER TO neondb_owner;
+
 --
--- Name: TABLE sso_domains; Type: COMMENT; Schema: auth; Owner: -
+-- Name: TABLE sso_domains; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON TABLE auth.sso_domains IS 'Auth: Manages SSO email address domain mapping to an SSO Identity Provider.';
 
 
 --
--- Name: sso_providers; Type: TABLE; Schema: auth; Owner: -
+-- Name: sso_providers; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.sso_providers (
@@ -2833,22 +2925,24 @@ CREATE TABLE auth.sso_providers (
 );
 
 
+ALTER TABLE auth.sso_providers OWNER TO neondb_owner;
+
 --
--- Name: TABLE sso_providers; Type: COMMENT; Schema: auth; Owner: -
+-- Name: TABLE sso_providers; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON TABLE auth.sso_providers IS 'Auth: Manages SSO identity provider information; see saml_providers for SAML.';
 
 
 --
--- Name: COLUMN sso_providers.resource_id; Type: COMMENT; Schema: auth; Owner: -
+-- Name: COLUMN sso_providers.resource_id; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON COLUMN auth.sso_providers.resource_id IS 'Auth: Uniquely identifies a SSO provider according to a user-chosen resource ID (case insensitive), useful in infrastructure as code.';
 
 
 --
--- Name: users; Type: TABLE; Schema: auth; Owner: -
+-- Name: users; Type: TABLE; Schema: auth; Owner: neondb_owner
 --
 
 CREATE TABLE auth.users (
@@ -2891,34 +2985,38 @@ CREATE TABLE auth.users (
 );
 
 
+ALTER TABLE auth.users OWNER TO neondb_owner;
+
 --
--- Name: TABLE users; Type: COMMENT; Schema: auth; Owner: -
+-- Name: TABLE users; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON TABLE auth.users IS 'Auth: Stores user login data within a secure schema.';
 
 
 --
--- Name: COLUMN users.is_sso_user; Type: COMMENT; Schema: auth; Owner: -
+-- Name: COLUMN users.is_sso_user; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON COLUMN auth.users.is_sso_user IS 'Auth: Set this column to true when the account comes from SSO. These accounts can have duplicate emails.';
 
 
 --
--- Name: bookmarks; Type: TABLE; Schema: public; Owner: -
+-- Name: bookmarks; Type: TABLE; Schema: public; Owner: neondb_owner
 --
 
 CREATE TABLE public.bookmarks (
     bookmark_id integer NOT NULL,
-    user_google_id character varying(255) NOT NULL,
     plant_id integer NOT NULL,
-    bookmarked_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    bookmarked_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    email character varying(100)
 );
 
 
+ALTER TABLE public.bookmarks OWNER TO neondb_owner;
+
 --
--- Name: bookmarks_bookmark_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- Name: bookmarks_bookmark_id_seq; Type: SEQUENCE; Schema: public; Owner: neondb_owner
 --
 
 CREATE SEQUENCE public.bookmarks_bookmark_id_seq
@@ -2930,15 +3028,17 @@ CREATE SEQUENCE public.bookmarks_bookmark_id_seq
     CACHE 1;
 
 
+ALTER SEQUENCE public.bookmarks_bookmark_id_seq OWNER TO neondb_owner;
+
 --
--- Name: bookmarks_bookmark_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+-- Name: bookmarks_bookmark_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: neondb_owner
 --
 
 ALTER SEQUENCE public.bookmarks_bookmark_id_seq OWNED BY public.bookmarks.bookmark_id;
 
 
 --
--- Name: plants; Type: TABLE; Schema: public; Owner: -
+-- Name: plants; Type: TABLE; Schema: public; Owner: neondb_owner
 --
 
 CREATE TABLE public.plants (
@@ -2954,8 +3054,10 @@ CREATE TABLE public.plants (
 );
 
 
+ALTER TABLE public.plants OWNER TO neondb_owner;
+
 --
--- Name: plants_plant_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- Name: plants_plant_id_seq; Type: SEQUENCE; Schema: public; Owner: neondb_owner
 --
 
 CREATE SEQUENCE public.plants_plant_id_seq
@@ -2967,27 +3069,71 @@ CREATE SEQUENCE public.plants_plant_id_seq
     CACHE 1;
 
 
+ALTER SEQUENCE public.plants_plant_id_seq OWNER TO neondb_owner;
+
 --
--- Name: plants_plant_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+-- Name: plants_plant_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: neondb_owner
 --
 
 ALTER SEQUENCE public.plants_plant_id_seq OWNED BY public.plants.plant_id;
 
 
 --
--- Name: users; Type: TABLE; Schema: public; Owner: -
+-- Name: resetcode; Type: TABLE; Schema: public; Owner: neondb_owner
 --
 
-CREATE TABLE public.users (
-    google_id character varying(255) NOT NULL,
+CREATE TABLE public.resetcode (
+    id integer NOT NULL,
     email character varying(100) NOT NULL,
-    first_name character varying(50),
-    last_name character varying(50)
+    "resetId" character varying(255) NOT NULL,
+    status character varying(50) NOT NULL,
+    created_at timestamp without time zone DEFAULT now(),
+    expired_in interval DEFAULT '01:00:00'::interval
 );
 
 
+ALTER TABLE public.resetcode OWNER TO neondb_owner;
+
 --
--- Name: messages; Type: TABLE; Schema: realtime; Owner: -
+-- Name: resetcode_id_seq; Type: SEQUENCE; Schema: public; Owner: neondb_owner
+--
+
+CREATE SEQUENCE public.resetcode_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.resetcode_id_seq OWNER TO neondb_owner;
+
+--
+-- Name: resetcode_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: neondb_owner
+--
+
+ALTER SEQUENCE public.resetcode_id_seq OWNED BY public.resetcode.id;
+
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.users (
+    email character varying(100) NOT NULL,
+    first_name character varying(50),
+    last_name character varying(50),
+    google_id character varying(255),
+    hashed_password character varying(255),
+    is_active boolean DEFAULT true
+);
+
+
+ALTER TABLE public.users OWNER TO neondb_owner;
+
+--
+-- Name: messages; Type: TABLE; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE TABLE realtime.messages (
@@ -3003,8 +3149,10 @@ CREATE TABLE realtime.messages (
 PARTITION BY RANGE (inserted_at);
 
 
+ALTER TABLE realtime.messages OWNER TO neondb_owner;
+
 --
--- Name: schema_migrations; Type: TABLE; Schema: realtime; Owner: -
+-- Name: schema_migrations; Type: TABLE; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE TABLE realtime.schema_migrations (
@@ -3013,8 +3161,10 @@ CREATE TABLE realtime.schema_migrations (
 );
 
 
+ALTER TABLE realtime.schema_migrations OWNER TO neondb_owner;
+
 --
--- Name: subscription; Type: TABLE; Schema: realtime; Owner: -
+-- Name: subscription; Type: TABLE; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE TABLE realtime.subscription (
@@ -3028,8 +3178,10 @@ CREATE TABLE realtime.subscription (
 );
 
 
+ALTER TABLE realtime.subscription OWNER TO neondb_owner;
+
 --
--- Name: subscription_id_seq; Type: SEQUENCE; Schema: realtime; Owner: -
+-- Name: subscription_id_seq; Type: SEQUENCE; Schema: realtime; Owner: neondb_owner
 --
 
 ALTER TABLE realtime.subscription ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
@@ -3043,7 +3195,7 @@ ALTER TABLE realtime.subscription ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTI
 
 
 --
--- Name: buckets; Type: TABLE; Schema: storage; Owner: -
+-- Name: buckets; Type: TABLE; Schema: storage; Owner: neondb_owner
 --
 
 CREATE TABLE storage.buckets (
@@ -3061,15 +3213,17 @@ CREATE TABLE storage.buckets (
 );
 
 
+ALTER TABLE storage.buckets OWNER TO neondb_owner;
+
 --
--- Name: COLUMN buckets.owner; Type: COMMENT; Schema: storage; Owner: -
+-- Name: COLUMN buckets.owner; Type: COMMENT; Schema: storage; Owner: neondb_owner
 --
 
 COMMENT ON COLUMN storage.buckets.owner IS 'Field is deprecated, use owner_id instead';
 
 
 --
--- Name: buckets_analytics; Type: TABLE; Schema: storage; Owner: -
+-- Name: buckets_analytics; Type: TABLE; Schema: storage; Owner: neondb_owner
 --
 
 CREATE TABLE storage.buckets_analytics (
@@ -3083,8 +3237,10 @@ CREATE TABLE storage.buckets_analytics (
 );
 
 
+ALTER TABLE storage.buckets_analytics OWNER TO neondb_owner;
+
 --
--- Name: buckets_vectors; Type: TABLE; Schema: storage; Owner: -
+-- Name: buckets_vectors; Type: TABLE; Schema: storage; Owner: neondb_owner
 --
 
 CREATE TABLE storage.buckets_vectors (
@@ -3095,8 +3251,10 @@ CREATE TABLE storage.buckets_vectors (
 );
 
 
+ALTER TABLE storage.buckets_vectors OWNER TO neondb_owner;
+
 --
--- Name: migrations; Type: TABLE; Schema: storage; Owner: -
+-- Name: migrations; Type: TABLE; Schema: storage; Owner: neondb_owner
 --
 
 CREATE TABLE storage.migrations (
@@ -3107,8 +3265,10 @@ CREATE TABLE storage.migrations (
 );
 
 
+ALTER TABLE storage.migrations OWNER TO neondb_owner;
+
 --
--- Name: objects; Type: TABLE; Schema: storage; Owner: -
+-- Name: objects; Type: TABLE; Schema: storage; Owner: neondb_owner
 --
 
 CREATE TABLE storage.objects (
@@ -3128,15 +3288,17 @@ CREATE TABLE storage.objects (
 );
 
 
+ALTER TABLE storage.objects OWNER TO neondb_owner;
+
 --
--- Name: COLUMN objects.owner; Type: COMMENT; Schema: storage; Owner: -
+-- Name: COLUMN objects.owner; Type: COMMENT; Schema: storage; Owner: neondb_owner
 --
 
 COMMENT ON COLUMN storage.objects.owner IS 'Field is deprecated, use owner_id instead';
 
 
 --
--- Name: prefixes; Type: TABLE; Schema: storage; Owner: -
+-- Name: prefixes; Type: TABLE; Schema: storage; Owner: neondb_owner
 --
 
 CREATE TABLE storage.prefixes (
@@ -3148,8 +3310,10 @@ CREATE TABLE storage.prefixes (
 );
 
 
+ALTER TABLE storage.prefixes OWNER TO neondb_owner;
+
 --
--- Name: s3_multipart_uploads; Type: TABLE; Schema: storage; Owner: -
+-- Name: s3_multipart_uploads; Type: TABLE; Schema: storage; Owner: neondb_owner
 --
 
 CREATE TABLE storage.s3_multipart_uploads (
@@ -3165,8 +3329,10 @@ CREATE TABLE storage.s3_multipart_uploads (
 );
 
 
+ALTER TABLE storage.s3_multipart_uploads OWNER TO neondb_owner;
+
 --
--- Name: s3_multipart_uploads_parts; Type: TABLE; Schema: storage; Owner: -
+-- Name: s3_multipart_uploads_parts; Type: TABLE; Schema: storage; Owner: neondb_owner
 --
 
 CREATE TABLE storage.s3_multipart_uploads_parts (
@@ -3183,8 +3349,10 @@ CREATE TABLE storage.s3_multipart_uploads_parts (
 );
 
 
+ALTER TABLE storage.s3_multipart_uploads_parts OWNER TO neondb_owner;
+
 --
--- Name: vector_indexes; Type: TABLE; Schema: storage; Owner: -
+-- Name: vector_indexes; Type: TABLE; Schema: storage; Owner: neondb_owner
 --
 
 CREATE TABLE storage.vector_indexes (
@@ -3200,29 +3368,38 @@ CREATE TABLE storage.vector_indexes (
 );
 
 
+ALTER TABLE storage.vector_indexes OWNER TO neondb_owner;
+
 --
--- Name: refresh_tokens id; Type: DEFAULT; Schema: auth; Owner: -
+-- Name: refresh_tokens id; Type: DEFAULT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.refresh_tokens ALTER COLUMN id SET DEFAULT nextval('auth.refresh_tokens_id_seq'::regclass);
 
 
 --
--- Name: bookmarks bookmark_id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: bookmarks bookmark_id; Type: DEFAULT; Schema: public; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY public.bookmarks ALTER COLUMN bookmark_id SET DEFAULT nextval('public.bookmarks_bookmark_id_seq'::regclass);
 
 
 --
--- Name: plants plant_id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: plants plant_id; Type: DEFAULT; Schema: public; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY public.plants ALTER COLUMN plant_id SET DEFAULT nextval('public.plants_plant_id_seq'::regclass);
 
 
 --
--- Data for Name: audit_log_entries; Type: TABLE DATA; Schema: auth; Owner: -
+-- Name: resetcode id; Type: DEFAULT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.resetcode ALTER COLUMN id SET DEFAULT nextval('public.resetcode_id_seq'::regclass);
+
+
+--
+-- Data for Name: audit_log_entries; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.audit_log_entries (instance_id, id, payload, created_at, ip_address) FROM stdin;
@@ -3230,7 +3407,7 @@ COPY auth.audit_log_entries (instance_id, id, payload, created_at, ip_address) F
 
 
 --
--- Data for Name: flow_state; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: flow_state; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.flow_state (id, user_id, auth_code, code_challenge_method, code_challenge, provider_type, provider_access_token, provider_refresh_token, created_at, updated_at, authentication_method, auth_code_issued_at) FROM stdin;
@@ -3238,7 +3415,7 @@ COPY auth.flow_state (id, user_id, auth_code, code_challenge_method, code_challe
 
 
 --
--- Data for Name: identities; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: identities; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at, id) FROM stdin;
@@ -3246,7 +3423,7 @@ COPY auth.identities (provider_id, user_id, identity_data, provider, last_sign_i
 
 
 --
--- Data for Name: instances; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: instances; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.instances (id, uuid, raw_base_config, created_at, updated_at) FROM stdin;
@@ -3254,7 +3431,7 @@ COPY auth.instances (id, uuid, raw_base_config, created_at, updated_at) FROM std
 
 
 --
--- Data for Name: mfa_amr_claims; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: mfa_amr_claims; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.mfa_amr_claims (session_id, created_at, updated_at, authentication_method, id) FROM stdin;
@@ -3262,7 +3439,7 @@ COPY auth.mfa_amr_claims (session_id, created_at, updated_at, authentication_met
 
 
 --
--- Data for Name: mfa_challenges; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: mfa_challenges; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.mfa_challenges (id, factor_id, created_at, verified_at, ip_address, otp_code, web_authn_session_data) FROM stdin;
@@ -3270,7 +3447,7 @@ COPY auth.mfa_challenges (id, factor_id, created_at, verified_at, ip_address, ot
 
 
 --
--- Data for Name: mfa_factors; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: mfa_factors; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.mfa_factors (id, user_id, friendly_name, factor_type, status, created_at, updated_at, secret, phone, last_challenged_at, web_authn_credential, web_authn_aaguid, last_webauthn_challenge_data) FROM stdin;
@@ -3278,7 +3455,7 @@ COPY auth.mfa_factors (id, user_id, friendly_name, factor_type, status, created_
 
 
 --
--- Data for Name: oauth_authorizations; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: oauth_authorizations; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.oauth_authorizations (id, authorization_id, client_id, user_id, redirect_uri, scope, state, resource, code_challenge, code_challenge_method, response_type, status, authorization_code, created_at, expires_at, approved_at, nonce) FROM stdin;
@@ -3286,7 +3463,7 @@ COPY auth.oauth_authorizations (id, authorization_id, client_id, user_id, redire
 
 
 --
--- Data for Name: oauth_client_states; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: oauth_client_states; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.oauth_client_states (id, provider_type, code_verifier, created_at) FROM stdin;
@@ -3294,7 +3471,7 @@ COPY auth.oauth_client_states (id, provider_type, code_verifier, created_at) FRO
 
 
 --
--- Data for Name: oauth_clients; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: oauth_clients; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.oauth_clients (id, client_secret_hash, registration_type, redirect_uris, grant_types, client_name, client_uri, logo_uri, created_at, updated_at, deleted_at, client_type) FROM stdin;
@@ -3302,7 +3479,7 @@ COPY auth.oauth_clients (id, client_secret_hash, registration_type, redirect_uri
 
 
 --
--- Data for Name: oauth_consents; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: oauth_consents; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.oauth_consents (id, user_id, client_id, scopes, granted_at, revoked_at) FROM stdin;
@@ -3310,7 +3487,7 @@ COPY auth.oauth_consents (id, user_id, client_id, scopes, granted_at, revoked_at
 
 
 --
--- Data for Name: one_time_tokens; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: one_time_tokens; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.one_time_tokens (id, user_id, token_type, token_hash, relates_to, created_at, updated_at) FROM stdin;
@@ -3318,7 +3495,7 @@ COPY auth.one_time_tokens (id, user_id, token_type, token_hash, relates_to, crea
 
 
 --
--- Data for Name: refresh_tokens; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: refresh_tokens; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.refresh_tokens (instance_id, id, token, user_id, revoked, created_at, updated_at, parent, session_id) FROM stdin;
@@ -3326,7 +3503,7 @@ COPY auth.refresh_tokens (instance_id, id, token, user_id, revoked, created_at, 
 
 
 --
--- Data for Name: saml_providers; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: saml_providers; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.saml_providers (id, sso_provider_id, entity_id, metadata_xml, metadata_url, attribute_mapping, created_at, updated_at, name_id_format) FROM stdin;
@@ -3334,7 +3511,7 @@ COPY auth.saml_providers (id, sso_provider_id, entity_id, metadata_xml, metadata
 
 
 --
--- Data for Name: saml_relay_states; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: saml_relay_states; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.saml_relay_states (id, sso_provider_id, request_id, for_email, redirect_to, created_at, updated_at, flow_state_id) FROM stdin;
@@ -3342,7 +3519,7 @@ COPY auth.saml_relay_states (id, sso_provider_id, request_id, for_email, redirec
 
 
 --
--- Data for Name: schema_migrations; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: schema_migrations; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.schema_migrations (version) FROM stdin;
@@ -3422,7 +3599,7 @@ COPY auth.schema_migrations (version) FROM stdin;
 
 
 --
--- Data for Name: sessions; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: sessions; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.sessions (id, user_id, created_at, updated_at, factor_id, aal, not_after, refreshed_at, user_agent, ip, tag, oauth_client_id, refresh_token_hmac_key, refresh_token_counter, scopes) FROM stdin;
@@ -3430,7 +3607,7 @@ COPY auth.sessions (id, user_id, created_at, updated_at, factor_id, aal, not_aft
 
 
 --
--- Data for Name: sso_domains; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: sso_domains; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.sso_domains (id, sso_provider_id, domain, created_at, updated_at) FROM stdin;
@@ -3438,7 +3615,7 @@ COPY auth.sso_domains (id, sso_provider_id, domain, created_at, updated_at) FROM
 
 
 --
--- Data for Name: sso_providers; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: sso_providers; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.sso_providers (id, resource_id, created_at, updated_at, disabled) FROM stdin;
@@ -3446,7 +3623,7 @@ COPY auth.sso_providers (id, resource_id, created_at, updated_at, disabled) FROM
 
 
 --
--- Data for Name: users; Type: TABLE DATA; Schema: auth; Owner: -
+-- Data for Name: users; Type: TABLE DATA; Schema: auth; Owner: neondb_owner
 --
 
 COPY auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, invited_at, confirmation_token, confirmation_sent_at, recovery_token, recovery_sent_at, email_change_token_new, email_change, email_change_sent_at, last_sign_in_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, created_at, updated_at, phone, phone_confirmed_at, phone_change, phone_change_token, phone_change_sent_at, email_change_token_current, email_change_confirm_status, banned_until, reauthentication_token, reauthentication_sent_at, is_sso_user, deleted_at, is_anonymous) FROM stdin;
@@ -3454,37 +3631,53 @@ COPY auth.users (instance_id, id, aud, role, email, encrypted_password, email_co
 
 
 --
--- Data for Name: bookmarks; Type: TABLE DATA; Schema: public; Owner: -
+-- Data for Name: bookmarks; Type: TABLE DATA; Schema: public; Owner: neondb_owner
 --
 
-COPY public.bookmarks (bookmark_id, user_google_id, plant_id, bookmarked_at) FROM stdin;
+COPY public.bookmarks (bookmark_id, plant_id, bookmarked_at, email) FROM stdin;
+87	7	2025-12-26 18:45:53.166019	abhidevops096@gmail.com
+88	6	2025-12-26 18:45:54.929662	abhidevops096@gmail.com
+96	4	2026-01-06 09:22:24.265592	dharshan122001@gmail.com
+97	7	2026-01-21 10:13:30.710491	dharshan122001@gmail.com
 \.
 
 
 --
--- Data for Name: plants; Type: TABLE DATA; Schema: public; Owner: -
+-- Data for Name: plants; Type: TABLE DATA; Schema: public; Owner: neondb_owner
 --
 
 COPY public.plants (plant_id, common_name, scientific_name, description, uses, region, plant_type, image_url, three_d_model_url) FROM stdin;
 7	Betel leaf	Scidry2	A fragrant, flowering plant known for its calming properties and beautiful purple blooms. Widely used in aromatherapy and traditional medicine.	{Aromatherapy,Relaxation,"Sleep aid",Antiseptic,Perfumery}	Mediterranean	Shrub	https://res.cloudinary.com/roundglass/image/upload/w_640,ar_1:1,f_auto/v1705051558/rg/collective/media/Betel%20leaf_gj61ny.png	https://example.com/models/lavender.glb
-6	sandalWood	Scidry1	A fragrant, flowering plant known for its calming properties and beautiful purple blooms. Widely used in aromatherapy and traditional medicine.	{Aromatherapy,Relaxation,"Sleep aid",Antiseptic,Perfumery}	Mediterranean	Shrub	https://hasiruagro.com/wp-content/uploads/2023/08/Sandalwood-F.jpg	https://example.com/models/lavender.glb
 4	Lavender	Lavandula angustifolia	A fragrant herb known for its calming properties.	{Relaxation,"Sleep aid",Aromatherapy}	Mediterranean	Herb	https://www.gardendesign.com/pictures/images/263x300Exact_68x0/site_3/english-lavender-lavandula-angustifolia-garden-design_11716.jpg	\N
 3	Turmeric	Curcuma longa	A flowering plant of the ginger family. The rhizomes are used in cooking and traditional medicine.	{Anti-inflammatory,Antioxidant,"Culinary spice","Wound healing"}	Southeast Asia, India	Herb	https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Curcuma_longa_roots.jpg/250px-Curcuma_longa_roots.jpg	https://example.com/models/turmeric.glb
 2	Peppermint	Mentha piperita	A hybrid mint, a cross between watermint and spearmint. Known for its strong, fresh aroma.	{Digestion,Headaches,"Cold symptoms",Aromatherapy}	Europe, North America	Herb	https://static.toiimg.com/thumb/msid-116376596,imgsize-47262,width-400,resizemode-4/116376596.jpg	https://example.com/models/peppermint.glb
+6	Sandal Wood	Scidry1	A fragrant, flowering plant known for its calming properties and beautiful purple blooms. Widely used in aromatherapy and traditional medicine.	{Aromatherapy,Relaxation,"Sleep aid",Antiseptic,Perfumery}	Mediterranean	Shrub	https://hasiruagro.com/wp-content/uploads/2023/08/Sandalwood-F.jpg	https://example.com/models/lavender.glb
 \.
 
 
 --
--- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: -
+-- Data for Name: resetcode; Type: TABLE DATA; Schema: public; Owner: neondb_owner
 --
 
-COPY public.users (google_id, email, first_name, last_name) FROM stdin;
-DAUutukDj0WQTxiffBjvQp1BTal2	dharshan122001@gmail.com	Dharshan	K
+COPY public.resetcode (id, email, "resetId", status, created_at, expired_in) FROM stdin;
 \.
 
 
 --
--- Data for Name: schema_migrations; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.users (email, first_name, last_name, google_id, hashed_password, is_active) FROM stdin;
+abhidevops096@gmail.com	Abhi	Ram	\N	$2b$12$dBp3RgaofnhSH5EmQ.nXdOOODXduHyLCTgXGA.GVMZVaoaaWyEWJS	t
+harshank9945@gmail.com	Harshan	Krishna	\N	$2b$12$pBYcxh5KGU8lzhd4tjjEPeIjD01MQLv3YwSuJaclP73/HafcLeyQe	t
+gtaditya5@gmail.com			\N	$2b$12$oqL09ST6h6j4NQfzFr3QQ.LNHBOQJbDy4LwMpP3oFBRnBxjXZ38HC	t
+mouneshn07@gmail.com			\N	$2b$12$UTJp0L.FNGkPV5skBeBACOUKpQxrTzoXeYG84/oNYYwGQggyj4x0u	t
+dharshan122001@gmail.com			\N	$2b$12$zgwh/xKKyaHSDhycE4pF8eabVONPyyrOou20bqmHLfyC3l/T7a/A.	t
+\.
+
+
+--
+-- Data for Name: schema_migrations; Type: TABLE DATA; Schema: realtime; Owner: neondb_owner
 --
 
 COPY realtime.schema_migrations (version, inserted_at) FROM stdin;
@@ -3557,7 +3750,7 @@ COPY realtime.schema_migrations (version, inserted_at) FROM stdin;
 
 
 --
--- Data for Name: subscription; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: subscription; Type: TABLE DATA; Schema: realtime; Owner: neondb_owner
 --
 
 COPY realtime.subscription (id, subscription_id, entity, filters, claims, created_at) FROM stdin;
@@ -3565,7 +3758,7 @@ COPY realtime.subscription (id, subscription_id, entity, filters, claims, create
 
 
 --
--- Data for Name: buckets; Type: TABLE DATA; Schema: storage; Owner: -
+-- Data for Name: buckets; Type: TABLE DATA; Schema: storage; Owner: neondb_owner
 --
 
 COPY storage.buckets (id, name, owner, created_at, updated_at, public, avif_autodetection, file_size_limit, allowed_mime_types, owner_id, type) FROM stdin;
@@ -3573,7 +3766,7 @@ COPY storage.buckets (id, name, owner, created_at, updated_at, public, avif_auto
 
 
 --
--- Data for Name: buckets_analytics; Type: TABLE DATA; Schema: storage; Owner: -
+-- Data for Name: buckets_analytics; Type: TABLE DATA; Schema: storage; Owner: neondb_owner
 --
 
 COPY storage.buckets_analytics (name, type, format, created_at, updated_at, id, deleted_at) FROM stdin;
@@ -3581,7 +3774,7 @@ COPY storage.buckets_analytics (name, type, format, created_at, updated_at, id, 
 
 
 --
--- Data for Name: buckets_vectors; Type: TABLE DATA; Schema: storage; Owner: -
+-- Data for Name: buckets_vectors; Type: TABLE DATA; Schema: storage; Owner: neondb_owner
 --
 
 COPY storage.buckets_vectors (id, type, created_at, updated_at) FROM stdin;
@@ -3589,7 +3782,7 @@ COPY storage.buckets_vectors (id, type, created_at, updated_at) FROM stdin;
 
 
 --
--- Data for Name: migrations; Type: TABLE DATA; Schema: storage; Owner: -
+-- Data for Name: migrations; Type: TABLE DATA; Schema: storage; Owner: neondb_owner
 --
 
 COPY storage.migrations (id, name, hash, executed_at) FROM stdin;
@@ -3647,7 +3840,7 @@ COPY storage.migrations (id, name, hash, executed_at) FROM stdin;
 
 
 --
--- Data for Name: objects; Type: TABLE DATA; Schema: storage; Owner: -
+-- Data for Name: objects; Type: TABLE DATA; Schema: storage; Owner: neondb_owner
 --
 
 COPY storage.objects (id, bucket_id, name, owner, created_at, updated_at, last_accessed_at, metadata, version, owner_id, user_metadata, level) FROM stdin;
@@ -3655,7 +3848,7 @@ COPY storage.objects (id, bucket_id, name, owner, created_at, updated_at, last_a
 
 
 --
--- Data for Name: prefixes; Type: TABLE DATA; Schema: storage; Owner: -
+-- Data for Name: prefixes; Type: TABLE DATA; Schema: storage; Owner: neondb_owner
 --
 
 COPY storage.prefixes (bucket_id, name, created_at, updated_at) FROM stdin;
@@ -3663,7 +3856,7 @@ COPY storage.prefixes (bucket_id, name, created_at, updated_at) FROM stdin;
 
 
 --
--- Data for Name: s3_multipart_uploads; Type: TABLE DATA; Schema: storage; Owner: -
+-- Data for Name: s3_multipart_uploads; Type: TABLE DATA; Schema: storage; Owner: neondb_owner
 --
 
 COPY storage.s3_multipart_uploads (id, in_progress_size, upload_signature, bucket_id, key, version, owner_id, created_at, user_metadata) FROM stdin;
@@ -3671,7 +3864,7 @@ COPY storage.s3_multipart_uploads (id, in_progress_size, upload_signature, bucke
 
 
 --
--- Data for Name: s3_multipart_uploads_parts; Type: TABLE DATA; Schema: storage; Owner: -
+-- Data for Name: s3_multipart_uploads_parts; Type: TABLE DATA; Schema: storage; Owner: neondb_owner
 --
 
 COPY storage.s3_multipart_uploads_parts (id, upload_id, size, part_number, bucket_id, key, etag, owner_id, version, created_at) FROM stdin;
@@ -3679,7 +3872,7 @@ COPY storage.s3_multipart_uploads_parts (id, upload_id, size, part_number, bucke
 
 
 --
--- Data for Name: vector_indexes; Type: TABLE DATA; Schema: storage; Owner: -
+-- Data for Name: vector_indexes; Type: TABLE DATA; Schema: storage; Owner: neondb_owner
 --
 
 COPY storage.vector_indexes (id, name, bucket_id, data_type, dimension, distance_metric, metadata_configuration, created_at, updated_at) FROM stdin;
@@ -3687,43 +3880,42 @@ COPY storage.vector_indexes (id, name, bucket_id, data_type, dimension, distance
 
 
 --
--- Data for Name: secrets; Type: TABLE DATA; Schema: vault; Owner: -
---
-
-COPY vault.secrets (id, name, description, secret, key_id, nonce, created_at, updated_at) FROM stdin;
-\.
-
-
---
--- Name: refresh_tokens_id_seq; Type: SEQUENCE SET; Schema: auth; Owner: -
+-- Name: refresh_tokens_id_seq; Type: SEQUENCE SET; Schema: auth; Owner: neondb_owner
 --
 
 SELECT pg_catalog.setval('auth.refresh_tokens_id_seq', 1, false);
 
 
 --
--- Name: bookmarks_bookmark_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+-- Name: bookmarks_bookmark_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
 --
 
-SELECT pg_catalog.setval('public.bookmarks_bookmark_id_seq', 82, true);
+SELECT pg_catalog.setval('public.bookmarks_bookmark_id_seq', 98, true);
 
 
 --
--- Name: plants_plant_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+-- Name: plants_plant_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
 --
 
 SELECT pg_catalog.setval('public.plants_plant_id_seq', 8, true);
 
 
 --
--- Name: subscription_id_seq; Type: SEQUENCE SET; Schema: realtime; Owner: -
+-- Name: resetcode_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
+--
+
+SELECT pg_catalog.setval('public.resetcode_id_seq', 116, true);
+
+
+--
+-- Name: subscription_id_seq; Type: SEQUENCE SET; Schema: realtime; Owner: neondb_owner
 --
 
 SELECT pg_catalog.setval('realtime.subscription_id_seq', 1, false);
 
 
 --
--- Name: mfa_amr_claims amr_id_pk; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: mfa_amr_claims amr_id_pk; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.mfa_amr_claims
@@ -3731,7 +3923,7 @@ ALTER TABLE ONLY auth.mfa_amr_claims
 
 
 --
--- Name: audit_log_entries audit_log_entries_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: audit_log_entries audit_log_entries_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.audit_log_entries
@@ -3739,7 +3931,7 @@ ALTER TABLE ONLY auth.audit_log_entries
 
 
 --
--- Name: flow_state flow_state_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: flow_state flow_state_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.flow_state
@@ -3747,7 +3939,7 @@ ALTER TABLE ONLY auth.flow_state
 
 
 --
--- Name: identities identities_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: identities identities_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.identities
@@ -3755,7 +3947,7 @@ ALTER TABLE ONLY auth.identities
 
 
 --
--- Name: identities identities_provider_id_provider_unique; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: identities identities_provider_id_provider_unique; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.identities
@@ -3763,7 +3955,7 @@ ALTER TABLE ONLY auth.identities
 
 
 --
--- Name: instances instances_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: instances instances_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.instances
@@ -3771,7 +3963,7 @@ ALTER TABLE ONLY auth.instances
 
 
 --
--- Name: mfa_amr_claims mfa_amr_claims_session_id_authentication_method_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: mfa_amr_claims mfa_amr_claims_session_id_authentication_method_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.mfa_amr_claims
@@ -3779,7 +3971,7 @@ ALTER TABLE ONLY auth.mfa_amr_claims
 
 
 --
--- Name: mfa_challenges mfa_challenges_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: mfa_challenges mfa_challenges_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.mfa_challenges
@@ -3787,7 +3979,7 @@ ALTER TABLE ONLY auth.mfa_challenges
 
 
 --
--- Name: mfa_factors mfa_factors_last_challenged_at_key; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: mfa_factors mfa_factors_last_challenged_at_key; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.mfa_factors
@@ -3795,7 +3987,7 @@ ALTER TABLE ONLY auth.mfa_factors
 
 
 --
--- Name: mfa_factors mfa_factors_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: mfa_factors mfa_factors_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.mfa_factors
@@ -3803,7 +3995,7 @@ ALTER TABLE ONLY auth.mfa_factors
 
 
 --
--- Name: oauth_authorizations oauth_authorizations_authorization_code_key; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: oauth_authorizations oauth_authorizations_authorization_code_key; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.oauth_authorizations
@@ -3811,7 +4003,7 @@ ALTER TABLE ONLY auth.oauth_authorizations
 
 
 --
--- Name: oauth_authorizations oauth_authorizations_authorization_id_key; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: oauth_authorizations oauth_authorizations_authorization_id_key; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.oauth_authorizations
@@ -3819,7 +4011,7 @@ ALTER TABLE ONLY auth.oauth_authorizations
 
 
 --
--- Name: oauth_authorizations oauth_authorizations_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: oauth_authorizations oauth_authorizations_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.oauth_authorizations
@@ -3827,7 +4019,7 @@ ALTER TABLE ONLY auth.oauth_authorizations
 
 
 --
--- Name: oauth_client_states oauth_client_states_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: oauth_client_states oauth_client_states_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.oauth_client_states
@@ -3835,7 +4027,7 @@ ALTER TABLE ONLY auth.oauth_client_states
 
 
 --
--- Name: oauth_clients oauth_clients_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: oauth_clients oauth_clients_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.oauth_clients
@@ -3843,7 +4035,7 @@ ALTER TABLE ONLY auth.oauth_clients
 
 
 --
--- Name: oauth_consents oauth_consents_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: oauth_consents oauth_consents_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.oauth_consents
@@ -3851,7 +4043,7 @@ ALTER TABLE ONLY auth.oauth_consents
 
 
 --
--- Name: oauth_consents oauth_consents_user_client_unique; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: oauth_consents oauth_consents_user_client_unique; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.oauth_consents
@@ -3859,7 +4051,7 @@ ALTER TABLE ONLY auth.oauth_consents
 
 
 --
--- Name: one_time_tokens one_time_tokens_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: one_time_tokens one_time_tokens_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.one_time_tokens
@@ -3867,7 +4059,7 @@ ALTER TABLE ONLY auth.one_time_tokens
 
 
 --
--- Name: refresh_tokens refresh_tokens_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: refresh_tokens refresh_tokens_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.refresh_tokens
@@ -3875,7 +4067,7 @@ ALTER TABLE ONLY auth.refresh_tokens
 
 
 --
--- Name: refresh_tokens refresh_tokens_token_unique; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: refresh_tokens refresh_tokens_token_unique; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.refresh_tokens
@@ -3883,7 +4075,7 @@ ALTER TABLE ONLY auth.refresh_tokens
 
 
 --
--- Name: saml_providers saml_providers_entity_id_key; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: saml_providers saml_providers_entity_id_key; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.saml_providers
@@ -3891,7 +4083,7 @@ ALTER TABLE ONLY auth.saml_providers
 
 
 --
--- Name: saml_providers saml_providers_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: saml_providers saml_providers_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.saml_providers
@@ -3899,7 +4091,7 @@ ALTER TABLE ONLY auth.saml_providers
 
 
 --
--- Name: saml_relay_states saml_relay_states_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: saml_relay_states saml_relay_states_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.saml_relay_states
@@ -3907,7 +4099,7 @@ ALTER TABLE ONLY auth.saml_relay_states
 
 
 --
--- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.schema_migrations
@@ -3915,7 +4107,7 @@ ALTER TABLE ONLY auth.schema_migrations
 
 
 --
--- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.sessions
@@ -3923,7 +4115,7 @@ ALTER TABLE ONLY auth.sessions
 
 
 --
--- Name: sso_domains sso_domains_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: sso_domains sso_domains_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.sso_domains
@@ -3931,7 +4123,7 @@ ALTER TABLE ONLY auth.sso_domains
 
 
 --
--- Name: sso_providers sso_providers_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: sso_providers sso_providers_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.sso_providers
@@ -3939,7 +4131,7 @@ ALTER TABLE ONLY auth.sso_providers
 
 
 --
--- Name: users users_phone_key; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: users users_phone_key; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.users
@@ -3947,7 +4139,7 @@ ALTER TABLE ONLY auth.users
 
 
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.users
@@ -3955,7 +4147,7 @@ ALTER TABLE ONLY auth.users
 
 
 --
--- Name: bookmarks bookmarks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: bookmarks bookmarks_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY public.bookmarks
@@ -3963,15 +4155,7 @@ ALTER TABLE ONLY public.bookmarks
 
 
 --
--- Name: bookmarks bookmarks_user_google_id_plant_id_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.bookmarks
-    ADD CONSTRAINT bookmarks_user_google_id_plant_id_key UNIQUE (user_google_id, plant_id);
-
-
---
--- Name: plants plants_common_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: plants plants_common_name_key; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY public.plants
@@ -3979,7 +4163,7 @@ ALTER TABLE ONLY public.plants
 
 
 --
--- Name: plants plants_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: plants plants_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY public.plants
@@ -3987,7 +4171,7 @@ ALTER TABLE ONLY public.plants
 
 
 --
--- Name: plants plants_scientific_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: plants plants_scientific_name_key; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY public.plants
@@ -3995,7 +4179,23 @@ ALTER TABLE ONLY public.plants
 
 
 --
--- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: resetcode resetcode_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.resetcode
+    ADD CONSTRAINT resetcode_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: resetcode resetcode_resetId_key; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.resetcode
+    ADD CONSTRAINT "resetcode_resetId_key" UNIQUE ("resetId");
+
+
+--
+-- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY public.users
@@ -4003,15 +4203,15 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY public.users
-    ADD CONSTRAINT users_pkey PRIMARY KEY (google_id);
+    ADD CONSTRAINT users_pkey PRIMARY KEY (email);
 
 
 --
--- Name: messages messages_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages messages_pkey; Type: CONSTRAINT; Schema: realtime; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY realtime.messages
@@ -4019,7 +4219,7 @@ ALTER TABLE ONLY realtime.messages
 
 
 --
--- Name: subscription pk_subscription; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: subscription pk_subscription; Type: CONSTRAINT; Schema: realtime; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY realtime.subscription
@@ -4027,7 +4227,7 @@ ALTER TABLE ONLY realtime.subscription
 
 
 --
--- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: realtime; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY realtime.schema_migrations
@@ -4035,7 +4235,7 @@ ALTER TABLE ONLY realtime.schema_migrations
 
 
 --
--- Name: buckets_analytics buckets_analytics_pkey; Type: CONSTRAINT; Schema: storage; Owner: -
+-- Name: buckets_analytics buckets_analytics_pkey; Type: CONSTRAINT; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY storage.buckets_analytics
@@ -4043,7 +4243,7 @@ ALTER TABLE ONLY storage.buckets_analytics
 
 
 --
--- Name: buckets buckets_pkey; Type: CONSTRAINT; Schema: storage; Owner: -
+-- Name: buckets buckets_pkey; Type: CONSTRAINT; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY storage.buckets
@@ -4051,7 +4251,7 @@ ALTER TABLE ONLY storage.buckets
 
 
 --
--- Name: buckets_vectors buckets_vectors_pkey; Type: CONSTRAINT; Schema: storage; Owner: -
+-- Name: buckets_vectors buckets_vectors_pkey; Type: CONSTRAINT; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY storage.buckets_vectors
@@ -4059,7 +4259,7 @@ ALTER TABLE ONLY storage.buckets_vectors
 
 
 --
--- Name: migrations migrations_name_key; Type: CONSTRAINT; Schema: storage; Owner: -
+-- Name: migrations migrations_name_key; Type: CONSTRAINT; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY storage.migrations
@@ -4067,7 +4267,7 @@ ALTER TABLE ONLY storage.migrations
 
 
 --
--- Name: migrations migrations_pkey; Type: CONSTRAINT; Schema: storage; Owner: -
+-- Name: migrations migrations_pkey; Type: CONSTRAINT; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY storage.migrations
@@ -4075,7 +4275,7 @@ ALTER TABLE ONLY storage.migrations
 
 
 --
--- Name: objects objects_pkey; Type: CONSTRAINT; Schema: storage; Owner: -
+-- Name: objects objects_pkey; Type: CONSTRAINT; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY storage.objects
@@ -4083,7 +4283,7 @@ ALTER TABLE ONLY storage.objects
 
 
 --
--- Name: prefixes prefixes_pkey; Type: CONSTRAINT; Schema: storage; Owner: -
+-- Name: prefixes prefixes_pkey; Type: CONSTRAINT; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY storage.prefixes
@@ -4091,7 +4291,7 @@ ALTER TABLE ONLY storage.prefixes
 
 
 --
--- Name: s3_multipart_uploads_parts s3_multipart_uploads_parts_pkey; Type: CONSTRAINT; Schema: storage; Owner: -
+-- Name: s3_multipart_uploads_parts s3_multipart_uploads_parts_pkey; Type: CONSTRAINT; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY storage.s3_multipart_uploads_parts
@@ -4099,7 +4299,7 @@ ALTER TABLE ONLY storage.s3_multipart_uploads_parts
 
 
 --
--- Name: s3_multipart_uploads s3_multipart_uploads_pkey; Type: CONSTRAINT; Schema: storage; Owner: -
+-- Name: s3_multipart_uploads s3_multipart_uploads_pkey; Type: CONSTRAINT; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY storage.s3_multipart_uploads
@@ -4107,7 +4307,7 @@ ALTER TABLE ONLY storage.s3_multipart_uploads
 
 
 --
--- Name: vector_indexes vector_indexes_pkey; Type: CONSTRAINT; Schema: storage; Owner: -
+-- Name: vector_indexes vector_indexes_pkey; Type: CONSTRAINT; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY storage.vector_indexes
@@ -4115,497 +4315,497 @@ ALTER TABLE ONLY storage.vector_indexes
 
 
 --
--- Name: audit_logs_instance_id_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: audit_logs_instance_id_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX audit_logs_instance_id_idx ON auth.audit_log_entries USING btree (instance_id);
 
 
 --
--- Name: confirmation_token_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: confirmation_token_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE UNIQUE INDEX confirmation_token_idx ON auth.users USING btree (confirmation_token) WHERE ((confirmation_token)::text !~ '^[0-9 ]*$'::text);
 
 
 --
--- Name: email_change_token_current_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: email_change_token_current_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE UNIQUE INDEX email_change_token_current_idx ON auth.users USING btree (email_change_token_current) WHERE ((email_change_token_current)::text !~ '^[0-9 ]*$'::text);
 
 
 --
--- Name: email_change_token_new_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: email_change_token_new_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE UNIQUE INDEX email_change_token_new_idx ON auth.users USING btree (email_change_token_new) WHERE ((email_change_token_new)::text !~ '^[0-9 ]*$'::text);
 
 
 --
--- Name: factor_id_created_at_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: factor_id_created_at_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX factor_id_created_at_idx ON auth.mfa_factors USING btree (user_id, created_at);
 
 
 --
--- Name: flow_state_created_at_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: flow_state_created_at_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX flow_state_created_at_idx ON auth.flow_state USING btree (created_at DESC);
 
 
 --
--- Name: identities_email_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: identities_email_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX identities_email_idx ON auth.identities USING btree (email text_pattern_ops);
 
 
 --
--- Name: INDEX identities_email_idx; Type: COMMENT; Schema: auth; Owner: -
+-- Name: INDEX identities_email_idx; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON INDEX auth.identities_email_idx IS 'Auth: Ensures indexed queries on the email column';
 
 
 --
--- Name: identities_user_id_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: identities_user_id_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX identities_user_id_idx ON auth.identities USING btree (user_id);
 
 
 --
--- Name: idx_auth_code; Type: INDEX; Schema: auth; Owner: -
+-- Name: idx_auth_code; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX idx_auth_code ON auth.flow_state USING btree (auth_code);
 
 
 --
--- Name: idx_oauth_client_states_created_at; Type: INDEX; Schema: auth; Owner: -
+-- Name: idx_oauth_client_states_created_at; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX idx_oauth_client_states_created_at ON auth.oauth_client_states USING btree (created_at);
 
 
 --
--- Name: idx_user_id_auth_method; Type: INDEX; Schema: auth; Owner: -
+-- Name: idx_user_id_auth_method; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX idx_user_id_auth_method ON auth.flow_state USING btree (user_id, authentication_method);
 
 
 --
--- Name: mfa_challenge_created_at_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: mfa_challenge_created_at_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX mfa_challenge_created_at_idx ON auth.mfa_challenges USING btree (created_at DESC);
 
 
 --
--- Name: mfa_factors_user_friendly_name_unique; Type: INDEX; Schema: auth; Owner: -
+-- Name: mfa_factors_user_friendly_name_unique; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE UNIQUE INDEX mfa_factors_user_friendly_name_unique ON auth.mfa_factors USING btree (friendly_name, user_id) WHERE (TRIM(BOTH FROM friendly_name) <> ''::text);
 
 
 --
--- Name: mfa_factors_user_id_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: mfa_factors_user_id_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX mfa_factors_user_id_idx ON auth.mfa_factors USING btree (user_id);
 
 
 --
--- Name: oauth_auth_pending_exp_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: oauth_auth_pending_exp_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX oauth_auth_pending_exp_idx ON auth.oauth_authorizations USING btree (expires_at) WHERE (status = 'pending'::auth.oauth_authorization_status);
 
 
 --
--- Name: oauth_clients_deleted_at_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: oauth_clients_deleted_at_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX oauth_clients_deleted_at_idx ON auth.oauth_clients USING btree (deleted_at);
 
 
 --
--- Name: oauth_consents_active_client_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: oauth_consents_active_client_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX oauth_consents_active_client_idx ON auth.oauth_consents USING btree (client_id) WHERE (revoked_at IS NULL);
 
 
 --
--- Name: oauth_consents_active_user_client_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: oauth_consents_active_user_client_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX oauth_consents_active_user_client_idx ON auth.oauth_consents USING btree (user_id, client_id) WHERE (revoked_at IS NULL);
 
 
 --
--- Name: oauth_consents_user_order_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: oauth_consents_user_order_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX oauth_consents_user_order_idx ON auth.oauth_consents USING btree (user_id, granted_at DESC);
 
 
 --
--- Name: one_time_tokens_relates_to_hash_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: one_time_tokens_relates_to_hash_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX one_time_tokens_relates_to_hash_idx ON auth.one_time_tokens USING hash (relates_to);
 
 
 --
--- Name: one_time_tokens_token_hash_hash_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: one_time_tokens_token_hash_hash_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX one_time_tokens_token_hash_hash_idx ON auth.one_time_tokens USING hash (token_hash);
 
 
 --
--- Name: one_time_tokens_user_id_token_type_key; Type: INDEX; Schema: auth; Owner: -
+-- Name: one_time_tokens_user_id_token_type_key; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE UNIQUE INDEX one_time_tokens_user_id_token_type_key ON auth.one_time_tokens USING btree (user_id, token_type);
 
 
 --
--- Name: reauthentication_token_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: reauthentication_token_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE UNIQUE INDEX reauthentication_token_idx ON auth.users USING btree (reauthentication_token) WHERE ((reauthentication_token)::text !~ '^[0-9 ]*$'::text);
 
 
 --
--- Name: recovery_token_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: recovery_token_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE UNIQUE INDEX recovery_token_idx ON auth.users USING btree (recovery_token) WHERE ((recovery_token)::text !~ '^[0-9 ]*$'::text);
 
 
 --
--- Name: refresh_tokens_instance_id_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: refresh_tokens_instance_id_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX refresh_tokens_instance_id_idx ON auth.refresh_tokens USING btree (instance_id);
 
 
 --
--- Name: refresh_tokens_instance_id_user_id_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: refresh_tokens_instance_id_user_id_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX refresh_tokens_instance_id_user_id_idx ON auth.refresh_tokens USING btree (instance_id, user_id);
 
 
 --
--- Name: refresh_tokens_parent_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: refresh_tokens_parent_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX refresh_tokens_parent_idx ON auth.refresh_tokens USING btree (parent);
 
 
 --
--- Name: refresh_tokens_session_id_revoked_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: refresh_tokens_session_id_revoked_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX refresh_tokens_session_id_revoked_idx ON auth.refresh_tokens USING btree (session_id, revoked);
 
 
 --
--- Name: refresh_tokens_updated_at_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: refresh_tokens_updated_at_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX refresh_tokens_updated_at_idx ON auth.refresh_tokens USING btree (updated_at DESC);
 
 
 --
--- Name: saml_providers_sso_provider_id_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: saml_providers_sso_provider_id_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX saml_providers_sso_provider_id_idx ON auth.saml_providers USING btree (sso_provider_id);
 
 
 --
--- Name: saml_relay_states_created_at_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: saml_relay_states_created_at_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX saml_relay_states_created_at_idx ON auth.saml_relay_states USING btree (created_at DESC);
 
 
 --
--- Name: saml_relay_states_for_email_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: saml_relay_states_for_email_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX saml_relay_states_for_email_idx ON auth.saml_relay_states USING btree (for_email);
 
 
 --
--- Name: saml_relay_states_sso_provider_id_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: saml_relay_states_sso_provider_id_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX saml_relay_states_sso_provider_id_idx ON auth.saml_relay_states USING btree (sso_provider_id);
 
 
 --
--- Name: sessions_not_after_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: sessions_not_after_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX sessions_not_after_idx ON auth.sessions USING btree (not_after DESC);
 
 
 --
--- Name: sessions_oauth_client_id_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: sessions_oauth_client_id_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX sessions_oauth_client_id_idx ON auth.sessions USING btree (oauth_client_id);
 
 
 --
--- Name: sessions_user_id_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: sessions_user_id_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX sessions_user_id_idx ON auth.sessions USING btree (user_id);
 
 
 --
--- Name: sso_domains_domain_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: sso_domains_domain_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE UNIQUE INDEX sso_domains_domain_idx ON auth.sso_domains USING btree (lower(domain));
 
 
 --
--- Name: sso_domains_sso_provider_id_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: sso_domains_sso_provider_id_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX sso_domains_sso_provider_id_idx ON auth.sso_domains USING btree (sso_provider_id);
 
 
 --
--- Name: sso_providers_resource_id_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: sso_providers_resource_id_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE UNIQUE INDEX sso_providers_resource_id_idx ON auth.sso_providers USING btree (lower(resource_id));
 
 
 --
--- Name: sso_providers_resource_id_pattern_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: sso_providers_resource_id_pattern_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX sso_providers_resource_id_pattern_idx ON auth.sso_providers USING btree (resource_id text_pattern_ops);
 
 
 --
--- Name: unique_phone_factor_per_user; Type: INDEX; Schema: auth; Owner: -
+-- Name: unique_phone_factor_per_user; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE UNIQUE INDEX unique_phone_factor_per_user ON auth.mfa_factors USING btree (user_id, phone);
 
 
 --
--- Name: user_id_created_at_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: user_id_created_at_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX user_id_created_at_idx ON auth.sessions USING btree (user_id, created_at);
 
 
 --
--- Name: users_email_partial_key; Type: INDEX; Schema: auth; Owner: -
+-- Name: users_email_partial_key; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE UNIQUE INDEX users_email_partial_key ON auth.users USING btree (email) WHERE (is_sso_user = false);
 
 
 --
--- Name: INDEX users_email_partial_key; Type: COMMENT; Schema: auth; Owner: -
+-- Name: INDEX users_email_partial_key; Type: COMMENT; Schema: auth; Owner: neondb_owner
 --
 
 COMMENT ON INDEX auth.users_email_partial_key IS 'Auth: A partial unique index that applies only when is_sso_user is false';
 
 
 --
--- Name: users_instance_id_email_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: users_instance_id_email_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX users_instance_id_email_idx ON auth.users USING btree (instance_id, lower((email)::text));
 
 
 --
--- Name: users_instance_id_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: users_instance_id_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX users_instance_id_idx ON auth.users USING btree (instance_id);
 
 
 --
--- Name: users_is_anonymous_idx; Type: INDEX; Schema: auth; Owner: -
+-- Name: users_is_anonymous_idx; Type: INDEX; Schema: auth; Owner: neondb_owner
 --
 
 CREATE INDEX users_is_anonymous_idx ON auth.users USING btree (is_anonymous);
 
 
 --
--- Name: ix_realtime_subscription_entity; Type: INDEX; Schema: realtime; Owner: -
+-- Name: ix_realtime_subscription_entity; Type: INDEX; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE INDEX ix_realtime_subscription_entity ON realtime.subscription USING btree (entity);
 
 
 --
--- Name: messages_inserted_at_topic_index; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_inserted_at_topic_index; Type: INDEX; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE INDEX messages_inserted_at_topic_index ON ONLY realtime.messages USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: subscription_subscription_id_entity_filters_key; Type: INDEX; Schema: realtime; Owner: -
+-- Name: subscription_subscription_id_entity_filters_key; Type: INDEX; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE UNIQUE INDEX subscription_subscription_id_entity_filters_key ON realtime.subscription USING btree (subscription_id, entity, filters);
 
 
 --
--- Name: bname; Type: INDEX; Schema: storage; Owner: -
+-- Name: bname; Type: INDEX; Schema: storage; Owner: neondb_owner
 --
 
 CREATE UNIQUE INDEX bname ON storage.buckets USING btree (name);
 
 
 --
--- Name: bucketid_objname; Type: INDEX; Schema: storage; Owner: -
+-- Name: bucketid_objname; Type: INDEX; Schema: storage; Owner: neondb_owner
 --
 
 CREATE UNIQUE INDEX bucketid_objname ON storage.objects USING btree (bucket_id, name);
 
 
 --
--- Name: buckets_analytics_unique_name_idx; Type: INDEX; Schema: storage; Owner: -
+-- Name: buckets_analytics_unique_name_idx; Type: INDEX; Schema: storage; Owner: neondb_owner
 --
 
 CREATE UNIQUE INDEX buckets_analytics_unique_name_idx ON storage.buckets_analytics USING btree (name) WHERE (deleted_at IS NULL);
 
 
 --
--- Name: idx_multipart_uploads_list; Type: INDEX; Schema: storage; Owner: -
+-- Name: idx_multipart_uploads_list; Type: INDEX; Schema: storage; Owner: neondb_owner
 --
 
 CREATE INDEX idx_multipart_uploads_list ON storage.s3_multipart_uploads USING btree (bucket_id, key, created_at);
 
 
 --
--- Name: idx_name_bucket_level_unique; Type: INDEX; Schema: storage; Owner: -
+-- Name: idx_name_bucket_level_unique; Type: INDEX; Schema: storage; Owner: neondb_owner
 --
 
 CREATE UNIQUE INDEX idx_name_bucket_level_unique ON storage.objects USING btree (name COLLATE "C", bucket_id, level);
 
 
 --
--- Name: idx_objects_bucket_id_name; Type: INDEX; Schema: storage; Owner: -
+-- Name: idx_objects_bucket_id_name; Type: INDEX; Schema: storage; Owner: neondb_owner
 --
 
 CREATE INDEX idx_objects_bucket_id_name ON storage.objects USING btree (bucket_id, name COLLATE "C");
 
 
 --
--- Name: idx_objects_lower_name; Type: INDEX; Schema: storage; Owner: -
+-- Name: idx_objects_lower_name; Type: INDEX; Schema: storage; Owner: neondb_owner
 --
 
 CREATE INDEX idx_objects_lower_name ON storage.objects USING btree ((path_tokens[level]), lower(name) text_pattern_ops, bucket_id, level);
 
 
 --
--- Name: idx_prefixes_lower_name; Type: INDEX; Schema: storage; Owner: -
+-- Name: idx_prefixes_lower_name; Type: INDEX; Schema: storage; Owner: neondb_owner
 --
 
 CREATE INDEX idx_prefixes_lower_name ON storage.prefixes USING btree (bucket_id, level, ((string_to_array(name, '/'::text))[level]), lower(name) text_pattern_ops);
 
 
 --
--- Name: name_prefix_search; Type: INDEX; Schema: storage; Owner: -
+-- Name: name_prefix_search; Type: INDEX; Schema: storage; Owner: neondb_owner
 --
 
 CREATE INDEX name_prefix_search ON storage.objects USING btree (name text_pattern_ops);
 
 
 --
--- Name: objects_bucket_id_level_idx; Type: INDEX; Schema: storage; Owner: -
+-- Name: objects_bucket_id_level_idx; Type: INDEX; Schema: storage; Owner: neondb_owner
 --
 
 CREATE UNIQUE INDEX objects_bucket_id_level_idx ON storage.objects USING btree (bucket_id, level, name COLLATE "C");
 
 
 --
--- Name: vector_indexes_name_bucket_id_idx; Type: INDEX; Schema: storage; Owner: -
+-- Name: vector_indexes_name_bucket_id_idx; Type: INDEX; Schema: storage; Owner: neondb_owner
 --
 
 CREATE UNIQUE INDEX vector_indexes_name_bucket_id_idx ON storage.vector_indexes USING btree (name, bucket_id);
 
 
 --
--- Name: subscription tr_check_filters; Type: TRIGGER; Schema: realtime; Owner: -
+-- Name: subscription tr_check_filters; Type: TRIGGER; Schema: realtime; Owner: neondb_owner
 --
 
 CREATE TRIGGER tr_check_filters BEFORE INSERT OR UPDATE ON realtime.subscription FOR EACH ROW EXECUTE FUNCTION realtime.subscription_check_filters();
 
 
 --
--- Name: buckets enforce_bucket_name_length_trigger; Type: TRIGGER; Schema: storage; Owner: -
+-- Name: buckets enforce_bucket_name_length_trigger; Type: TRIGGER; Schema: storage; Owner: neondb_owner
 --
 
 CREATE TRIGGER enforce_bucket_name_length_trigger BEFORE INSERT OR UPDATE OF name ON storage.buckets FOR EACH ROW EXECUTE FUNCTION storage.enforce_bucket_name_length();
 
 
 --
--- Name: objects objects_delete_delete_prefix; Type: TRIGGER; Schema: storage; Owner: -
+-- Name: objects objects_delete_delete_prefix; Type: TRIGGER; Schema: storage; Owner: neondb_owner
 --
 
 CREATE TRIGGER objects_delete_delete_prefix AFTER DELETE ON storage.objects FOR EACH ROW EXECUTE FUNCTION storage.delete_prefix_hierarchy_trigger();
 
 
 --
--- Name: objects objects_insert_create_prefix; Type: TRIGGER; Schema: storage; Owner: -
+-- Name: objects objects_insert_create_prefix; Type: TRIGGER; Schema: storage; Owner: neondb_owner
 --
 
 CREATE TRIGGER objects_insert_create_prefix BEFORE INSERT ON storage.objects FOR EACH ROW EXECUTE FUNCTION storage.objects_insert_prefix_trigger();
 
 
 --
--- Name: objects objects_update_create_prefix; Type: TRIGGER; Schema: storage; Owner: -
+-- Name: objects objects_update_create_prefix; Type: TRIGGER; Schema: storage; Owner: neondb_owner
 --
 
 CREATE TRIGGER objects_update_create_prefix BEFORE UPDATE ON storage.objects FOR EACH ROW WHEN (((new.name <> old.name) OR (new.bucket_id <> old.bucket_id))) EXECUTE FUNCTION storage.objects_update_prefix_trigger();
 
 
 --
--- Name: prefixes prefixes_create_hierarchy; Type: TRIGGER; Schema: storage; Owner: -
+-- Name: prefixes prefixes_create_hierarchy; Type: TRIGGER; Schema: storage; Owner: neondb_owner
 --
 
 CREATE TRIGGER prefixes_create_hierarchy BEFORE INSERT ON storage.prefixes FOR EACH ROW WHEN ((pg_trigger_depth() < 1)) EXECUTE FUNCTION storage.prefixes_insert_trigger();
 
 
 --
--- Name: prefixes prefixes_delete_hierarchy; Type: TRIGGER; Schema: storage; Owner: -
+-- Name: prefixes prefixes_delete_hierarchy; Type: TRIGGER; Schema: storage; Owner: neondb_owner
 --
 
 CREATE TRIGGER prefixes_delete_hierarchy AFTER DELETE ON storage.prefixes FOR EACH ROW EXECUTE FUNCTION storage.delete_prefix_hierarchy_trigger();
 
 
 --
--- Name: objects update_objects_updated_at; Type: TRIGGER; Schema: storage; Owner: -
+-- Name: objects update_objects_updated_at; Type: TRIGGER; Schema: storage; Owner: neondb_owner
 --
 
 CREATE TRIGGER update_objects_updated_at BEFORE UPDATE ON storage.objects FOR EACH ROW EXECUTE FUNCTION storage.update_updated_at_column();
 
 
 --
--- Name: identities identities_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
+-- Name: identities identities_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.identities
@@ -4613,7 +4813,7 @@ ALTER TABLE ONLY auth.identities
 
 
 --
--- Name: mfa_amr_claims mfa_amr_claims_session_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
+-- Name: mfa_amr_claims mfa_amr_claims_session_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.mfa_amr_claims
@@ -4621,7 +4821,7 @@ ALTER TABLE ONLY auth.mfa_amr_claims
 
 
 --
--- Name: mfa_challenges mfa_challenges_auth_factor_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
+-- Name: mfa_challenges mfa_challenges_auth_factor_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.mfa_challenges
@@ -4629,7 +4829,7 @@ ALTER TABLE ONLY auth.mfa_challenges
 
 
 --
--- Name: mfa_factors mfa_factors_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
+-- Name: mfa_factors mfa_factors_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.mfa_factors
@@ -4637,7 +4837,7 @@ ALTER TABLE ONLY auth.mfa_factors
 
 
 --
--- Name: oauth_authorizations oauth_authorizations_client_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
+-- Name: oauth_authorizations oauth_authorizations_client_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.oauth_authorizations
@@ -4645,7 +4845,7 @@ ALTER TABLE ONLY auth.oauth_authorizations
 
 
 --
--- Name: oauth_authorizations oauth_authorizations_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
+-- Name: oauth_authorizations oauth_authorizations_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.oauth_authorizations
@@ -4653,7 +4853,7 @@ ALTER TABLE ONLY auth.oauth_authorizations
 
 
 --
--- Name: oauth_consents oauth_consents_client_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
+-- Name: oauth_consents oauth_consents_client_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.oauth_consents
@@ -4661,7 +4861,7 @@ ALTER TABLE ONLY auth.oauth_consents
 
 
 --
--- Name: oauth_consents oauth_consents_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
+-- Name: oauth_consents oauth_consents_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.oauth_consents
@@ -4669,7 +4869,7 @@ ALTER TABLE ONLY auth.oauth_consents
 
 
 --
--- Name: one_time_tokens one_time_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
+-- Name: one_time_tokens one_time_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.one_time_tokens
@@ -4677,7 +4877,7 @@ ALTER TABLE ONLY auth.one_time_tokens
 
 
 --
--- Name: refresh_tokens refresh_tokens_session_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
+-- Name: refresh_tokens refresh_tokens_session_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.refresh_tokens
@@ -4685,7 +4885,7 @@ ALTER TABLE ONLY auth.refresh_tokens
 
 
 --
--- Name: saml_providers saml_providers_sso_provider_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
+-- Name: saml_providers saml_providers_sso_provider_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.saml_providers
@@ -4693,7 +4893,7 @@ ALTER TABLE ONLY auth.saml_providers
 
 
 --
--- Name: saml_relay_states saml_relay_states_flow_state_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
+-- Name: saml_relay_states saml_relay_states_flow_state_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.saml_relay_states
@@ -4701,7 +4901,7 @@ ALTER TABLE ONLY auth.saml_relay_states
 
 
 --
--- Name: saml_relay_states saml_relay_states_sso_provider_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
+-- Name: saml_relay_states saml_relay_states_sso_provider_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.saml_relay_states
@@ -4709,7 +4909,7 @@ ALTER TABLE ONLY auth.saml_relay_states
 
 
 --
--- Name: sessions sessions_oauth_client_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
+-- Name: sessions sessions_oauth_client_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.sessions
@@ -4717,7 +4917,7 @@ ALTER TABLE ONLY auth.sessions
 
 
 --
--- Name: sessions sessions_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
+-- Name: sessions sessions_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.sessions
@@ -4725,7 +4925,7 @@ ALTER TABLE ONLY auth.sessions
 
 
 --
--- Name: sso_domains sso_domains_sso_provider_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
+-- Name: sso_domains sso_domains_sso_provider_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY auth.sso_domains
@@ -4733,7 +4933,15 @@ ALTER TABLE ONLY auth.sso_domains
 
 
 --
--- Name: bookmarks bookmarks_plant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: bookmarks bookmarks_email_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.bookmarks
+    ADD CONSTRAINT bookmarks_email_fkey FOREIGN KEY (email) REFERENCES public.users(email) ON DELETE CASCADE;
+
+
+--
+-- Name: bookmarks bookmarks_plant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY public.bookmarks
@@ -4741,15 +4949,15 @@ ALTER TABLE ONLY public.bookmarks
 
 
 --
--- Name: bookmarks bookmarks_user_google_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: resetcode resetcode_email_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
-ALTER TABLE ONLY public.bookmarks
-    ADD CONSTRAINT bookmarks_user_google_id_fkey FOREIGN KEY (user_google_id) REFERENCES public.users(google_id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.resetcode
+    ADD CONSTRAINT resetcode_email_fkey FOREIGN KEY (email) REFERENCES public.users(email) ON DELETE CASCADE;
 
 
 --
--- Name: objects objects_bucketId_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: -
+-- Name: objects objects_bucketId_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY storage.objects
@@ -4757,7 +4965,7 @@ ALTER TABLE ONLY storage.objects
 
 
 --
--- Name: prefixes prefixes_bucketId_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: -
+-- Name: prefixes prefixes_bucketId_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY storage.prefixes
@@ -4765,7 +4973,7 @@ ALTER TABLE ONLY storage.prefixes
 
 
 --
--- Name: s3_multipart_uploads s3_multipart_uploads_bucket_id_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: -
+-- Name: s3_multipart_uploads s3_multipart_uploads_bucket_id_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY storage.s3_multipart_uploads
@@ -4773,7 +4981,7 @@ ALTER TABLE ONLY storage.s3_multipart_uploads
 
 
 --
--- Name: s3_multipart_uploads_parts s3_multipart_uploads_parts_bucket_id_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: -
+-- Name: s3_multipart_uploads_parts s3_multipart_uploads_parts_bucket_id_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY storage.s3_multipart_uploads_parts
@@ -4781,7 +4989,7 @@ ALTER TABLE ONLY storage.s3_multipart_uploads_parts
 
 
 --
--- Name: s3_multipart_uploads_parts s3_multipart_uploads_parts_upload_id_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: -
+-- Name: s3_multipart_uploads_parts s3_multipart_uploads_parts_upload_id_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY storage.s3_multipart_uploads_parts
@@ -4789,7 +4997,7 @@ ALTER TABLE ONLY storage.s3_multipart_uploads_parts
 
 
 --
--- Name: vector_indexes vector_indexes_bucket_id_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: -
+-- Name: vector_indexes vector_indexes_bucket_id_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY storage.vector_indexes
@@ -4797,170 +5005,186 @@ ALTER TABLE ONLY storage.vector_indexes
 
 
 --
--- Name: audit_log_entries; Type: ROW SECURITY; Schema: auth; Owner: -
+-- Name: audit_log_entries; Type: ROW SECURITY; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE auth.audit_log_entries ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: flow_state; Type: ROW SECURITY; Schema: auth; Owner: -
+-- Name: flow_state; Type: ROW SECURITY; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE auth.flow_state ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: identities; Type: ROW SECURITY; Schema: auth; Owner: -
+-- Name: identities; Type: ROW SECURITY; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE auth.identities ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: instances; Type: ROW SECURITY; Schema: auth; Owner: -
+-- Name: instances; Type: ROW SECURITY; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE auth.instances ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: mfa_amr_claims; Type: ROW SECURITY; Schema: auth; Owner: -
+-- Name: mfa_amr_claims; Type: ROW SECURITY; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE auth.mfa_amr_claims ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: mfa_challenges; Type: ROW SECURITY; Schema: auth; Owner: -
+-- Name: mfa_challenges; Type: ROW SECURITY; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE auth.mfa_challenges ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: mfa_factors; Type: ROW SECURITY; Schema: auth; Owner: -
+-- Name: mfa_factors; Type: ROW SECURITY; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE auth.mfa_factors ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: one_time_tokens; Type: ROW SECURITY; Schema: auth; Owner: -
+-- Name: one_time_tokens; Type: ROW SECURITY; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE auth.one_time_tokens ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: refresh_tokens; Type: ROW SECURITY; Schema: auth; Owner: -
+-- Name: refresh_tokens; Type: ROW SECURITY; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE auth.refresh_tokens ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: saml_providers; Type: ROW SECURITY; Schema: auth; Owner: -
+-- Name: saml_providers; Type: ROW SECURITY; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE auth.saml_providers ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: saml_relay_states; Type: ROW SECURITY; Schema: auth; Owner: -
+-- Name: saml_relay_states; Type: ROW SECURITY; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE auth.saml_relay_states ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: schema_migrations; Type: ROW SECURITY; Schema: auth; Owner: -
+-- Name: schema_migrations; Type: ROW SECURITY; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE auth.schema_migrations ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: sessions; Type: ROW SECURITY; Schema: auth; Owner: -
+-- Name: sessions; Type: ROW SECURITY; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE auth.sessions ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: sso_domains; Type: ROW SECURITY; Schema: auth; Owner: -
+-- Name: sso_domains; Type: ROW SECURITY; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE auth.sso_domains ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: sso_providers; Type: ROW SECURITY; Schema: auth; Owner: -
+-- Name: sso_providers; Type: ROW SECURITY; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE auth.sso_providers ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: users; Type: ROW SECURITY; Schema: auth; Owner: -
+-- Name: users; Type: ROW SECURITY; Schema: auth; Owner: neondb_owner
 --
 
 ALTER TABLE auth.users ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: messages; Type: ROW SECURITY; Schema: realtime; Owner: -
+-- Name: messages; Type: ROW SECURITY; Schema: realtime; Owner: neondb_owner
 --
 
 ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: buckets; Type: ROW SECURITY; Schema: storage; Owner: -
+-- Name: buckets; Type: ROW SECURITY; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE storage.buckets ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: buckets_analytics; Type: ROW SECURITY; Schema: storage; Owner: -
+-- Name: buckets_analytics; Type: ROW SECURITY; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE storage.buckets_analytics ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: buckets_vectors; Type: ROW SECURITY; Schema: storage; Owner: -
+-- Name: buckets_vectors; Type: ROW SECURITY; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE storage.buckets_vectors ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: migrations; Type: ROW SECURITY; Schema: storage; Owner: -
+-- Name: migrations; Type: ROW SECURITY; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE storage.migrations ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: objects; Type: ROW SECURITY; Schema: storage; Owner: -
+-- Name: objects; Type: ROW SECURITY; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: prefixes; Type: ROW SECURITY; Schema: storage; Owner: -
+-- Name: prefixes; Type: ROW SECURITY; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE storage.prefixes ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: s3_multipart_uploads; Type: ROW SECURITY; Schema: storage; Owner: -
+-- Name: s3_multipart_uploads; Type: ROW SECURITY; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE storage.s3_multipart_uploads ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: s3_multipart_uploads_parts; Type: ROW SECURITY; Schema: storage; Owner: -
+-- Name: s3_multipart_uploads_parts; Type: ROW SECURITY; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE storage.s3_multipart_uploads_parts ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: vector_indexes; Type: ROW SECURITY; Schema: storage; Owner: -
+-- Name: vector_indexes; Type: ROW SECURITY; Schema: storage; Owner: neondb_owner
 --
 
 ALTER TABLE storage.vector_indexes ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: supabase_realtime; Type: PUBLICATION; Schema: -; Owner: -
+-- Name: supabase_realtime; Type: PUBLICATION; Schema: -; Owner: neondb_owner
 --
 
 CREATE PUBLICATION supabase_realtime WITH (publish = 'insert, update, delete, truncate');
 
 
+ALTER PUBLICATION supabase_realtime OWNER TO neondb_owner;
+
 --
--- Name: issue_graphql_placeholder; Type: EVENT TRIGGER; Schema: -; Owner: -
+-- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: cloud_admin
+--
+
+ALTER DEFAULT PRIVILEGES FOR ROLE cloud_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO neon_superuser WITH GRANT OPTION;
+
+
+--
+-- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: cloud_admin
+--
+
+ALTER DEFAULT PRIVILEGES FOR ROLE cloud_admin IN SCHEMA public GRANT ALL ON TABLES TO neon_superuser WITH GRANT OPTION;
+
+
+--
+-- Name: issue_graphql_placeholder; Type: EVENT TRIGGER; Schema: -; Owner: neondb_owner
 --
 
 CREATE EVENT TRIGGER issue_graphql_placeholder ON sql_drop
@@ -4968,8 +5192,10 @@ CREATE EVENT TRIGGER issue_graphql_placeholder ON sql_drop
    EXECUTE FUNCTION extensions.set_graphql_placeholder();
 
 
+ALTER EVENT TRIGGER issue_graphql_placeholder OWNER TO neondb_owner;
+
 --
--- Name: issue_pg_cron_access; Type: EVENT TRIGGER; Schema: -; Owner: -
+-- Name: issue_pg_cron_access; Type: EVENT TRIGGER; Schema: -; Owner: neondb_owner
 --
 
 CREATE EVENT TRIGGER issue_pg_cron_access ON ddl_command_end
@@ -4977,8 +5203,10 @@ CREATE EVENT TRIGGER issue_pg_cron_access ON ddl_command_end
    EXECUTE FUNCTION extensions.grant_pg_cron_access();
 
 
+ALTER EVENT TRIGGER issue_pg_cron_access OWNER TO neondb_owner;
+
 --
--- Name: issue_pg_graphql_access; Type: EVENT TRIGGER; Schema: -; Owner: -
+-- Name: issue_pg_graphql_access; Type: EVENT TRIGGER; Schema: -; Owner: neondb_owner
 --
 
 CREATE EVENT TRIGGER issue_pg_graphql_access ON ddl_command_end
@@ -4986,8 +5214,10 @@ CREATE EVENT TRIGGER issue_pg_graphql_access ON ddl_command_end
    EXECUTE FUNCTION extensions.grant_pg_graphql_access();
 
 
+ALTER EVENT TRIGGER issue_pg_graphql_access OWNER TO neondb_owner;
+
 --
--- Name: issue_pg_net_access; Type: EVENT TRIGGER; Schema: -; Owner: -
+-- Name: issue_pg_net_access; Type: EVENT TRIGGER; Schema: -; Owner: neondb_owner
 --
 
 CREATE EVENT TRIGGER issue_pg_net_access ON ddl_command_end
@@ -4995,25 +5225,31 @@ CREATE EVENT TRIGGER issue_pg_net_access ON ddl_command_end
    EXECUTE FUNCTION extensions.grant_pg_net_access();
 
 
+ALTER EVENT TRIGGER issue_pg_net_access OWNER TO neondb_owner;
+
 --
--- Name: pgrst_ddl_watch; Type: EVENT TRIGGER; Schema: -; Owner: -
+-- Name: pgrst_ddl_watch; Type: EVENT TRIGGER; Schema: -; Owner: neondb_owner
 --
 
 CREATE EVENT TRIGGER pgrst_ddl_watch ON ddl_command_end
    EXECUTE FUNCTION extensions.pgrst_ddl_watch();
 
 
+ALTER EVENT TRIGGER pgrst_ddl_watch OWNER TO neondb_owner;
+
 --
--- Name: pgrst_drop_watch; Type: EVENT TRIGGER; Schema: -; Owner: -
+-- Name: pgrst_drop_watch; Type: EVENT TRIGGER; Schema: -; Owner: neondb_owner
 --
 
 CREATE EVENT TRIGGER pgrst_drop_watch ON sql_drop
    EXECUTE FUNCTION extensions.pgrst_drop_watch();
 
 
+ALTER EVENT TRIGGER pgrst_drop_watch OWNER TO neondb_owner;
+
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict jfBgYarkEsTvODpN1I9lTozKXjHDiZhh5Zbs9cPdvNNimkbh338axjrCVqea2C9
+\unrestrict PlbsEfSARfbH9MRpW46kmo172cF6shzMvQoRPKBOGgPTPCbTRbArXCc7dzjDM62
 

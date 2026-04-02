@@ -1,41 +1,22 @@
-# ---------- Stage 1: Build React frontend ----------
-FROM node:20-alpine AS builder
+FROM nginx:alpine
 
-WORKDIR /app/client
-
-# Copy package.json and package-lock.json first for caching
-COPY package.json package-lock.json ./
-
-# Install dependencies
-RUN npm install
-
-# Copy all source code
-COPY . .
-
-# Build the frontend
-RUN npm run build
-
-# ---------- Stage 2: Serve with Nginx ----------
-FROM nginx:alpine AS final
-
-# Remove default static files
+# 1. Clean
 RUN rm -rf /usr/share/nginx/html/*
 
-# Copy build output from builder stage
-COPY --from=builder /app/client/dist /usr/share/nginx/html
+# 2. Copy the dist folder
+COPY dist /usr/share/nginx/html
 
-# Copy custom nginx config
+# 3. Copy config and entrypoint
 COPY nginx.conf /etc/nginx/nginx.conf
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
-# Copy entrypoint script to dynamically update env variables
-COPY entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+# 4. Permissions
+RUN chmod +x /usr/local/bin/entrypoint.sh
+# Ensure the nginx user can write to the config file location
+RUN touch /usr/share/nginx/html/config.js && chmod 666 /usr/share/nginx/html/config.js
 
-# Expose port 80
 EXPOSE 80
 
-# Use entrypoint to inject dynamic env variables
-ENTRYPOINT ["/docker-entrypoint.sh"]
-
-# Start Nginx in foreground
+# 5. Use the absolute path
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]

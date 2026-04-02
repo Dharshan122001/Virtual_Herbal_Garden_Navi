@@ -11,7 +11,9 @@ import Home from "./components/Home";
 import AuthPage from "./components/AuthPage";
 import ResetPassword from "./components/ResetPassword";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { PLANT_SERVICE_URL } from "./apiConfig"; // ✅ Correct for App.jsx
+
+
 
 function App() {
   const [user, setUser] = useState(() => {
@@ -31,7 +33,7 @@ function App() {
 
     try {
       const res = await axios.get(
-        `${API_BASE_URL}/bookmarks/user/${currentUser.email}`,
+        `${PLANT_SERVICE_URL}/bookmarks/user/${currentUser.email}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setUserBookmarks(new Set(res.data.map(b => b.plant_id)));
@@ -66,52 +68,22 @@ function App() {
     });
   }, []);
 
-  return (
+return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar
-        user={user}
-        onLogout={handleLogout}
-        showBookmarkedOnly={showBookmarkedOnly}
-        setShowBookmarkedOnly={setShowBookmarkedOnly}
-      />
-
+      <Navbar user={user} onLogout={handleLogout} showBookmarkedOnly={showBookmarkedOnly} setShowBookmarkedOnly={setShowBookmarkedOnly} />
       <main className="flex-grow container mx-auto px-4 py-8">
         <Routes>
           <Route path="/" element={<Home />} />
-
-          <Route
-            path="/plants"
-            element={
-              <PlantList
-                userBookmarks={userBookmarks}
-                onBookmarkToggled={handleBookmarkToggled}
-                showBookmarkedOnly={showBookmarkedOnly}
-              />
-            }
-          />
-
-          <Route
-            path="/plants/:plantId"
-            element={
-              <PlantDetail
-                userBookmarks={userBookmarks}
-                onBookmarkToggled={handleBookmarkToggled}
-              />
-            }
-          />
-
-          <Route path="/ai-assistant" element={<AIChatAssistant user={user} />} />
+          <Route path="/plants" element={<PlantList userBookmarks={userBookmarks} onBookmarkToggled={handleBookmarkToggled} showBookmarkedOnly={showBookmarkedOnly} />} />
+          <Route path="/plants/:plantId" element={<PlantDetail userBookmarks={userBookmarks} onBookmarkToggled={handleBookmarkToggled} />} />
+          <Route path="/ai-assistant" element={<AIChatAssistant />} />
           <Route path="/identify" element={<IdentifyPlant />} />
           <Route path="/login" element={<AuthPage onLogin={handleLogin} />} />
           <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
       </main>
-
-      <footer className="bg-gray-800 text-white text-center p-4">
-        © 2025 Virtual Herbal Garden
-      </footer>
+      <footer className="bg-gray-800 text-white text-center p-4">© 2025 Virtual Herbal Garden</footer>
     </div>
   );
 }
-
 export default App;

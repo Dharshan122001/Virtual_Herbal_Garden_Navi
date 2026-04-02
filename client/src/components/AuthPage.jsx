@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
+import { AUTH_SERVICE_URL } from "../apiConfig";
 
-const AUTH_URL = import.meta.env.VITE_AUTH_API;
+// const AUTH_URL = import.meta.env.VITE_AUTH_API;
 
 function AuthPage({ onLogin }) {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ function AuthPage({ onLogin }) {
       const endpoint =
         mode === "login" ? "/auth/login" : mode === "register" ? "/auth/register" : "/auth/forgot-password";
 
-      const res = await axios.post(`${AUTH_URL}${endpoint}`, formData);
+      const res = await axios.post(`${AUTH_SERVICE_URL}${endpoint}`, formData);
 
       if (mode === "login") {
         onLogin(res.data.user, res.data.access_token);

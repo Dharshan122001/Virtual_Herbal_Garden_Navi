@@ -31,4 +31,6 @@ server/gmail_token.py
 server/token.json
 server/*.json
 gmail.txt
+server/.envserver/.env
+client/.env
 server/.env
