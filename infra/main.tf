@@ -177,4 +177,5 @@ resource "azurerm_linux_web_app" "frontend" {
     "VITE_AUTH_API_URL"  = "https://${azurerm_linux_web_app.auth_backend.default_hostname}"
     "VITE_AI_API_URL"    = "https://${azurerm_linux_web_app.ai_backend.default_hostname}"
   }
+  
 }
