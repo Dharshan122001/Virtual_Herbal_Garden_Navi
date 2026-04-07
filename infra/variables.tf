@@ -23,3 +23,7 @@ variable "ai_tag" {
   type    = string
   default = "latest"
 }
+
+variable "my_ip" {
+  type = string
+}

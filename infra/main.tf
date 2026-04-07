@@ -6,6 +6,7 @@ terraform {
       version = "~> 4.0"
     }
   }
+  # Backend is configured via the ADO Pipeline (vhgstate123)
   backend "azurerm" {} 
 }
 
@@ -28,6 +29,7 @@ locals {
     cost    = "none"
   }
 
+  # These settings apply to all 3 Backend Services
   shared_backend_vars = {
     "ALGORITHM"           = "HS256"
     "GEMINI_API_KEY"      = "AIzaSyDU2IRX8vjA5dtEfcuJ6IRAKuv4Ij1CBL4"
@@ -72,9 +74,9 @@ resource "azurerm_postgresql_flexible_server" "vhg_db" {
   tags                   = local.common_tags
 }
 
-# --- NEW: FIREWALL RULES ---
+# --- 5. FIREWALL RULES (Automatic Connectivity) ---
 
-# Rule 1: Allow all Azure Services (Required for App Services to talk to DB)
+# Allow Azure Services (Required for the App Services to reach the DB)
 resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure" {
   name             = "allow-azure-services"
   server_id        = azurerm_postgresql_flexible_server.vhg_db.id
@@ -82,16 +84,15 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure" {
   end_ip_address   = "0.0.0.0"
 }
 
-# Rule 2: Allow Your Mac (Update start/end with your actual Public IP)
-# You can find your IP at https://ifconfig.me/
-resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_my_mac" {
-  name             = "allow-local-mac"
+# Allow Local Client (Passed from the Pipeline to allow the SQL Dump)
+resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_my_client" {
+  name             = "allow-deployment-client"
   server_id        = azurerm_postgresql_flexible_server.vhg_db.id
-  start_ip_address = "49.207.200.123" # <--- REPLACE WITH YOUR IP
-  end_ip_address   = "49.207.200.123" # <--- REPLACE WITH YOUR IP
+  start_ip_address = var.my_ip
+  end_ip_address   = var.my_ip
 }
 
-# --- 5. PLANT BACKEND ---
+# --- 6. PLANT BACKEND ---
 resource "azurerm_linux_web_app" "plant_backend" {
   name                = "herbal-garden-plant-terraform"
   resource_group_name = data.azurerm_resource_group.existing_rg.name
@@ -109,11 +110,11 @@ resource "azurerm_linux_web_app" "plant_backend" {
   app_settings = merge(local.shared_backend_vars, {
     "WEBSITES_PORT" = "8005"
     "DATABASE_URL"  = "postgresql://vhgadmin_terraform:${var.db_password}@${azurerm_postgresql_flexible_server.vhg_db.fqdn}:5432/postgres?sslmode=require"
-    "CORS_ORIGINS"  = "https://herbal-garden-frontend-terraform.azurewebsites.net"
+    "CORS_ORIGINS"  = "https://${azurerm_linux_web_app.frontend.default_hostname}"
   })
 }
 
-# --- 6. AUTH BACKEND ---
+# --- 7. AUTH BACKEND ---
 resource "azurerm_linux_web_app" "auth_backend" {
   name                = "herbal-garden-auth-terraform"
   resource_group_name = data.azurerm_resource_group.existing_rg.name
@@ -131,11 +132,11 @@ resource "azurerm_linux_web_app" "auth_backend" {
   app_settings = merge(local.shared_backend_vars, {
     "WEBSITES_PORT" = "8006"
     "DATABASE_URL"  = "postgresql://vhgadmin_terraform:${var.db_password}@${azurerm_postgresql_flexible_server.vhg_db.fqdn}:5432/postgres?sslmode=require"
-    "CORS_ORIGINS"  = "https://herbal-garden-frontend-terraform.azurewebsites.net"
+    "CORS_ORIGINS"  = "https://${azurerm_linux_web_app.frontend.default_hostname}"
   })
 }
 
-# --- 7. AI BACKEND ---
+# --- 8. AI BACKEND ---
 resource "azurerm_linux_web_app" "ai_backend" {
   name                = "herbal-garden-ai-terraform"
   resource_group_name = data.azurerm_resource_group.existing_rg.name
@@ -153,11 +154,11 @@ resource "azurerm_linux_web_app" "ai_backend" {
   app_settings = merge(local.shared_backend_vars, {
     "WEBSITES_PORT" = "8007"
     "DATABASE_URL"  = "postgresql://vhgadmin_terraform:${var.db_password}@${azurerm_postgresql_flexible_server.vhg_db.fqdn}:5432/postgres?sslmode=require"
-    "CORS_ORIGINS"  = "https://herbal-garden-frontend-terraform.azurewebsites.net"
+    "CORS_ORIGINS"  = "https://${azurerm_linux_web_app.frontend.default_hostname}"
   })
 }
 
-# --- 8. FRONTEND ---
+# --- 9. FRONTEND ---
 resource "azurerm_linux_web_app" "frontend" {
   name                = "herbal-garden-frontend-terraform"
   resource_group_name = data.azurerm_resource_group.existing_rg.name
@@ -177,5 +178,4 @@ resource "azurerm_linux_web_app" "frontend" {
     "VITE_AUTH_API_URL"  = "https://${azurerm_linux_web_app.auth_backend.default_hostname}"
     "VITE_AI_API_URL"    = "https://${azurerm_linux_web_app.ai_backend.default_hostname}"
   }
-  
 }
