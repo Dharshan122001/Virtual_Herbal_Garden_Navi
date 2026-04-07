@@ -4,10 +4,7 @@ trigger:
       - fresh
 
 variables:
-  # 1. Links to the Variable Group in ADO Library
   - group: vhg-secrets 
-  
-  # 2. Service Connection and Tagging Variables
   - name: azureServiceConnection
     value: 'AzureConn'
   - name: dockerRegistryConn
@@ -25,17 +22,12 @@ stages:
       vmImage: 'ubuntu-latest'
     steps:
     - script: |
-        # Get the list of changed files between this commit and the previous one
         CHANGED_FILES=$(git diff --name-only HEAD HEAD~1)
         echo "Files changed: $CHANGED_FILES"
-
-        # Check if 'client/' or 'server/' folders have changes
         if echo "$CHANGED_FILES" | grep -E '^(client/|server/)'; then
           echo "##vso[task.setvariable variable=app_changed;isOutput=true]true"
-          echo "App code changes detected."
         else
           echo "##vso[task.setvariable variable=app_changed;isOutput=true]false"
-          echo "No app code changes detected. Skipping build."
         fi
       name: DetermineChanges
       displayName: "Run Git Diff"
@@ -44,7 +36,6 @@ stages:
 - stage: Build_and_Push
   displayName: "1. Build & Push Images"
   dependsOn: Detect_Changes
-  # CONDITION: Only run if the 'app_changed' variable from the previous stage is 'true'
   condition: eq(dependencies.Detect_Changes.outputs['CheckChanges.DetermineChanges.app_changed'], 'true')
   jobs:
   - job: DockerBuild
@@ -60,7 +51,6 @@ stages:
         dockerfile: 'client/Dockerfile'
         buildContext: 'client/'
         tags: '$(tag)'
-
     - task: Docker@2
       displayName: "Push Plant Service"
       inputs:
@@ -70,7 +60,6 @@ stages:
         dockerfile: 'server/plant_service/Dockerfile'
         buildContext: 'server/'
         tags: '$(tag)'
-
     - task: Docker@2
       displayName: "Push Auth Service"
       inputs:
@@ -80,7 +69,6 @@ stages:
         dockerfile: 'server/auth_service/Dockerfile'
         buildContext: 'server/'
         tags: '$(tag)'
-
     - task: Docker@2
       displayName: "Push AI Service"
       inputs:
@@ -97,14 +85,18 @@ stages:
   dependsOn: 
     - Detect_Changes
     - Build_and_Push
-  # CONDITION: Always run Terraform if the 'Detect_Changes' stage was successful, 
-  # even if 'Build_and_Push' was skipped.
   condition: succeeded('Detect_Changes')
   jobs:
   - job: TerraformApply
     pool:
       vmImage: 'ubuntu-latest'
     steps:
+    # --- NEW STEP: Fetch Agent IP ---
+    - script: |
+        IP=$(curl -s ifconfig.me)
+        echo "##vso[task.setvariable variable=computed_ip]$IP"
+      displayName: "Fetch Pipeline Agent IP"
+
     - task: TerraformInstaller@1
       inputs:
         terraformVersion: 'latest'
@@ -134,4 +126,4 @@ stages:
           -var="plant_tag=$(tag)" 
           -var="auth_tag=$(tag)" 
           -var="ai_tag=$(tag)"
-          -var="my_ip=$(curl -s ifconfig.me)"
+          -var="my_ip=$(computed_ip)"
