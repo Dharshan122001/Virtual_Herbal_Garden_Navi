@@ -24,3 +24,11 @@ server/gmail_token.py
 server/token.json
 gmail.txt
 herbal_garden_dump.sql
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfvars.json
+.terraform.lock.hcl
