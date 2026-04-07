@@ -61,3 +61,4 @@ The project uses **React (Vite)** on the frontend and **FastAPI microservices** 
 
 
 
+psql "host=vhg-db-server-darshan-terraform-v1.postgres.database.azure.com user=vhgadmin_terraform dbname=postgres sslmode=require" \\n-f herbal_garden_dump.sql
