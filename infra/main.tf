@@ -1,4 +1,4 @@
-# 1. Required Providers Block (Tells Terraform which plugins to download)
+# 1. Required Providers Block
 terraform {
   required_providers {
     azurerm = {
@@ -6,13 +6,13 @@ terraform {
       version = "~> 4.0"
     }
   }
+  backend "azurerm" {} 
 }
 
-# 2. Provider Configuration Block (The "Front Door" key)
+# 2. Provider Configuration Block
 provider "azurerm" {
-  features {} # This empty block is MANDATORY for Azure
+  features {}
 }
-
 
 # --- 1. Reference Existing Infrastructure ---
 data "azurerm_resource_group" "existing_rg" {
@@ -28,26 +28,24 @@ locals {
     cost    = "none"
   }
 
-  # Shared variables for all 3 Backend Services
   shared_backend_vars = {
-    "ALGORITHM"                           = "HS256"
-    "GEMINI_API_KEY"                      = "AIzaSyDU2IRX8vjA5dtEfcuJ6IRAKuv4Ij1CBL4"
-    "GROQ_API_KEY"                        = "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"
-    "GMAIL_CLIENT_ID"                     = "491680937929-m88h1v3rkremor2v6025aes8l2egqufd.apps.googleusercontent.com"
-    "GMAIL_CLIENT_SECRET"                 = "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"
-    "GMAIL_REFRESH_TOKEN"                 = "1//0gNUjID8oBv9JCgYIARAAGBASNwF-L9IrkeSzw_VBE71GWQIe4JP-lOM0FYZvbSQAWSfOCPt_Fn4_JCaBvAuCfKBKb-sMagwih8k"
-    "MAIL_SERVER"                         = "smtp.gmail.com"
-    "MAIL_PORT"                           = "587"
-    "MAIL_USERNAME"                       = "dharshan122001@gmail.com"
-    "MAIL_FROM"                           = "dharshan122001@gmail.com"
-    "MAIL_PASSWORD"                       = "nxwgqsnu jhfk khof"
-    "MAIL_STARTTLS"                       = "True"
-    "MAIL_SSL_TLS"                        = "False"
-    "PLANTNET_API_KEY"                    = "2b10axG37F0YebW32fCdNG7Q"
-    "PYTHON_VERSION"                      = "3.10.13"
-    "SECRET_KEY"                          = "finiteloop_secret_secure_key_123"
-    "DOCKER_ENABLE_CI"                    = "true"
-    "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
+    "ALGORITHM"           = "HS256"
+    "GEMINI_API_KEY"      = "AIzaSyDU2IRX8vjA5dtEfcuJ6IRAKuv4Ij1CBL4"
+    "GROQ_API_KEY"        = "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"
+    "GMAIL_CLIENT_ID"     = "491680937929-m88h1v3rkremor2v6025aes8l2egqufd.apps.googleusercontent.com"
+    "GMAIL_CLIENT_SECRET" = "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"
+    "GMAIL_REFRESH_TOKEN" = "1//0gNUjID8oBv9JCgYIARAAGBASNwF-L9IrkeSzw_VBE71GWQIe4JP-lOM0FYZvbSQAWSfOCPt_Fn4_JCaBvAuCfKBKb-sMagwih8k"
+    "MAIL_SERVER"         = "smtp.gmail.com"
+    "MAIL_PORT"           = "587"
+    "MAIL_USERNAME"       = "dharshan122001@gmail.com"
+    "MAIL_FROM"           = "dharshan122001@gmail.com"
+    "MAIL_PASSWORD"       = "nxwgqsnu jhfk khof"
+    "MAIL_STARTTLS"       = "True"
+    "MAIL_SSL_TLS"        = "False"
+    "PLANTNET_API_KEY"    = "2b10axG37F0YebW32fCdNG7Q"
+    "PYTHON_VERSION"      = "3.10.13"
+    "SECRET_KEY"          = "finiteloop_secret_secure_key_123"
+    "DOCKER_ENABLE_CI"    = "true"
   }
 }
 
@@ -74,6 +72,25 @@ resource "azurerm_postgresql_flexible_server" "vhg_db" {
   tags                   = local.common_tags
 }
 
+# --- NEW: FIREWALL RULES ---
+
+# Rule 1: Allow all Azure Services (Required for App Services to talk to DB)
+resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure" {
+  name             = "allow-azure-services"
+  server_id        = azurerm_postgresql_flexible_server.vhg_db.id
+  start_ip_address = "0.0.0.0"
+  end_ip_address   = "0.0.0.0"
+}
+
+# Rule 2: Allow Your Mac (Update start/end with your actual Public IP)
+# You can find your IP at https://ifconfig.me/
+resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_my_mac" {
+  name             = "allow-local-mac"
+  server_id        = azurerm_postgresql_flexible_server.vhg_db.id
+  start_ip_address = "49.207.200.123" # <--- REPLACE WITH YOUR IP
+  end_ip_address   = "49.207.200.123" # <--- REPLACE WITH YOUR IP
+}
+
 # --- 5. PLANT BACKEND ---
 resource "azurerm_linux_web_app" "plant_backend" {
   name                = "herbal-garden-plant-terraform"
@@ -92,7 +109,7 @@ resource "azurerm_linux_web_app" "plant_backend" {
   app_settings = merge(local.shared_backend_vars, {
     "WEBSITES_PORT" = "8005"
     "DATABASE_URL"  = "postgresql://vhgadmin_terraform:${var.db_password}@${azurerm_postgresql_flexible_server.vhg_db.fqdn}:5432/postgres?sslmode=require"
-    "CORS_ORIGINS"  = "https://herbal-garden-frontend-app.azurewebsites.net"
+    "CORS_ORIGINS"  = "https://herbal-garden-frontend-terraform.azurewebsites.net"
   })
 }
 
@@ -114,7 +131,7 @@ resource "azurerm_linux_web_app" "auth_backend" {
   app_settings = merge(local.shared_backend_vars, {
     "WEBSITES_PORT" = "8006"
     "DATABASE_URL"  = "postgresql://vhgadmin_terraform:${var.db_password}@${azurerm_postgresql_flexible_server.vhg_db.fqdn}:5432/postgres?sslmode=require"
-    "CORS_ORIGINS"  = "https://herbal-garden-frontend-app.azurewebsites.net"
+    "CORS_ORIGINS"  = "https://herbal-garden-frontend-terraform.azurewebsites.net"
   })
 }
 
@@ -136,7 +153,7 @@ resource "azurerm_linux_web_app" "ai_backend" {
   app_settings = merge(local.shared_backend_vars, {
     "WEBSITES_PORT" = "8007"
     "DATABASE_URL"  = "postgresql://vhgadmin_terraform:${var.db_password}@${azurerm_postgresql_flexible_server.vhg_db.fqdn}:5432/postgres?sslmode=require"
-    "CORS_ORIGINS"  = "https://herbal-garden-frontend-app.azurewebsites.net"
+    "CORS_ORIGINS"  = "https://herbal-garden-frontend-terraform.azurewebsites.net"
   })
 }
 
@@ -156,10 +173,8 @@ resource "azurerm_linux_web_app" "frontend" {
   }
 
   app_settings = {
-    "DOCKER_ENABLE_CI"                    = "true"
-    "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
-    "VITE_PLANT_API_URL"                  = "https://${azurerm_linux_web_app.plant_backend.default_hostname}"
-    "VITE_AUTH_API_URL"                   = "https://${azurerm_linux_web_app.auth_backend.default_hostname}"
-    "VITE_AI_API_URL"                     = "https://${azurerm_linux_web_app.ai_backend.default_hostname}"
+    "VITE_PLANT_API_URL" = "https://${azurerm_linux_web_app.plant_backend.default_hostname}"
+    "VITE_AUTH_API_URL"  = "https://${azurerm_linux_web_app.auth_backend.default_hostname}"
+    "VITE_AI_API_URL"    = "https://${azurerm_linux_web_app.ai_backend.default_hostname}"
   }
 }
