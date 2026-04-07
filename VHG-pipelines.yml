@@ -1,84 +1,19 @@
-# trigger:
-#   branches:
-#     include:
-#       - fresh
-
-# variables:
-#   dockerRegistryServiceConnection: 'DockerHubConn'
-#   # Define the two different tags here
-#   frontendTag: '1.0.1'
-#   backendTag: 'latest'
-
-# stages:
-# - stage: Build_and_Push_All
-#   displayName: "Build and Push All Services"
-#   jobs:
-#   - job: BuildAll
-#     pool:
-#       vmImage: 'ubuntu-latest'
-#     steps:
-
-#     # 1. Build FRONTEND (using 1.0.1)
-#     - task: Docker@2
-#       displayName: "Frontend: Build and Push (1.0.1)"
-#       inputs:
-#         containerRegistry: '$(dockerRegistryServiceConnection)'
-#         repository: 'dharshan3690/navi-frontend'
-#         command: 'buildAndPush'
-#         dockerfile: 'client/Dockerfile'
-#         buildContext: 'client/'
-#         tags: '$(frontendTag)'
-
-#     # 2. Build PLANT SERVICE (using latest)
-#     - task: Docker@2
-#       displayName: "Plant: Build and Push (latest)"
-#       inputs:
-#         containerRegistry: '$(dockerRegistryServiceConnection)'
-#         repository: 'dharshan3690/plant-service'
-#         command: 'buildAndPush'
-#         dockerfile: 'server/plant_service/Dockerfile'
-#         buildContext: 'server/'
-#         tags: '$(backendTag)'
-
-#     # 3. Build AUTH SERVICE (using latest)
-#     - task: Docker@2
-#       displayName: "Auth: Build and Push (latest)"
-#       inputs:
-#         containerRegistry: '$(dockerRegistryServiceConnection)'
-#         repository: 'dharshan3690/auth-service'
-#         command: 'buildAndPush'
-#         dockerfile: 'server/auth_service/Dockerfile'
-#         buildContext: 'server/'
-#         tags: '$(backendTag)'
-
-#     # 4. Build AI SERVICE (using latest)
-#     - task: Docker@2
-#       displayName: "AI: Build and Push (latest)"
-#       inputs:
-#         containerRegistry: '$(dockerRegistryServiceConnection)'
-#         repository: 'dharshan3690/ai-service'
-#         command: 'buildAndPush'
-#         dockerfile: 'server/ai_service/Dockerfile'
-#         buildContext: 'server/'
-#         tags: '$(backendTag)'
-
-
-
 trigger:
   branches:
     include:
       - fresh
 
 variables:
-  # Links to the Variable Group you created in Pipelines > Library
+  # 1. Links to the Variable Group in ADO Library
   - group: vhg-secrets 
   
-  # Service Connection Names
-  azureServiceConnection: 'AzureConn'
-  dockerRegistryConn: 'DockerHubConn'
-  
-  # Use the unique Build ID as the Docker Tag for all services
-  tag: '$(Build.BuildId)'
+  # 2. Service Connection and Tagging Variables
+  - name: azureServiceConnection
+    value: 'AzureConn'
+  - name: dockerRegistryConn
+    value: 'DockerHubConn'
+  - name: tag
+    value: '$(Build.BuildId)'
 
 stages:
 # --- STAGE 1: Build and Push Docker Images ---
@@ -157,7 +92,7 @@ stages:
         workingDirectory: '$(System.DefaultWorkingDirectory)/infra'
         backendServiceArm: '$(azureServiceConnection)'
         backendAzureRmResourceGroupName: 'Darshan.k_lean_rg'
-        backendAzureRmStorageAccountName: 'vhgstate123' # Ensure this matches your storage name
+        backendAzureRmStorageAccountName: 'vhgstate123' 
         backendAzureRmContainerName: 'tfstate'
         backendAzureRmKey: 'terraform.tfstate'
 
