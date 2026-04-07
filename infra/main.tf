@@ -6,7 +6,6 @@ terraform {
       version = "~> 4.0"
     }
   }
-  # Backend is configured via the ADO Pipeline (vhgstate123)
   backend "azurerm" {} 
 }
 
@@ -29,7 +28,9 @@ locals {
     cost    = "none"
   }
 
-  # These settings apply to all 3 Backend Services
+  # Fixed URL for CORS to prevent circular dependency
+  frontend_url = "https://herbal-garden-frontend-terraform.azurewebsites.net"
+
   shared_backend_vars = {
     "ALGORITHM"           = "HS256"
     "GEMINI_API_KEY"      = "AIzaSyDU2IRX8vjA5dtEfcuJ6IRAKuv4Ij1CBL4"
@@ -74,9 +75,7 @@ resource "azurerm_postgresql_flexible_server" "vhg_db" {
   tags                   = local.common_tags
 }
 
-# --- 5. FIREWALL RULES (Automatic Connectivity) ---
-
-# Allow Azure Services (Required for the App Services to reach the DB)
+# --- 5. FIREWALL RULES ---
 resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure" {
   name             = "allow-azure-services"
   server_id        = azurerm_postgresql_flexible_server.vhg_db.id
@@ -84,7 +83,6 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure" {
   end_ip_address   = "0.0.0.0"
 }
 
-# Allow Local Client (Passed from the Pipeline to allow the SQL Dump)
 resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_my_client" {
   name             = "allow-deployment-client"
   server_id        = azurerm_postgresql_flexible_server.vhg_db.id
@@ -110,7 +108,7 @@ resource "azurerm_linux_web_app" "plant_backend" {
   app_settings = merge(local.shared_backend_vars, {
     "WEBSITES_PORT" = "8005"
     "DATABASE_URL"  = "postgresql://vhgadmin_terraform:${var.db_password}@${azurerm_postgresql_flexible_server.vhg_db.fqdn}:5432/postgres?sslmode=require"
-    "CORS_ORIGINS"  = "https://${azurerm_linux_web_app.frontend.default_hostname}"
+    "CORS_ORIGINS"  = local.frontend_url
   })
 }
 
@@ -132,7 +130,7 @@ resource "azurerm_linux_web_app" "auth_backend" {
   app_settings = merge(local.shared_backend_vars, {
     "WEBSITES_PORT" = "8006"
     "DATABASE_URL"  = "postgresql://vhgadmin_terraform:${var.db_password}@${azurerm_postgresql_flexible_server.vhg_db.fqdn}:5432/postgres?sslmode=require"
-    "CORS_ORIGINS"  = "https://${azurerm_linux_web_app.frontend.default_hostname}"
+    "CORS_ORIGINS"  = local.frontend_url
   })
 }
 
@@ -154,7 +152,7 @@ resource "azurerm_linux_web_app" "ai_backend" {
   app_settings = merge(local.shared_backend_vars, {
     "WEBSITES_PORT" = "8007"
     "DATABASE_URL"  = "postgresql://vhgadmin_terraform:${var.db_password}@${azurerm_postgresql_flexible_server.vhg_db.fqdn}:5432/postgres?sslmode=require"
-    "CORS_ORIGINS"  = "https://${azurerm_linux_web_app.frontend.default_hostname}"
+    "CORS_ORIGINS"  = local.frontend_url
   })
 }
 
