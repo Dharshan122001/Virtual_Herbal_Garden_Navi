@@ -1,17 +1,17 @@
 trigger:
   branches:
     include:
-      - fresh
+      - fresh # whenever the fresh branch is triggered then this pipeline is going to be used
 
 variables:
-  - group: vhg-secrets 
-  - name: azureServiceConnection
+  - group: vhg-secrets # for now only the DB password has been used
+  - name: azureServiceConnection # connection to the Azure is done for terraform
     value: 'AzureConn'
-  - name: dockerRegistryConn
+  - name: dockerRegistryConn # connection to the Dockerhub to push and pull
     value: 'DockerHubConn'
 
 stages:
-# --- STAGE 1: Detect Changes & Resolve Service Tags ---
+# --- STAGE 1: Used to check if there is any changes in the client / server
 - stage: Detect_and_Resolve
   displayName: "0. Detect & Resolve"
   jobs:
@@ -24,8 +24,11 @@ stages:
 
     - script: |
         # 1. Diff against previous commit
+        # -- STAGE 3: Deploy Infrastructure ---
+
         PREV_COMMIT=$(git rev-parse HEAD~1 2>/dev/null || echo "HEAD")
-        CHANGED_FILES=$(git diff --name-only HEAD $PREV_COMMIT)
+        # getting only the changed files from present and previous commit
+        CHANGED_FILES=$(git diff --name-only HEAD $PREV_COMMIT) 
         echo "Files modified: $CHANGED_FILES"
         
         get_latest() {
@@ -99,7 +102,7 @@ stages:
 # --- STAGE 3: Deploy Infrastructure ---
 - stage: Deploy_Infrastructure
   displayName: "2. Terraform Deploy"
-  dependsOn: [Detect_and_Resolve, Build_and_Push]
+  dependsOn: [Detect_and_Resolve, Build_and_Push] # needs to run after stage 1 and 2
   condition: succeeded('Detect_and_Resolve')
   jobs:
   - job: TerraformApply
