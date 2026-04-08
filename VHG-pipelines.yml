@@ -76,30 +76,41 @@ stages:
   displayName: "2. Terraform Deploy"
   dependsOn: [Detect_and_Resolve, Build_and_Push]
   condition: succeeded('Detect_and_Resolve')
-  variables:
-    # Individually map the 4 tags to this stage
-    final_f_tag: $[ dependencies.Detect_and_Resolve.outputs['ResolveTags.TagLogic.f_tag'] ]
-    final_p_tag: $[ dependencies.Detect_and_Resolve.outputs['ResolveTags.TagLogic.p_tag'] ]
-    final_au_tag: $[ dependencies.Detect_and_Resolve.outputs['ResolveTags.TagLogic.au_tag'] ]
-    final_ai_tag: $[ dependencies.Detect_and_Resolve.outputs['ResolveTags.TagLogic.ai_tag'] ]
   jobs:
   - job: TerraformApply
     pool:
       vmImage: 'ubuntu-latest'
+    variables:
+      final_f_tag: $[ dependencies.Detect_and_Resolve.outputs['ResolveTags.TagLogic.f_tag'] ]
+      final_p_tag: $[ dependencies.Detect_and_Resolve.outputs['ResolveTags.TagLogic.p_tag'] ]
+      final_au_tag: $[ dependencies.Detect_and_Resolve.outputs['ResolveTags.TagLogic.au_tag'] ]
+      final_ai_tag: $[ dependencies.Detect_and_Resolve.outputs['ResolveTags.TagLogic.ai_tag'] ]
     steps:
+    # 1. NEW STEP: Fetch Agent IP
     - script: |
         echo "##vso[task.setvariable variable=agent_ip]$(curl -s ifconfig.me)"
       displayName: "Fetch Agent IP"
+
+    # 2. MANDATORY STEP: Install Terraform
+    - task: TerraformInstaller@1
+      displayName: "Install Terraform"
+      inputs:
+        terraformVersion: 'latest'
+
+    # 3. Terraform Init
     - task: TerraformTaskV4@4
+      displayName: "Terraform Init"
       inputs:
         provider: 'azurerm'
         command: 'init'
         workingDirectory: '$(System.DefaultWorkingDirectory)/infra'
         backendServiceArm: '$(azureServiceConnection)'
         backendAzureRmResourceGroupName: 'Darshan.k_lean_rg'
-        backendAzureRmStorageAccountName: 'vhgstate123'
+        backendAzureRmStorageAccountName: 'vhgstate123' 
         backendAzureRmContainerName: 'tfstate'
         backendAzureRmKey: 'terraform.tfstate'
+
+    # 4. Terraform Apply
     - task: TerraformTaskV4@4
       displayName: "Terraform Apply"
       inputs:
