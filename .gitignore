@@ -1,0 +1,34 @@
+# General
+.DS_Store
+.vscode/
+*.sql
+*.log
+
+# Client
+client/node_modules/
+client/dist/
+client/dist-ssr/
+client/.env
+client/*.local
+
+# Server
+server/.env
+server/**/__pycache__/
+server/**/*.py[cod]
+server/venv/
+server/.venv/
+
+# Sensitive Files (JSON/Tokens)
+server/*.json
+server/gmail_token.py
+server/token.json
+gmail.txt
+herbal_garden_dump.sql
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfvars.json
+.terraform.lock.hcl

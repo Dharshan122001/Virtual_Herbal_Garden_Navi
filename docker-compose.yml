@@ -1,0 +1,65 @@
+services:
+  plant_service:
+    build:
+      context: ./server
+      dockerfile: plant_service/Dockerfile
+    container_name: plant-service-container
+    env_file:
+      - ./server/.env
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    ports:
+      - "8005:8005"
+    volumes:
+      - ./server:/app
+    restart: always
+
+  auth_service:
+    build:
+      context: ./server
+      dockerfile: auth_service/Dockerfile
+    container_name: auth-service-container
+    env_file:
+      - ./server/.env
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    ports:
+      - "8006:8006"
+    volumes:
+      - ./server:/app
+    restart: always
+
+  ai_service:
+    build:
+      context: ./server
+      dockerfile: ai_service/Dockerfile
+    container_name: ai-service-container
+    env_file:
+      - ./server/.env
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    ports:
+      - "8007:8007"
+    volumes:
+      - ./server:/app
+    restart: always
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: frontend-container
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    ports:
+      - "3000:80"
+    depends_on:
+      - plant_service
+      - auth_service
+      - ai_service
+    env_file:
+      - ./client/.env
