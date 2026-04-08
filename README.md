@@ -64,3 +64,18 @@ DBPASSWORD
 psql "host=vhg-db-server-darshan-terraform-v1.postgres.database.azure.com user=vhgadmin_terraform dbname=postgres sslmode=require" \\n-f herbal_garden_dump.sql
 
 this is updating perfectly
+
+
+# 1. Recreate the Storage Account
+az storage account create \
+  --name vhgstate123 \
+  --resource-group Darshan.k_lean_rg \
+  --location canadacentral \
+  --sku Standard_LRS \
+  --kind StorageV2 \
+  --allow-blob-public-access false
+
+# 2. Recreate the Container inside the storage account
+az storage container create \
+  --name tfstate \
+  --account-name vhgstate123
