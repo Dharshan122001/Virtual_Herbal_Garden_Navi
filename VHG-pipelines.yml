@@ -127,3 +127,7 @@ stages:
           -var="auth_tag=$(tag)" 
           -var="ai_tag=$(tag)"
           -var="my_ip=$(computed_ip)"
+
+
+# this is general
+      
