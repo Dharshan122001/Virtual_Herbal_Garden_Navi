@@ -21,40 +21,44 @@ stages:
     steps:
     - script: |
         # 1. Check for Path Changes
-        CHANGED_FILES=$(git diff --name-only HEAD HEAD~1)
+        # Note: If this is the first run, git diff HEAD~1 might fail. 
+        # We use || echo "" to prevent pipeline failure.
+        CHANGED_FILES=$(git diff --name-only HEAD HEAD~1 2>/dev/null || echo "client/ server/ infra/")
         echo "Files modified: $CHANGED_FILES"
         
         if echo "$CHANGED_FILES" | grep -E '^(client/|server/)'; then
           echo "##vso[task.setvariable variable=app_changed;isOutput=true]true"
           echo "##vso[task.setvariable variable=resolved_tag;isOutput=true]$(Build.BuildId)"
-          echo "App changes detected. New Tag: $(Build.BuildId)"
+          echo "App changes detected. Using New Tag: $(Build.BuildId)"
         else
           echo "##vso[task.setvariable variable=app_changed;isOutput=true]false"
           
-          # 2. Query Docker Hub for the highest numeric tag currently available
+          # 2. Query Docker Hub for the highest numeric tag available
           REPO="dharshan3690/navi-frontend"
-          echo "Fetching latest tag from Docker Hub for $REPO..."
+          echo "Querying Docker Hub for latest existing tag..."
           LATEST_TAG=$(curl -s "https://hub.docker.com/v2/repositories/${REPO}/tags/?page_size=100" | jq -r '.results|.[]|.name' | grep -E '^[0-9]+$' | sort -nr | head -n 1)
           
-          # Fallback if no numeric tag is found
+          # Fallback to 'latest' if no numeric tags exist
           if [ -z "$LATEST_TAG" ]; then LATEST_TAG="latest"; fi
           
           echo "##vso[task.setvariable variable=resolved_tag;isOutput=true]$LATEST_TAG"
-          echo "No app changes. Re-using latest tag: $LATEST_TAG"
+          echo "No app changes. Re-using existing tag: $LATEST_TAG"
         fi
       name: DetermineLogic
-      displayName: "Calculate Build Logic"
+      displayName: "Run Git Diff & Fetch Docker Tag"
 
 # --- STAGE 2: Build and Push (Only runs if code changed) ---
 - stage: Build_and_Push
   displayName: "1. Build & Push Images"
   dependsOn: Detect_Changes
+  # Only run if DetermineLogic output app_changed is true
   condition: eq(dependencies.Detect_Changes.outputs['Resolve.DetermineLogic.app_changed'], 'true')
   jobs:
   - job: DockerBuild
     pool:
       vmImage: 'ubuntu-latest'
     variables:
+      # Map the resolved_tag from Stage 1 into this stage
       target_tag: $[ dependencies.Detect_Changes.outputs['Resolve.DetermineLogic.resolved_tag'] ]
     steps:
     - task: Docker@2
@@ -66,6 +70,7 @@ stages:
         dockerfile: 'client/Dockerfile'
         buildContext: 'client/'
         tags: '$(target_tag)'
+
     - task: Docker@2
       displayName: "Push Plant Service"
       inputs:
@@ -75,6 +80,7 @@ stages:
         dockerfile: 'server/plant_service/Dockerfile'
         buildContext: 'server/'
         tags: '$(target_tag)'
+
     - task: Docker@2
       displayName: "Push Auth Service"
       inputs:
@@ -84,6 +90,7 @@ stages:
         dockerfile: 'server/auth_service/Dockerfile'
         buildContext: 'server/'
         tags: '$(target_tag)'
+
     - task: Docker@2
       displayName: "Push AI Service"
       inputs:
@@ -98,17 +105,19 @@ stages:
 - stage: Deploy_Infrastructure
   displayName: "2. Terraform Deploy"
   dependsOn: [Detect_Changes, Build_and_Push]
+  # Always run even if Build stage was skipped
   condition: succeeded('Detect_Changes')
   jobs:
   - job: TerraformApply
     pool:
       vmImage: 'ubuntu-latest'
     variables:
+      # Pull the tag resolved in Stage 1
       final_tag: $[ dependencies.Detect_Changes.outputs['Resolve.DetermineLogic.resolved_tag'] ]
     steps:
     - script: |
         echo "##vso[task.setvariable variable=agent_ip]$(curl -s ifconfig.me)"
-      displayName: "Fetch Agent IP"
+      displayName: "Fetch Agent Public IP"
 
     - task: TerraformInstaller@1
       inputs:
