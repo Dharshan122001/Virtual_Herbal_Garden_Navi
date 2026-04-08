@@ -79,3 +79,14 @@ az storage account create \
 az storage container create \
   --name tfstate \
   --account-name vhgstate123
+
+
+
+  terraform init \
+  -backend-config="resource_group_name=Darshan.k_lean_rg" \
+  -backend-config="storage_account_name=vhgstate123" \
+  -backend-config="container_name=tfstate" \
+  -backend-config="key=terraform.tfstate"
+
+
+terraform destroy -var="db_password=Vinu9945385205" -var="frontend_tag=1753" -var="plant_tag=1743" -var="auth_tag=1743" -var="ai_tag=1743" -var="my_ip=$(curl -s ifconfig.me)"
