@@ -9,38 +9,53 @@ variables:
     value: 'AzureConn'
   - name: dockerRegistryConn
     value: 'DockerHubConn'
-  - name: tag
-    value: '$(Build.BuildId)'
 
 stages:
-# --- STAGE 1: Detect Changes ---
+# --- STAGE 1: Detect Changes & Resolve Tag ---
 - stage: Detect_Changes
-  displayName: "0. Check Modified Paths"
+  displayName: "0. Detect Changes & Resolve Tag"
   jobs:
-  - job: CheckChanges
+  - job: Resolve
     pool:
       vmImage: 'ubuntu-latest'
     steps:
     - script: |
+        # 1. Check for Path Changes
         CHANGED_FILES=$(git diff --name-only HEAD HEAD~1)
-        echo "Files changed: $CHANGED_FILES"
+        echo "Files modified: $CHANGED_FILES"
+        
         if echo "$CHANGED_FILES" | grep -E '^(client/|server/)'; then
           echo "##vso[task.setvariable variable=app_changed;isOutput=true]true"
+          echo "##vso[task.setvariable variable=resolved_tag;isOutput=true]$(Build.BuildId)"
+          echo "App changes detected. New Tag: $(Build.BuildId)"
         else
           echo "##vso[task.setvariable variable=app_changed;isOutput=true]false"
+          
+          # 2. Query Docker Hub for the highest numeric tag currently available
+          REPO="dharshan3690/navi-frontend"
+          echo "Fetching latest tag from Docker Hub for $REPO..."
+          LATEST_TAG=$(curl -s "https://hub.docker.com/v2/repositories/${REPO}/tags/?page_size=100" | jq -r '.results|.[]|.name' | grep -E '^[0-9]+$' | sort -nr | head -n 1)
+          
+          # Fallback if no numeric tag is found
+          if [ -z "$LATEST_TAG" ]; then LATEST_TAG="latest"; fi
+          
+          echo "##vso[task.setvariable variable=resolved_tag;isOutput=true]$LATEST_TAG"
+          echo "No app changes. Re-using latest tag: $LATEST_TAG"
         fi
-      name: DetermineChanges
-      displayName: "Run Git Diff"
+      name: DetermineLogic
+      displayName: "Calculate Build Logic"
 
-# --- STAGE 2: Build and Push Docker Images ---
+# --- STAGE 2: Build and Push (Only runs if code changed) ---
 - stage: Build_and_Push
   displayName: "1. Build & Push Images"
   dependsOn: Detect_Changes
-  condition: eq(dependencies.Detect_Changes.outputs['CheckChanges.DetermineChanges.app_changed'], 'true')
+  condition: eq(dependencies.Detect_Changes.outputs['Resolve.DetermineLogic.app_changed'], 'true')
   jobs:
   - job: DockerBuild
     pool:
       vmImage: 'ubuntu-latest'
+    variables:
+      target_tag: $[ dependencies.Detect_Changes.outputs['Resolve.DetermineLogic.resolved_tag'] ]
     steps:
     - task: Docker@2
       displayName: "Push Frontend"
@@ -50,7 +65,7 @@ stages:
         command: 'buildAndPush'
         dockerfile: 'client/Dockerfile'
         buildContext: 'client/'
-        tags: '$(tag)'
+        tags: '$(target_tag)'
     - task: Docker@2
       displayName: "Push Plant Service"
       inputs:
@@ -59,7 +74,7 @@ stages:
         command: 'buildAndPush'
         dockerfile: 'server/plant_service/Dockerfile'
         buildContext: 'server/'
-        tags: '$(tag)'
+        tags: '$(target_tag)'
     - task: Docker@2
       displayName: "Push Auth Service"
       inputs:
@@ -68,7 +83,7 @@ stages:
         command: 'buildAndPush'
         dockerfile: 'server/auth_service/Dockerfile'
         buildContext: 'server/'
-        tags: '$(tag)'
+        tags: '$(target_tag)'
     - task: Docker@2
       displayName: "Push AI Service"
       inputs:
@@ -77,25 +92,23 @@ stages:
         command: 'buildAndPush'
         dockerfile: 'server/ai_service/Dockerfile'
         buildContext: 'server/'
-        tags: '$(tag)'
+        tags: '$(target_tag)'
 
-# --- STAGE 3: Deploy Infrastructure via Terraform ---
+# --- STAGE 3: Deploy Infrastructure ---
 - stage: Deploy_Infrastructure
   displayName: "2. Terraform Deploy"
-  dependsOn: 
-    - Detect_Changes
-    - Build_and_Push
+  dependsOn: [Detect_Changes, Build_and_Push]
   condition: succeeded('Detect_Changes')
   jobs:
   - job: TerraformApply
     pool:
       vmImage: 'ubuntu-latest'
+    variables:
+      final_tag: $[ dependencies.Detect_Changes.outputs['Resolve.DetermineLogic.resolved_tag'] ]
     steps:
-    # --- NEW STEP: Fetch Agent IP ---
     - script: |
-        IP=$(curl -s ifconfig.me)
-        echo "##vso[task.setvariable variable=computed_ip]$IP"
-      displayName: "Fetch Pipeline Agent IP"
+        echo "##vso[task.setvariable variable=agent_ip]$(curl -s ifconfig.me)"
+      displayName: "Fetch Agent IP"
 
     - task: TerraformInstaller@1
       inputs:
@@ -122,12 +135,8 @@ stages:
         environmentServiceNameAzureRM: '$(azureServiceConnection)'
         commandOptions: >
           -var="db_password=$(DB_PASSWORD)" 
-          -var="frontend_tag=$(tag)" 
-          -var="plant_tag=$(tag)" 
-          -var="auth_tag=$(tag)" 
-          -var="ai_tag=$(tag)"
-          -var="my_ip=$(computed_ip)"
-
-
-# this is general
-      
+          -var="frontend_tag=$(final_tag)" 
+          -var="plant_tag=$(final_tag)" 
+          -var="auth_tag=$(final_tag)" 
+          -var="ai_tag=$(final_tag)"
+          -var="my_ip=$(agent_ip)"

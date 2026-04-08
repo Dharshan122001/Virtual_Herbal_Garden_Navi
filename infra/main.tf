@@ -1,4 +1,3 @@
-# 1. Required Providers Block
 terraform {
   required_providers {
     azurerm = {
@@ -9,17 +8,14 @@ terraform {
   backend "azurerm" {} 
 }
 
-# 2. Provider Configuration Block
 provider "azurerm" {
   features {}
 }
 
-# --- 1. Reference Existing Infrastructure ---
 data "azurerm_resource_group" "existing_rg" {
   name = "Darshan.k_lean_rg"
 }
 
-# --- 2. Centralized Tags & Shared Backend Config ---
 locals {
   location = "canadacentral"
   common_tags = {
@@ -28,8 +24,11 @@ locals {
     cost    = "none"
   }
 
-  # Fixed URL for CORS to prevent circular dependency
+  # Industry Standard: Predict your URLs to avoid circular dependency errors
   frontend_url = "https://herbal-garden-frontend-terraform.azurewebsites.net"
+  plant_url    = "https://herbal-garden-plant-terraform.azurewebsites.net"
+  auth_url     = "https://herbal-garden-auth-terraform.azurewebsites.net"
+  ai_url       = "https://herbal-garden-ai-terraform.azurewebsites.net"
 
   shared_backend_vars = {
     "ALGORITHM"           = "HS256"
@@ -52,7 +51,6 @@ locals {
   }
 }
 
-# --- 3. App Service Plan ---
 resource "azurerm_service_plan" "vhg_plan" {
   name                = "vhg-service-plan-terraform"
   resource_group_name = data.azurerm_resource_group.existing_rg.name
@@ -62,7 +60,6 @@ resource "azurerm_service_plan" "vhg_plan" {
   tags                = local.common_tags
 }
 
-# --- 4. PostgreSQL Flexible Server ---
 resource "azurerm_postgresql_flexible_server" "vhg_db" {
   name                   = "vhg-db-server-darshan-terraform-v1" 
   resource_group_name    = data.azurerm_resource_group.existing_rg.name
@@ -73,9 +70,13 @@ resource "azurerm_postgresql_flexible_server" "vhg_db" {
   storage_mb             = 32768
   sku_name               = "B_Standard_B1ms"
   tags                   = local.common_tags
+
+  # Prevents crash when Azure assigns a zone automatically
+  lifecycle {
+    ignore_changes = [ zone, high_availability ]
+  }
 }
 
-# --- 5. FIREWALL RULES ---
 resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure" {
   name             = "allow-azure-services"
   server_id        = azurerm_postgresql_flexible_server.vhg_db.id
@@ -90,21 +91,18 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_my_client" {
   end_ip_address   = var.my_ip
 }
 
-# --- 6. PLANT BACKEND ---
 resource "azurerm_linux_web_app" "plant_backend" {
   name                = "herbal-garden-plant-terraform"
   resource_group_name = data.azurerm_resource_group.existing_rg.name
   location            = local.location
   service_plan_id     = azurerm_service_plan.vhg_plan.id
   tags                = local.common_tags
-
   site_config {
     application_stack {
       docker_image_name   = "dharshan3690/plant-service:${var.plant_tag}"
       docker_registry_url = "https://index.docker.io"
     }
   }
-
   app_settings = merge(local.shared_backend_vars, {
     "WEBSITES_PORT" = "8005"
     "DATABASE_URL"  = "postgresql://vhgadmin_terraform:${var.db_password}@${azurerm_postgresql_flexible_server.vhg_db.fqdn}:5432/postgres?sslmode=require"
@@ -112,21 +110,18 @@ resource "azurerm_linux_web_app" "plant_backend" {
   })
 }
 
-# --- 7. AUTH BACKEND ---
 resource "azurerm_linux_web_app" "auth_backend" {
   name                = "herbal-garden-auth-terraform"
   resource_group_name = data.azurerm_resource_group.existing_rg.name
   location            = local.location
   service_plan_id     = azurerm_service_plan.vhg_plan.id
   tags                = local.common_tags
-
   site_config {
     application_stack {
       docker_image_name   = "dharshan3690/auth-service:${var.auth_tag}"
       docker_registry_url = "https://index.docker.io"
     }
   }
-
   app_settings = merge(local.shared_backend_vars, {
     "WEBSITES_PORT" = "8006"
     "DATABASE_URL"  = "postgresql://vhgadmin_terraform:${var.db_password}@${azurerm_postgresql_flexible_server.vhg_db.fqdn}:5432/postgres?sslmode=require"
@@ -134,21 +129,18 @@ resource "azurerm_linux_web_app" "auth_backend" {
   })
 }
 
-# --- 8. AI BACKEND ---
 resource "azurerm_linux_web_app" "ai_backend" {
   name                = "herbal-garden-ai-terraform"
   resource_group_name = data.azurerm_resource_group.existing_rg.name
   location            = local.location
   service_plan_id     = azurerm_service_plan.vhg_plan.id
   tags                = local.common_tags
-
   site_config {
     application_stack {
       docker_image_name   = "dharshan3690/ai-service:${var.ai_tag}"
       docker_registry_url = "https://index.docker.io"
     }
   }
-
   app_settings = merge(local.shared_backend_vars, {
     "WEBSITES_PORT" = "8007"
     "DATABASE_URL"  = "postgresql://vhgadmin_terraform:${var.db_password}@${azurerm_postgresql_flexible_server.vhg_db.fqdn}:5432/postgres?sslmode=require"
@@ -156,24 +148,23 @@ resource "azurerm_linux_web_app" "ai_backend" {
   })
 }
 
-# --- 9. FRONTEND ---
 resource "azurerm_linux_web_app" "frontend" {
   name                = "herbal-garden-frontend-terraform"
   resource_group_name = data.azurerm_resource_group.existing_rg.name
   location            = local.location
   service_plan_id     = azurerm_service_plan.vhg_plan.id
   tags                = local.common_tags
-
   site_config {
     application_stack {
       docker_image_name   = "dharshan3690/navi-frontend:${var.frontend_tag}"
       docker_registry_url = "https://index.docker.io"
     }
   }
-
   app_settings = {
-    "VITE_PLANT_API_URL" = "https://${azurerm_linux_web_app.plant_backend.default_hostname}"
-    "VITE_AUTH_API_URL"  = "https://${azurerm_linux_web_app.auth_backend.default_hostname}"
-    "VITE_AI_API_URL"    = "https://${azurerm_linux_web_app.ai_backend.default_hostname}"
+    "VITE_PLANT_API_URL" = local.plant_url
+    "VITE_AUTH_API_URL"  = local.auth_url
+    "VITE_AI_API_URL"    = local.ai_url
+    "WEBSITES_PORT"      = "80" 
+    "DOCKER_ENABLE_CI"   = "true"
   }
 }

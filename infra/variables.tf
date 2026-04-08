@@ -3,7 +3,10 @@ variable "db_password" {
   sensitive = true
 }
 
-# Individual tags for each service
+variable "my_ip" {
+  type = string
+}
+
 variable "frontend_tag" {
   type    = string
   default = "latest"
@@ -22,8 +25,4 @@ variable "auth_tag" {
 variable "ai_tag" {
   type    = string
   default = "latest"
-}
-
-variable "my_ip" {
-  type = string
 }
