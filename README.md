@@ -60,5 +60,7 @@ The project uses **React (Vite)** on the frontend and **FastAPI microservices** 
 ![ChatGPT Image Jan 2, 2026, 03_48_21 PM](https://github.com/user-attachments/assets/e34af147-1512-4829-8a5a-f6b2d91c5d16)
 
 
-
+DBPASSWORD
 psql "host=vhg-db-server-darshan-terraform-v1.postgres.database.azure.com user=vhgadmin_terraform dbname=postgres sslmode=require" \\n-f herbal_garden_dump.sql
+
+this is updating perfectly
