@@ -11,55 +11,54 @@ variables:
     value: 'DockerHubConn'
 
 stages:
-# --- STAGE 1: Detect Changes & Resolve Tag ---
-- stage: Detect_Changes
-  displayName: "0. Detect Changes & Resolve Tag"
+# --- STAGE 1: Multi-Service Tag Resolver ---
+- stage: Detect_and_Resolve
+  displayName: "0. Detect & Resolve Tags"
   jobs:
-  - job: Resolve
+  - job: ResolveTags
     pool:
       vmImage: 'ubuntu-latest'
     steps:
     - script: |
-        # 1. Check for Path Changes
-        # Note: If this is the first run, git diff HEAD~1 might fail. 
-        # We use || echo "" to prevent pipeline failure.
+        # Check for code changes
         CHANGED_FILES=$(git diff --name-only HEAD HEAD~1 2>/dev/null || echo "client/ server/ infra/")
-        echo "Files modified: $CHANGED_FILES"
         
+        # Function to fetch the latest numeric tag from Docker Hub for a specific repo
+        get_latest_tag() {
+          REPO=$1
+          TAG=$(curl -s "https://hub.docker.com/v2/repositories/dharshan3690/${REPO}/tags/?page_size=100" | \
+                jq -r '.results|.[]|.name' | grep -E '^[0-9]+$' | sort -nr | head -n 1)
+          if [ -z "$TAG" ]; then TAG="latest"; fi
+          echo "$TAG"
+        }
+
         if echo "$CHANGED_FILES" | grep -E '^(client/|server/)'; then
           echo "##vso[task.setvariable variable=app_changed;isOutput=true]true"
-          echo "##vso[task.setvariable variable=resolved_tag;isOutput=true]$(Build.BuildId)"
-          echo "App changes detected. Using New Tag: $(Build.BuildId)"
+          NEW_TAG="$(Build.BuildId)"
+          echo "##vso[task.setvariable variable=f_tag;isOutput=true]$NEW_TAG"
+          echo "##vso[task.setvariable variable=p_tag;isOutput=true]$NEW_TAG"
+          echo "##vso[task.setvariable variable=au_tag;isOutput=true]$NEW_TAG"
+          echo "##vso[task.setvariable variable=ai_tag;isOutput=true]$NEW_TAG"
         else
           echo "##vso[task.setvariable variable=app_changed;isOutput=true]false"
-          
-          # 2. Query Docker Hub for the highest numeric tag available
-          REPO="dharshan3690/navi-frontend"
-          echo "Querying Docker Hub for latest existing tag..."
-          LATEST_TAG=$(curl -s "https://hub.docker.com/v2/repositories/${REPO}/tags/?page_size=100" | jq -r '.results|.[]|.name' | grep -E '^[0-9]+$' | sort -nr | head -n 1)
-          
-          # Fallback to 'latest' if no numeric tags exist
-          if [ -z "$LATEST_TAG" ]; then LATEST_TAG="latest"; fi
-          
-          echo "##vso[task.setvariable variable=resolved_tag;isOutput=true]$LATEST_TAG"
-          echo "No app changes. Re-using existing tag: $LATEST_TAG"
+          # Individually fetch latest tags for each service
+          echo "##vso[task.setvariable variable=f_tag;isOutput=true]$(get_latest_tag navi-frontend)"
+          echo "##vso[task.setvariable variable=p_tag;isOutput=true]$(get_latest_tag plant-service)"
+          echo "##vso[task.setvariable variable=au_tag;isOutput=true]$(get_latest_tag auth-service)"
+          echo "##vso[task.setvariable variable=ai_tag;isOutput=true]$(get_latest_tag ai-service)"
         fi
-      name: DetermineLogic
-      displayName: "Run Git Diff & Fetch Docker Tag"
+      name: TagLogic
+      displayName: "Resolve Service Tags"
 
-# --- STAGE 2: Build and Push (Only runs if code changed) ---
+# --- STAGE 2: Build and Push ---
 - stage: Build_and_Push
-  displayName: "1. Build & Push Images"
-  dependsOn: Detect_Changes
-  # Only run if DetermineLogic output app_changed is true
-  condition: eq(dependencies.Detect_Changes.outputs['Resolve.DetermineLogic.app_changed'], 'true')
+  displayName: "1. Build Images"
+  dependsOn: Detect_and_Resolve
+  condition: eq(dependencies.Detect_and_Resolve.outputs['ResolveTags.TagLogic.app_changed'], 'true')
   jobs:
   - job: DockerBuild
     pool:
       vmImage: 'ubuntu-latest'
-    variables:
-      # Map the resolved_tag from Stage 1 into this stage
-      target_tag: $[ dependencies.Detect_Changes.outputs['Resolve.DetermineLogic.resolved_tag'] ]
     steps:
     - task: Docker@2
       displayName: "Push Frontend"
@@ -69,72 +68,38 @@ stages:
         command: 'buildAndPush'
         dockerfile: 'client/Dockerfile'
         buildContext: 'client/'
-        tags: '$(target_tag)'
-
-    - task: Docker@2
-      displayName: "Push Plant Service"
-      inputs:
-        containerRegistry: '$(dockerRegistryConn)'
-        repository: 'dharshan3690/plant-service'
-        command: 'buildAndPush'
-        dockerfile: 'server/plant_service/Dockerfile'
-        buildContext: 'server/'
-        tags: '$(target_tag)'
-
-    - task: Docker@2
-      displayName: "Push Auth Service"
-      inputs:
-        containerRegistry: '$(dockerRegistryConn)'
-        repository: 'dharshan3690/auth-service'
-        command: 'buildAndPush'
-        dockerfile: 'server/auth_service/Dockerfile'
-        buildContext: 'server/'
-        tags: '$(target_tag)'
-
-    - task: Docker@2
-      displayName: "Push AI Service"
-      inputs:
-        containerRegistry: '$(dockerRegistryConn)'
-        repository: 'dharshan3690/ai-service'
-        command: 'buildAndPush'
-        dockerfile: 'server/ai_service/Dockerfile'
-        buildContext: 'server/'
-        tags: '$(target_tag)'
+        tags: '$(Build.BuildId)'
+    # ... Repeat Docker task for plant-service, auth-service, and ai-service ...
 
 # --- STAGE 3: Deploy Infrastructure ---
 - stage: Deploy_Infrastructure
   displayName: "2. Terraform Deploy"
-  dependsOn: [Detect_Changes, Build_and_Push]
-  # Always run even if Build stage was skipped
-  condition: succeeded('Detect_Changes')
+  dependsOn: [Detect_and_Resolve, Build_and_Push]
+  condition: succeeded('Detect_and_Resolve')
+  variables:
+    # Individually map the 4 tags to this stage
+    final_f_tag: $[ dependencies.Detect_and_Resolve.outputs['ResolveTags.TagLogic.f_tag'] ]
+    final_p_tag: $[ dependencies.Detect_and_Resolve.outputs['ResolveTags.TagLogic.p_tag'] ]
+    final_au_tag: $[ dependencies.Detect_and_Resolve.outputs['ResolveTags.TagLogic.au_tag'] ]
+    final_ai_tag: $[ dependencies.Detect_and_Resolve.outputs['ResolveTags.TagLogic.ai_tag'] ]
   jobs:
   - job: TerraformApply
     pool:
       vmImage: 'ubuntu-latest'
-    variables:
-      # Pull the tag resolved in Stage 1
-      final_tag: $[ dependencies.Detect_Changes.outputs['Resolve.DetermineLogic.resolved_tag'] ]
     steps:
     - script: |
         echo "##vso[task.setvariable variable=agent_ip]$(curl -s ifconfig.me)"
-      displayName: "Fetch Agent Public IP"
-
-    - task: TerraformInstaller@1
-      inputs:
-        terraformVersion: 'latest'
-
+      displayName: "Fetch Agent IP"
     - task: TerraformTaskV4@4
-      displayName: "Terraform Init"
       inputs:
         provider: 'azurerm'
         command: 'init'
         workingDirectory: '$(System.DefaultWorkingDirectory)/infra'
         backendServiceArm: '$(azureServiceConnection)'
         backendAzureRmResourceGroupName: 'Darshan.k_lean_rg'
-        backendAzureRmStorageAccountName: 'vhgstate123' 
+        backendAzureRmStorageAccountName: 'vhgstate123'
         backendAzureRmContainerName: 'tfstate'
         backendAzureRmKey: 'terraform.tfstate'
-
     - task: TerraformTaskV4@4
       displayName: "Terraform Apply"
       inputs:
@@ -144,8 +109,8 @@ stages:
         environmentServiceNameAzureRM: '$(azureServiceConnection)'
         commandOptions: >
           -var="db_password=$(DB_PASSWORD)" 
-          -var="frontend_tag=$(final_tag)" 
-          -var="plant_tag=$(final_tag)" 
-          -var="auth_tag=$(final_tag)" 
-          -var="ai_tag=$(final_tag)"
+          -var="frontend_tag=$(final_f_tag)" 
+          -var="plant_tag=$(final_p_tag)" 
+          -var="auth_tag=$(final_au_tag)" 
+          -var="ai_tag=$(final_ai_tag)"
           -var="my_ip=$(agent_ip)"

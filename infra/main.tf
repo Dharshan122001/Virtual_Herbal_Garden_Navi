@@ -1,3 +1,4 @@
+# 1. Required Providers Block
 terraform {
   required_providers {
     azurerm = {
@@ -5,17 +6,21 @@ terraform {
       version = "~> 4.0"
     }
   }
+  # Backend configuration inherited from Azure DevOps pipeline
   backend "azurerm" {} 
 }
 
+# 2. Provider Configuration Block
 provider "azurerm" {
   features {}
 }
 
+# --- 1. Reference Existing Infrastructure ---
 data "azurerm_resource_group" "existing_rg" {
   name = "Darshan.k_lean_rg"
 }
 
+# --- 2. Centralized Tags & Shared Config ---
 locals {
   location = "canadacentral"
   common_tags = {
@@ -24,12 +29,13 @@ locals {
     cost    = "none"
   }
 
-  # Industry Standard: Predict your URLs to avoid circular dependency errors
+  # Industry Standard: Predict URLs to break the dependency cycle between services
   frontend_url = "https://herbal-garden-frontend-terraform.azurewebsites.net"
   plant_url    = "https://herbal-garden-plant-terraform.azurewebsites.net"
   auth_url     = "https://herbal-garden-auth-terraform.azurewebsites.net"
   ai_url       = "https://herbal-garden-ai-terraform.azurewebsites.net"
 
+  # Shared environment variables for all Backend Services
   shared_backend_vars = {
     "ALGORITHM"           = "HS256"
     "GEMINI_API_KEY"      = "AIzaSyDU2IRX8vjA5dtEfcuJ6IRAKuv4Ij1CBL4"
@@ -51,6 +57,7 @@ locals {
   }
 }
 
+# --- 3. App Service Plan ---
 resource "azurerm_service_plan" "vhg_plan" {
   name                = "vhg-service-plan-terraform"
   resource_group_name = data.azurerm_resource_group.existing_rg.name
@@ -60,6 +67,7 @@ resource "azurerm_service_plan" "vhg_plan" {
   tags                = local.common_tags
 }
 
+# --- 4. PostgreSQL Flexible Server ---
 resource "azurerm_postgresql_flexible_server" "vhg_db" {
   name                   = "vhg-db-server-darshan-terraform-v1" 
   resource_group_name    = data.azurerm_resource_group.existing_rg.name
@@ -71,12 +79,13 @@ resource "azurerm_postgresql_flexible_server" "vhg_db" {
   sku_name               = "B_Standard_B1ms"
   tags                   = local.common_tags
 
-  # Prevents crash when Azure assigns a zone automatically
+  # CRITICAL: Prevents crash when Azure re-assigns availability zones
   lifecycle {
     ignore_changes = [ zone, high_availability ]
   }
 }
 
+# --- 5. FIREWALL RULES ---
 resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure" {
   name             = "allow-azure-services"
   server_id        = azurerm_postgresql_flexible_server.vhg_db.id
@@ -91,6 +100,7 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_my_client" {
   end_ip_address   = var.my_ip
 }
 
+# --- 6. PLANT BACKEND ---
 resource "azurerm_linux_web_app" "plant_backend" {
   name                = "herbal-garden-plant-terraform"
   resource_group_name = data.azurerm_resource_group.existing_rg.name
@@ -110,6 +120,7 @@ resource "azurerm_linux_web_app" "plant_backend" {
   })
 }
 
+# --- 7. AUTH BACKEND ---
 resource "azurerm_linux_web_app" "auth_backend" {
   name                = "herbal-garden-auth-terraform"
   resource_group_name = data.azurerm_resource_group.existing_rg.name
@@ -129,6 +140,7 @@ resource "azurerm_linux_web_app" "auth_backend" {
   })
 }
 
+# --- 8. AI BACKEND ---
 resource "azurerm_linux_web_app" "ai_backend" {
   name                = "herbal-garden-ai-terraform"
   resource_group_name = data.azurerm_resource_group.existing_rg.name
@@ -148,6 +160,7 @@ resource "azurerm_linux_web_app" "ai_backend" {
   })
 }
 
+# --- 9. FRONTEND ---
 resource "azurerm_linux_web_app" "frontend" {
   name                = "herbal-garden-frontend-terraform"
   resource_group_name = data.azurerm_resource_group.existing_rg.name
@@ -166,5 +179,6 @@ resource "azurerm_linux_web_app" "frontend" {
     "VITE_AI_API_URL"    = local.ai_url
     "WEBSITES_PORT"      = "80" 
     "DOCKER_ENABLE_CI"   = "true"
+    "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
   }
 }
