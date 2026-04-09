@@ -61,7 +61,7 @@ The project uses **React (Vite)** on the frontend and **FastAPI microservices** 
 
 
 DBPASSWORD
-psql "host=vhg-db-server-darshan-terraform-v1.postgres.database.azure.com user=vhgadmin_terraform dbname=postgres sslmode=require" \\n-f herbal_garden_dump.sql
+psql "host=vhg-db-server-darshan-terraform-v1.postgres.database.azure.com user=vhgadmin_terraform dbname=postgres sslmode=require" -f herbal_garden_dump.sql
 
 this is updating perfectly
 
