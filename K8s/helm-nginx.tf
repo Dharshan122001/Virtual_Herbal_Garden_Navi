@@ -5,10 +5,11 @@ resource "helm_release" "ingress_nginx" {
   namespace        = "ingress-nginx"
   create_namespace = true
 
-  timeout = 900 # 15 minutes for Azure LoadBalancer provisioning
+  # 15 minutes to allow Azure to provision the Load Balancer hardware
+  timeout = 900 
   wait    = true
 
-  # Ensure permissions and IP exist before starting
+  # Ensure the cluster and permissions are ready before installing
   depends_on = [
     azurerm_kubernetes_cluster.aks, 
     azurerm_role_assignment.aks_network_contributor, 
