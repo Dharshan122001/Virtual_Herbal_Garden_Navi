@@ -9,14 +9,14 @@ trigger:
       - vhg-chart/*
 
 variables:
-  - group: vhg-secrets # Contains DB_PASSWORD and other secrets
+  - group: vhg-secrets # Contains DB_PASSWORD, etc.
   - name: dockerRegistryConn
-    value: 'DockerHubConn' # Ensure this matches your Service Connection name
+    value: 'DockerHubConn' 
   - name: dockerUser
     value: 'dharshan3690'
 
 stages:
-# --- STAGE 1: Smart Detect & Resolve Tags ---
+# --- STAGE 1: Impact Analysis ---
 - stage: Detect_and_Resolve
   displayName: "0. Smart Detect"
   jobs:
@@ -28,41 +28,33 @@ stages:
       fetchDepth: 0 
 
     - script: |
-        # Get list of changed files
+        # Identify changes between this commit and the previous one
         PREV_COMMIT=$(git rev-parse HEAD~1 2>/dev/null || echo "HEAD")
         CHANGED_FILES=$(git diff --name-only $PREV_COMMIT HEAD)
         echo "Files modified: $CHANGED_FILES"
         
-        # 1. Frontend Detection
+        # 1. Frontend Check
         if echo "$CHANGED_FILES" | grep -q '^client/'; then
           echo "##vso[task.setvariable variable=f_changed;isOutput=true]true"
-        else
-          echo "##vso[task.setvariable variable=f_changed;isOutput=true]false"
         fi
 
-        # 2. Plant Service Detection (Depends on server/plant or server/common)
+        # 2. Plant Service Check (Includes common logic)
         if echo "$CHANGED_FILES" | grep -qE "^(server/plant_service/|server/common/)"; then
           echo "##vso[task.setvariable variable=p_changed;isOutput=true]true"
-        else
-          echo "##vso[task.setvariable variable=p_changed;isOutput=true]false"
         fi
 
-        # 3. Auth Service Detection
+        # 3. Auth Service Check
         if echo "$CHANGED_FILES" | grep -qE "^(server/auth_service/|server/common/)"; then
           echo "##vso[task.setvariable variable=au_changed;isOutput=true]true"
-        else
-          echo "##vso[task.setvariable variable=au_changed;isOutput=true]false"
         fi
 
-        # 4. AI Service Detection
+        # 4. AI Service Check
         if echo "$CHANGED_FILES" | grep -qE "^(server/ai_service/|server/common/)"; then
           echo "##vso[task.setvariable variable=ai_changed;isOutput=true]true"
-        else
-          echo "##vso[task.setvariable variable=ai_changed;isOutput=true]false"
         fi
       name: TagLogic
 
-# --- STAGE 2: Build and Push (Conditional) ---
+# --- STAGE 2: Targeted Build & Push ---
 - stage: Build_and_Push
   displayName: "1. Build and Push"
   dependsOn: Detect_and_Resolve
@@ -116,7 +108,7 @@ stages:
         dockerfile: 'server/ai_service/Dockerfile'
         tags: '$(Build.BuildId)'
 
-# --- STAGE 3: GitOps Manifest Update ---
+# --- STAGE 3: GitOps Automated Sync ---
 - stage: GitOps_Update
   displayName: "2. GitOps Sync"
   dependsOn: [Detect_and_Resolve, Build_and_Push]
@@ -135,25 +127,25 @@ stages:
       persistCredentials: true 
 
     - script: |
-        # Install yq
+        # Download yq for manifest manipulation
         sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
 
-        # Update values.yaml only for components that were rebuilt
+        # Update values.yaml ONLY for built components
         if [ "$(f_upd)" == "true" ]; then yq -i ".frontend.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml; fi
         if [ "$(p_upd)" == "true" ]; then yq -i ".plant.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml; fi
         if [ "$(au_upd)" == "true" ]; then yq -i ".auth.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml; fi
         if [ "$(ai_upd)" == "true" ]; then yq -i ".ai.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml; fi
 
-        # Git Push back to repo
+        # Git push back to the 'fresh' branch
         git config --global user.email "devops-pipeline@navikenz.com"
         git config --global user.name "Azure DevOps Pipeline"
         
-        # Only commit if changes were actually made to values.yaml
+        # Check if values.yaml actually changed
         if git diff --exit-code vhg-chart/values.yaml; then
-          echo "No manifest changes to commit."
+          echo "Nothing to update in Git."
         else
           git add vhg-chart/values.yaml
           git commit -m "GitOps: update image tags to $(Build.BuildId) [skip ci]"
           git push origin HEAD:fresh
         fi
-      displayName: "Update vhg-chart/values.yaml and Sync Git"
+      displayName: "Sync Manifests with Git"
