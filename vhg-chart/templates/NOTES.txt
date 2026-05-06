@@ -50,6 +50,8 @@ dharshankrishna@NAV-LT-0245 K8s % az role assignment create --assignee $AKS_ID -
 }
 
 
+PAT = DSIV8yq8uz5G5hxdYDu2T3EYPLItyxwlPPiUpC9tDArsf4IaoxEBJQQJ99CEACAAAAAu9fM3AAASAZDO4dVK
+
 
 
 
