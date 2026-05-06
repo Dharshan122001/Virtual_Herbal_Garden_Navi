@@ -82,6 +82,20 @@ stages:
         buildContext: '.'
         tags: '$(Build.BuildId)'
 
+    # --- UPDATED FRONTEND SECTION ---
+    - task: NodeTool@0
+      displayName: 'Install Node.js'
+      condition: eq(variables.f_upd, 'true')
+      inputs:
+        versionSpec: '20.x'
+
+    - script: |
+        cd client
+        npm install
+        npm run build
+      displayName: 'Build Frontend Project'
+      condition: eq(variables.f_upd, 'true')
+
     - task: Docker@2
       displayName: "Push Frontend"
       condition: eq(variables.f_upd, 'true')
