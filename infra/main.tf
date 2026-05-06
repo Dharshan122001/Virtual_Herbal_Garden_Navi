@@ -5,6 +5,7 @@ terraform {
       version = "~> 4.0"
     }
   }
+  # used to store the terraform state in Azure storage
   backend "azurerm" {} 
 }
 

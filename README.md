@@ -89,4 +89,4 @@ az storage container create \
   -backend-config="key=terraform.tfstate"
 
 
-terraform destroy -var="db_password=Vinu9945385205" -var="frontend_tag=1753" -var="plant_tag=1743" -var="auth_tag=1743" -var="ai_tag=1743" -var="my_ip=$(curl -s ifconfig.me)"
+terraform destroy -var="db_password=Vinu9945385205" -var="frontend_tag=1764" -var="plant_tag=1743" -var="auth_tag=1743" -var="ai_tag=1743" -var="my_ip=$(curl -s ifconfig.me)"
