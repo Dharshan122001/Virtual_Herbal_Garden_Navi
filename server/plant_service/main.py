@@ -30,8 +30,17 @@ load_dotenv(dotenv_path=env_path)
 app = FastAPI(title="Herbal Garden - Plant Service")
 setup_cors(app)
 
+#--- for gitops ----
+@app.get("/api/v1/test-deploy")
+async def test_api():
+    return {
+        "message": "GitOps Pipeline Success!",
+        "service": "Plant Service",
+        "version": "v1.0.1"
+    }
 
 # --- Plant Catalog Endpoints ---
+
 @app.get("/")
 async def health_check():
     return {"status": "Plant Service is running"}

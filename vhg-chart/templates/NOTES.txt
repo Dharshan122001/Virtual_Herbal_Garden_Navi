@@ -56,6 +56,7 @@ PAT = DSIV8yq8uz5G5hxdYDu2T3EYPLItyxwlPPiUpC9tDArsf4IaoxEBJQQJ99CEACAAAAAu9fM3AA
 
 
 
+
   {
     "apiVersion": "2026-01-01",
     "id": "/subscriptions/6ae0002f-3385-458e-a6b8-49eabda044bb/resourceGroups/Darshan.k_lean_rg/providers/microsoft.containerservice/managedClusters/vhg-cluster",
