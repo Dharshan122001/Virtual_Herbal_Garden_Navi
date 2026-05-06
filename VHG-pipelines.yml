@@ -137,3 +137,4 @@ stages:
           git push origin HEAD:fresh
         fi
       displayName: "Sync Manifests"
+      
