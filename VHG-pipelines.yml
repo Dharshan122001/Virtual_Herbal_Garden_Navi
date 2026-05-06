@@ -6,17 +6,17 @@ trigger:
     include:
       - client/*
       - server/*
-      - infra/*
+      - vhg-chart/*
 
 variables:
-  - group: vhg-secrets 
-  - name: azureServiceConnection
-    value: 'AzureConn'
+  - group: vhg-secrets # Contains DB_PASSWORD and other secrets
   - name: dockerRegistryConn
-    value: 'DockerHubConn'
+    value: 'DockerHubConn' # Ensure this matches your Service Connection name
+  - name: dockerUser
+    value: 'dharshan3690'
 
 stages:
-# --- STAGE 1: Smart Detect & Tag Resolution ---
+# --- STAGE 1: Smart Detect & Resolve Tags ---
 - stage: Detect_and_Resolve
   displayName: "0. Smart Detect"
   jobs:
@@ -28,43 +28,38 @@ stages:
       fetchDepth: 0 
 
     - script: |
+        # Get list of changed files
         PREV_COMMIT=$(git rev-parse HEAD~1 2>/dev/null || echo "HEAD")
         CHANGED_FILES=$(git diff --name-only $PREV_COMMIT HEAD)
         echo "Files modified: $CHANGED_FILES"
         
-        get_latest() {
-          REPO=$1
-          TAG=$(curl -s "https://hub.docker.com/v2/repositories/dharshan3690/${REPO}/tags/?page_size=100" | jq -r '.results|.[]|.name' | grep -E '^[0-9]+$' | sort -nr | head -n 1)
-          if [ -z "$TAG" ] || [ "$TAG" == "null" ]; then TAG="latest"; fi
-          echo "$TAG"
-        }
-
         # 1. Frontend Detection
         if echo "$CHANGED_FILES" | grep -q '^client/'; then
           echo "##vso[task.setvariable variable=f_changed;isOutput=true]true"
-          echo "##vso[task.setvariable variable=f_tag;isOutput=true]$(Build.BuildId)"
         else
           echo "##vso[task.setvariable variable=f_changed;isOutput=true]false"
-          echo "##vso[task.setvariable variable=f_tag;isOutput=true]$(get_latest navi-frontend)"
         fi
 
-        # 2. Microservices Detection (Plant, Auth, AI)
-        # Rebuilds if specific folder OR 'server/common' changes
-        services=("plant-service:server/plant_service:p" "auth-service:server/auth_service:au" "ai-service:server/ai_service:ai")
+        # 2. Plant Service Detection (Depends on server/plant or server/common)
+        if echo "$CHANGED_FILES" | grep -qE "^(server/plant_service/|server/common/)"; then
+          echo "##vso[task.setvariable variable=p_changed;isOutput=true]true"
+        else
+          echo "##vso[task.setvariable variable=p_changed;isOutput=true]false"
+        fi
 
-        for s in "${services[@]}"; do
-          REPO="${s%%:*}"; REM="${s#*:}"; DIR="${REM%%:*}"; SFX="${REM#*:}"
-          
-          if echo "$CHANGED_FILES" | grep -qE "^($DIR/|server/common/)"; then
-            echo "Changes detected in $REPO. Tagging with $(Build.BuildId)"
-            echo "##vso[task.setvariable variable=${SFX}_changed;isOutput=true]true"
-            echo "##vso[task.setvariable variable=${SFX}_tag;isOutput=true]$(Build.BuildId)"
-          else
-            echo "No changes in $REPO. Using latest existing tag."
-            echo "##vso[task.setvariable variable=${SFX}_changed;isOutput=true]false"
-            echo "##vso[task.setvariable variable=${SFX}_tag;isOutput=true]$(get_latest $REPO)"
-          fi
-        done
+        # 3. Auth Service Detection
+        if echo "$CHANGED_FILES" | grep -qE "^(server/auth_service/|server/common/)"; then
+          echo "##vso[task.setvariable variable=au_changed;isOutput=true]true"
+        else
+          echo "##vso[task.setvariable variable=au_changed;isOutput=true]false"
+        fi
+
+        # 4. AI Service Detection
+        if echo "$CHANGED_FILES" | grep -qE "^(server/ai_service/|server/common/)"; then
+          echo "##vso[task.setvariable variable=ai_changed;isOutput=true]true"
+        else
+          echo "##vso[task.setvariable variable=ai_changed;isOutput=true]false"
+        fi
       name: TagLogic
 
 # --- STAGE 2: Build and Push (Conditional) ---
@@ -86,7 +81,7 @@ stages:
       condition: eq(variables.f_upd, 'true')
       inputs:
         containerRegistry: '$(dockerRegistryConn)'
-        repository: 'dharshan3690/navi-frontend'
+        repository: '$(dockerUser)/navi-frontend'
         command: 'buildAndPush'
         dockerfile: 'client/Dockerfile'
         tags: '$(Build.BuildId)'
@@ -96,7 +91,7 @@ stages:
       condition: eq(variables.p_upd, 'true')
       inputs:
         containerRegistry: '$(dockerRegistryConn)'
-        repository: 'dharshan3690/plant-service'
+        repository: '$(dockerUser)/plant-service'
         command: 'buildAndPush'
         dockerfile: 'server/plant_service/Dockerfile'
         tags: '$(Build.BuildId)'
@@ -106,7 +101,7 @@ stages:
       condition: eq(variables.au_upd, 'true')
       inputs:
         containerRegistry: '$(dockerRegistryConn)'
-        repository: 'dharshan3690/auth-service'
+        repository: '$(dockerUser)/auth-service'
         command: 'buildAndPush'
         dockerfile: 'server/auth_service/Dockerfile'
         tags: '$(Build.BuildId)'
@@ -116,60 +111,49 @@ stages:
       condition: eq(variables.ai_upd, 'true')
       inputs:
         containerRegistry: '$(dockerRegistryConn)'
-        repository: 'dharshan3690/ai-service'
+        repository: '$(dockerUser)/ai-service'
         command: 'buildAndPush'
         dockerfile: 'server/ai_service/Dockerfile'
         tags: '$(Build.BuildId)'
 
-# --- STAGE 3: Deploy Infrastructure ---
-- stage: Deploy_Infrastructure
-  displayName: "2. Terraform Deploy"
+# --- STAGE 3: GitOps Manifest Update ---
+- stage: GitOps_Update
+  displayName: "2. GitOps Sync"
   dependsOn: [Detect_and_Resolve, Build_and_Push]
-  condition: succeeded('Detect_and_Resolve')
+  condition: succeeded()
   jobs:
-  - job: TerraformApply
+  - job: UpdateManifest
     pool:
       vmImage: 'ubuntu-latest'
     variables:
-      final_f_tag: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.f_tag'] ]
-      final_p_tag: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.p_tag'] ]
-      final_au_tag: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.au_tag'] ]
-      final_ai_tag: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.ai_tag'] ]
+      f_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.f_changed'] ]
+      p_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.p_changed'] ]
+      au_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.au_changed'] ]
+      ai_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.ai_changed'] ]
     steps:
     - checkout: self
+      persistCredentials: true 
 
     - script: |
-        echo "##vso[task.setvariable variable=agent_ip]$(curl -s ifconfig.me)"
-      displayName: "Fetch Agent IP"
+        # Install yq
+        sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
 
-    - task: TerraformInstaller@1
-      displayName: "Install Terraform"
-      inputs:
-        terraformVersion: 'latest'
+        # Update values.yaml only for components that were rebuilt
+        if [ "$(f_upd)" == "true" ]; then yq -i ".frontend.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml; fi
+        if [ "$(p_upd)" == "true" ]; then yq -i ".plant.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml; fi
+        if [ "$(au_upd)" == "true" ]; then yq -i ".auth.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml; fi
+        if [ "$(ai_upd)" == "true" ]; then yq -i ".ai.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml; fi
 
-    - task: TerraformTaskV4@4
-      displayName: "Init"
-      inputs:
-        provider: 'azurerm'
-        command: 'init'
-        workingDirectory: 'infra'
-        backendServiceArm: '$(azureServiceConnection)'
-        backendAzureRmResourceGroupName: 'Darshan.k_lean_rg'
-        backendAzureRmStorageAccountName: 'vhgstate123'
-        backendAzureRmContainerName: 'tfstate'
-        backendAzureRmKey: 'terraform.tfstate'
-
-    - task: TerraformTaskV4@4
-      displayName: "Apply"
-      inputs:
-        provider: 'azurerm'
-        command: 'apply'
-        workingDirectory: 'infra'
-        environmentServiceNameAzureRM: '$(azureServiceConnection)'
-        commandOptions: >
-          -var="db_password=$(DB_PASSWORD)" 
-          -var="frontend_tag=$(final_f_tag)" 
-          -var="plant_tag=$(final_p_tag)" 
-          -var="auth_tag=$(final_au_tag)" 
-          -var="ai_tag=$(final_ai_tag)"
-          -var="my_ip=$(agent_ip)"
+        # Git Push back to repo
+        git config --global user.email "devops-pipeline@navikenz.com"
+        git config --global user.name "Azure DevOps Pipeline"
+        
+        # Only commit if changes were actually made to values.yaml
+        if git diff --exit-code vhg-chart/values.yaml; then
+          echo "No manifest changes to commit."
+        else
+          git add vhg-chart/values.yaml
+          git commit -m "GitOps: update image tags to $(Build.BuildId) [skip ci]"
+          git push origin HEAD:fresh
+        fi
+      displayName: "Update vhg-chart/values.yaml and Sync Git"
