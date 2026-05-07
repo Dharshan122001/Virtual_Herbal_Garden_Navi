@@ -29,10 +29,17 @@ load_dotenv(dotenv_path=env_path)
 
 app = FastAPI(title="Herbal Garden - Plant Service")
 setup_cors(app)
-# trying the pipelien changes is done but not working 
+# trying the pipelien changes is done but not working at all
 #--- for gitops ----
 @app.get("/api/v1/test-deploy")
 async def test_api():
+    return {
+        "message": "GitOps Pipeline Success!",
+        "service": "Plant Service",
+        "version": "v1.0.1"
+    }
+@app.get("/api/v2/test-deploy")
+async def testing_api():
     return {
         "message": "GitOps Pipeline Success!",
         "service": "Plant Service",
