@@ -38,13 +38,7 @@ async def test_api():
         "service": "Plant Service",
         "version": "v1.0.1"
     }
-@app.get("/api/v2/test-deploy")
-async def testing_api():
-    return {
-        "message": "GitOps Pipeline Success!",
-        "service": "Plant Service",
-        "version": "v1.0.1"
-    }
+
 
 # --- Plant Catalog Endpoints ---
 
