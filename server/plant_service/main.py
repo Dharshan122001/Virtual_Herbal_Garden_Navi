@@ -29,7 +29,7 @@ load_dotenv(dotenv_path=env_path)
 
 app = FastAPI(title="Herbal Garden - Plant Service")
 setup_cors(app)
-# trying the pipelien changes is done
+# trying the pipelien changes is done but not working 
 #--- for gitops ----
 @app.get("/api/v1/test-deploy")
 async def test_api():
