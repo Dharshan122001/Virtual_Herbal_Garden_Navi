@@ -16,6 +16,7 @@ variables:
     value: 'dharshan3690'
 
 stages:
+# --- STAGE 0: Smart Impact Analysis ---
 - stage: Detect_and_Resolve
   displayName: "0. Smart Detect"
   jobs:
@@ -26,16 +27,34 @@ stages:
     - checkout: self
       fetchDepth: 0 
     - script: |
-        PREV_COMMIT=$(git rev-parse HEAD~1 2>/dev/null || echo "HEAD")
-        CHANGED_FILES=$(git diff --name-only $PREV_COMMIT HEAD)
+        # 1. Get changed files. Fallback to "ALL" if diff fails (e.g., first run)
+        CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "ALL")
+        echo "Files modified: $CHANGED_FILES"
         
-        # Detection Logic
-        [[ $(echo "$CHANGED_FILES" | grep '^client/') ]] && echo "##vso[task.setvariable variable=f_changed;isOutput=true]true" || echo "##vso[task.setvariable variable=f_changed;isOutput=true]false"
-        [[ $(echo "$CHANGED_FILES" | grep -qE "^(server/plant_service/|server/common/)") ]] && echo "##vso[task.setvariable variable=p_changed;isOutput=true]true" || echo "##vso[task.setvariable variable=p_changed;isOutput=true]false"
-        [[ $(echo "$CHANGED_FILES" | grep -qE "^(server/auth_service/|server/common/)") ]] && echo "##vso[task.setvariable variable=au_changed;isOutput=true]true" || echo "##vso[task.setvariable variable=au_changed;isOutput=true]false"
-        [[ $(echo "$CHANGED_FILES" | grep -qE "^(server/ai_service/|server/common/)") ]] && echo "##vso[task.setvariable variable=ai_changed;isOutput=true]true" || echo "##vso[task.setvariable variable=ai_changed;isOutput=true]false"
+        # 2. Initialize local variables
+        f=false; p=false; au=false; ai=false;
+
+        # 3. Logic: If "ALL" or specific paths changed, set to true
+        if [ "$CHANGED_FILES" == "ALL" ]; then
+           echo "Initial run or merge detected. Building all services."
+           f=true; p=true; au=true; ai=true;
+        else
+           [[ $(echo "$CHANGED_FILES" | grep '^client/') ]] && f=true
+           [[ $(echo "$CHANGED_FILES" | grep -qE "^(server/plant_service/|server/common/)") ]] && p=true
+           [[ $(echo "$CHANGED_FILES" | grep -qE "^(server/auth_service/|server/common/)") ]] && au=true
+           [[ $(echo "$CHANGED_FILES" | grep -qE "^(server/ai_service/|server/common/)") ]] && ai=true
+        fi
+
+        # 4. Export to Pipeline Variables
+        echo "##vso[task.setvariable variable=f_changed;isOutput=true]$f"
+        echo "##vso[task.setvariable variable=p_changed;isOutput=true]$p"
+        echo "##vso[task.setvariable variable=au_changed;isOutput=true]$au"
+        echo "##vso[task.setvariable variable=ai_changed;isOutput=true]$ai"
+        
+        echo "Detection Results -> Frontend: $f, Plant: $p, Auth: $au, AI: $ai"
       name: TagLogic
 
+# --- STAGE 1: Build and Push Images ---
 - stage: Build_and_Push
   displayName: "1. Build and Push"
   dependsOn: Detect_and_Resolve
@@ -49,6 +68,7 @@ stages:
       au_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.au_changed'] ]
       ai_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.ai_changed'] ]
     steps:
+    # --- Plant Service ---
     - task: Docker@2
       displayName: "Push Plant Service"
       condition: eq(variables.p_upd, 'true')
@@ -60,6 +80,7 @@ stages:
         buildContext: '.'
         tags: '$(Build.BuildId)'
 
+    # --- Auth Service ---
     - task: Docker@2
       displayName: "Push Auth Service"
       condition: eq(variables.au_upd, 'true')
@@ -71,6 +92,7 @@ stages:
         buildContext: '.'
         tags: '$(Build.BuildId)'
 
+    # --- AI Service ---
     - task: Docker@2
       displayName: "Push AI Service"
       condition: eq(variables.ai_upd, 'true')
@@ -82,7 +104,7 @@ stages:
         buildContext: '.'
         tags: '$(Build.BuildId)'
 
-    # --- UPDATED FRONTEND SECTION ---
+    # --- Frontend (Node.js Build + Docker) ---
     - task: NodeTool@0
       displayName: 'Install Node.js'
       condition: eq(variables.f_upd, 'true')
@@ -93,7 +115,7 @@ stages:
         cd client
         npm install
         npm run build
-      displayName: 'Build Frontend Project'
+      displayName: 'Compile Frontend'
       condition: eq(variables.f_upd, 'true')
 
     - task: Docker@2
@@ -107,6 +129,7 @@ stages:
         buildContext: '.'
         tags: '$(Build.BuildId)'
 
+# --- STAGE 2: GitOps Manifest Update ---
 - stage: GitOps_Update
   displayName: "2. GitOps Sync"
   dependsOn: [Detect_and_Resolve, Build_and_Push]
@@ -124,17 +147,25 @@ stages:
     - checkout: self
       persistCredentials: true 
     - script: |
+        # Download yq
         sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
+        
+        # Update tags in values.yaml only if built
         if [ "$(f_upd)" == "true" ]; then yq -i ".frontend.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml; fi
         if [ "$(p_upd)" == "true" ]; then yq -i ".plant.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml; fi
         if [ "$(au_upd)" == "true" ]; then yq -i ".auth.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml; fi
         if [ "$(ai_upd)" == "true" ]; then yq -i ".ai.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml; fi
+        
+        # Git config
         git config --global user.email "devops-pipeline@navikenz.com"
         git config --global user.name "Azure DevOps Pipeline"
+        
+        # Only push if there are actual changes
         if ! git diff --exit-code vhg-chart/values.yaml; then
           git add vhg-chart/values.yaml
           git commit -m "GitOps: update image tags to $(Build.BuildId) [skip ci]"
           git push origin HEAD:fresh
+        else
+          echo "No image tags to update in manifest."
         fi
-      displayName: "Sync Manifests"
-      
+      displayName: "Update Manifest and Sync to Git"
