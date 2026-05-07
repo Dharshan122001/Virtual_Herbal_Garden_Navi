@@ -16,7 +16,6 @@ variables:
     value: 'dharshan3690'
 
 stages:
-# --- STAGE 0: Smart Impact Analysis ---
 - stage: Detect_and_Resolve
   displayName: "0. Smart Detect"
   jobs:
@@ -27,16 +26,11 @@ stages:
     - checkout: self
       fetchDepth: 0 
     - script: |
-        # 1. Identify changes. Fallback to "ALL" if no parent commit exists
         CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "ALL")
         echo "Files modified: $CHANGED_FILES"
-        
-        # 2. Default everything to false
         f=false; p=false; au=false; ai=false;
 
-        # 3. Path Matching Logic
         if [ "$CHANGED_FILES" == "ALL" ]; then
-           echo "Initial run detected - building everything."
            f=true; p=true; au=true; ai=true;
         else
            for file in $CHANGED_FILES; do
@@ -48,17 +42,12 @@ stages:
              esac
            done
         fi
-
-        # 4. Set Pipeline Variables
         echo "##vso[task.setvariable variable=f_changed;isOutput=true]$f"
         echo "##vso[task.setvariable variable=p_changed;isOutput=true]$p"
         echo "##vso[task.setvariable variable=au_changed;isOutput=true]$au"
         echo "##vso[task.setvariable variable=ai_changed;isOutput=true]$ai"
-
-        echo "Detection Summary -> Frontend: $f, Plant: $p, Auth: $au, AI: $ai"
       name: TagLogic
 
-# --- STAGE 1: Build and Push ---
 - stage: Build_and_Push
   displayName: "1. Build and Push"
   dependsOn: Detect_and_Resolve
@@ -72,7 +61,6 @@ stages:
       au_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.au_changed'] ]
       ai_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.ai_changed'] ]
     steps:
-    # --- Plant Service ---
     - task: Docker@2
       displayName: "Push Plant Service"
       condition: eq(variables.p_upd, 'true')
@@ -80,11 +68,10 @@ stages:
         containerRegistry: '$(dockerRegistryConn)'
         repository: '$(dockerUser)/plant-service'
         command: 'buildAndPush'
-        dockerfile: 'server/plant_service/Dockerfile'
-        buildContext: '.'
+        dockerfile: '$(Build.SourcesDirectory)/server/plant_service/Dockerfile'
+        buildContext: '$(Build.SourcesDirectory)'
         tags: '$(Build.BuildId)'
 
-    # --- Auth Service ---
     - task: Docker@2
       displayName: "Push Auth Service"
       condition: eq(variables.au_upd, 'true')
@@ -92,11 +79,10 @@ stages:
         containerRegistry: '$(dockerRegistryConn)'
         repository: '$(dockerUser)/auth-service'
         command: 'buildAndPush'
-        dockerfile: 'server/auth_service/Dockerfile'
-        buildContext: '.'
+        dockerfile: '$(Build.SourcesDirectory)/server/auth_service/Dockerfile'
+        buildContext: '$(Build.SourcesDirectory)'
         tags: '$(Build.BuildId)'
 
-    # --- AI Service ---
     - task: Docker@2
       displayName: "Push AI Service"
       condition: eq(variables.ai_upd, 'true')
@@ -104,11 +90,10 @@ stages:
         containerRegistry: '$(dockerRegistryConn)'
         repository: '$(dockerUser)/ai-service'
         command: 'buildAndPush'
-        dockerfile: 'server/ai_service/Dockerfile'
-        buildContext: '.'
+        dockerfile: '$(Build.SourcesDirectory)/server/ai_service/Dockerfile'
+        buildContext: '$(Build.SourcesDirectory)'
         tags: '$(Build.BuildId)'
 
-    # --- Frontend Build (Build code first, then Dockerize) ---
     - task: NodeTool@0
       displayName: 'Install Node.js'
       condition: eq(variables.f_upd, 'true')
@@ -129,11 +114,10 @@ stages:
         containerRegistry: '$(dockerRegistryConn)'
         repository: '$(dockerUser)/navi-frontend'
         command: 'buildAndPush'
-        dockerfile: 'client/Dockerfile'
-        buildContext: '.'
+        dockerfile: '$(Build.SourcesDirectory)/client/Dockerfile'
+        buildContext: '$(Build.SourcesDirectory)'
         tags: '$(Build.BuildId)'
 
-# --- STAGE 2: GitOps Sync ---
 - stage: GitOps_Update
   displayName: "2. GitOps Sync"
   dependsOn: [Detect_and_Resolve, Build_and_Push]
@@ -152,20 +136,16 @@ stages:
       persistCredentials: true 
     - script: |
         sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
+        [ "$(f_upd)" == "true" ] && yq -i ".frontend.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
+        [ "$(p_upd)" == "true" ] && yq -i ".plant.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
+        [ "$(au_upd)" == "true" ] && yq -i ".auth.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
+        [ "$(ai_upd)" == "true" ] && yq -i ".ai.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
         
-        if [ "$(f_upd)" == "true" ]; then yq -i ".frontend.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml; fi
-        if [ "$(p_upd)" == "true" ]; then yq -i ".plant.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml; fi
-        if [ "$(au_upd)" == "true" ]; then yq -i ".auth.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml; fi
-        if [ "$(ai_upd)" == "true" ]; then yq -i ".ai.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml; fi
-
-        git config --global user.email "devops-pipeline@navikenz.com"
-        git config --global user.name "Azure DevOps Pipeline"
-        
+        git config --global user.email "devops@navikenz.com"
+        git config --global user.name "Pipeline"
         if ! git diff --exit-code vhg-chart/values.yaml; then
           git add vhg-chart/values.yaml
-          git commit -m "GitOps: update image tags to $(Build.BuildId) [skip ci]"
+          git commit -m "GitOps: image update $(Build.BuildId) [skip ci]"
           git push origin HEAD:fresh
-        else
-          echo "No image tags changed in values.yaml"
         fi
-      displayName: "Sync Tags to Git"
+      displayName: "Sync Tags"
