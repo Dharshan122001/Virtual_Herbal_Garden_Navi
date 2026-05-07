@@ -20,24 +20,22 @@ stages:
   displayName: "0. Smart Detect"
   jobs:
   - job: ResolveTags
-    pool:
-      vmImage: 'ubuntu-latest'
+    pool: { vmImage: 'ubuntu-latest' }
     steps:
     - checkout: self
       fetchDepth: 0 
     - script: |
         CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "ALL")
         f=false; p=false; au=false; ai=false;
-
         if [ "$CHANGED_FILES" == "ALL" ]; then
            f=true; p=true; au=true; ai=true;
         else
            for file in $CHANGED_FILES; do
              case "$file" in
                client/*) f=true ;;
-               server/plant_service/*|server/common/*) p=true ;;
-               server/auth_service/*|server/common/*) au=true ;;
-               server/ai_service/*|server/common/*) ai=true ;;
+               server/plant_service/*|server/common/*|server/requirements.txt) p=true ;;
+               server/auth_service/*|server/common/*|server/requirements.txt) au=true ;;
+               server/ai_service/*|server/common/*|server/requirements.txt) ai=true ;;
              esac
            done
         fi
@@ -52,69 +50,70 @@ stages:
   dependsOn: Detect_and_Resolve
   jobs:
   - job: DockerBuild
-    pool:
-      vmImage: 'ubuntu-latest'
+    pool: { vmImage: 'ubuntu-latest' }
     variables:
-      f_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.f_changed'] ]
       p_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.p_changed'] ]
       au_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.au_changed'] ]
       ai_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.ai_changed'] ]
+      f_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.f_changed'] ]
     steps:
     - task: Docker@2
-      displayName: "Login to Docker Hub"
+      displayName: "Login"
       inputs:
         containerRegistry: '$(dockerRegistryConn)'
         command: 'login'
 
-    # --- Plant Service ---
     - script: |
-        cp -r server/common server/plant_service/common
-        cd server/plant_service
-        docker build -t $(dockerUser)/plant-service:$(Build.BuildId) .
-        docker push $(dockerUser)/plant-service:$(Build.BuildId)
-      displayName: "Build & Push Plant Service"
-      condition: eq(variables.p_upd, 'true')
+        set -e
+        # 1. Build Plant Service
+        if [ "$(p_upd)" == "true" ]; then
+          cp server/requirements.txt server/plant_service/
+          cp -r server/common server/plant_service/common
+          cd server/plant_service
+          docker build -t $(dockerUser)/plant-service:$(Build.BuildId) .
+          docker push $(dockerUser)/plant-service:$(Build.BuildId)
+          cd ../..
+        fi
 
-    # --- Auth Service ---
-    - script: |
-        cp -r server/common server/auth_service/common
-        cd server/auth_service
-        docker build -t $(dockerUser)/auth-service:$(Build.BuildId) .
-        docker push $(dockerUser)/auth-service:$(Build.BuildId)
-      displayName: "Build & Push Auth Service"
-      condition: eq(variables.au_upd, 'true')
+        # 2. Build Auth Service
+        if [ "$(au_upd)" == "true" ]; then
+          cp server/requirements.txt server/auth_service/
+          cp -r server/common server/auth_service/common
+          cd server/auth_service
+          docker build -t $(dockerUser)/auth-service:$(Build.BuildId) .
+          docker push $(dockerUser)/auth-service:$(Build.BuildId)
+          cd ../..
+        fi
 
-    # --- AI Service ---
-    - script: |
-        cp -r server/common server/ai_service/common
-        cd server/ai_service
-        docker build -t $(dockerUser)/ai-service:$(Build.BuildId) .
-        docker push $(dockerUser)/ai-service:$(Build.BuildId)
-      displayName: "Build & Push AI Service"
-      condition: eq(variables.ai_upd, 'true')
+        # 3. Build AI Service
+        if [ "$(ai_upd)" == "true" ]; then
+          cp server/requirements.txt server/ai_service/
+          cp -r server/common server/ai_service/common
+          cd server/ai_service
+          docker build -t $(dockerUser)/ai-service:$(Build.BuildId) .
+          docker push $(dockerUser)/ai-service:$(Build.BuildId)
+          cd ../..
+        fi
+      displayName: "Inject and Build Services"
 
     # --- Frontend ---
-    - task: NodeTool@0
-      inputs: { versionSpec: '20.x' }
-      condition: eq(variables.f_upd, 'true')
-
     - script: |
-        cd client
-        npm install
-        npm run build
-        docker build -t $(dockerUser)/navi-frontend:$(Build.BuildId) .
-        docker push $(dockerUser)/navi-frontend:$(Build.BuildId)
-      displayName: 'Build & Push Frontend'
-      condition: eq(variables.f_upd, 'true')
+        set -e
+        if [ "$(f_upd)" == "true" ]; then
+          cd client
+          npm install
+          npm run build
+          docker build -t $(dockerUser)/navi-frontend:$(Build.BuildId) .
+          docker push $(dockerUser)/navi-frontend:$(Build.BuildId)
+        fi
+      displayName: "Build and Push Frontend"
 
 - stage: GitOps_Update
   displayName: "2. GitOps Sync"
   dependsOn: [Detect_and_Resolve, Build_and_Push]
-  condition: succeeded()
   jobs:
   - job: UpdateManifest
-    pool:
-      vmImage: 'ubuntu-latest'
+    pool: { vmImage: 'ubuntu-latest' }
     variables:
       f_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.f_changed'] ]
       p_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.p_changed'] ]
@@ -130,11 +129,11 @@ stages:
         [ "$(au_upd)" == "true" ] && yq -i ".auth.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
         [ "$(ai_upd)" == "true" ] && yq -i ".ai.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
         
-        git config --global user.email "pipeline@navikenz.com"
-        git config --global user.name "GitOps Bot"
+        git config --global user.email "devops@navikenz.com"
+        git config --global user.name "PipelineBot"
         if ! git diff --exit-code vhg-chart/values.yaml; then
           git add vhg-chart/values.yaml
-          git commit -m "GitOps: update tags to $(Build.BuildId) [skip ci]"
+          git commit -m "GitOps: deploy $(Build.BuildId) [skip ci]"
           git push origin HEAD:fresh
         fi
-      displayName: "Sync Tags to Git"
+      displayName: "Sync to Git"
