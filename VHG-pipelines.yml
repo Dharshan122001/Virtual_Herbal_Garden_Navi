@@ -16,23 +16,17 @@ variables:
     value: 'dharshan3690'
 
 stages:
-# --- STAGE 0: Smart Impact Analysis ---
 - stage: Detect_and_Resolve
   displayName: "0. Smart Detect"
   jobs:
   - job: ResolveTags
-    pool:
-      vmImage: 'ubuntu-latest'
+    pool: { vmImage: 'ubuntu-latest' }
     steps:
     - checkout: self
       fetchDepth: 0 
     - script: |
-        # Identify changes. Fallback to "ALL" if no parent commit exists
         CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "ALL")
-        echo "Files modified: $CHANGED_FILES"
-        
         f=false; p=false; au=false; ai=false;
-
         if [ "$CHANGED_FILES" == "ALL" ]; then
            f=true; p=true; au=true; ai=true;
         else
@@ -45,38 +39,34 @@ stages:
              esac
            done
         fi
-
         echo "##vso[task.setvariable variable=f_changed;isOutput=true]$f"
         echo "##vso[task.setvariable variable=p_changed;isOutput=true]$p"
         echo "##vso[task.setvariable variable=au_changed;isOutput=true]$au"
         echo "##vso[task.setvariable variable=ai_changed;isOutput=true]$ai"
       name: TagLogic
 
-# --- STAGE 1: Manual Bash Build and Push ---
 - stage: Build_and_Push
   displayName: "1. Build and Push"
   dependsOn: Detect_and_Resolve
   jobs:
   - job: DockerBuild
-    pool:
-      vmImage: 'ubuntu-latest'
+    pool: { vmImage: 'ubuntu-latest' }
     variables:
-      f_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.f_changed'] ]
       p_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.p_changed'] ]
       au_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.au_changed'] ]
       ai_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.ai_changed'] ]
+      f_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.f_changed'] ]
     steps:
     - task: Docker@2
-      displayName: "Login to Docker Hub"
+      displayName: "Docker Hub Login"
       inputs:
         containerRegistry: '$(dockerRegistryConn)'
         command: 'login'
 
     - script: |
         set -e
-        # 1. Plant Service
+        # 1. Build Plant Service
         if [ "$(p_upd)" == "true" ]; then
-          echo "Building Plant Service..."
           cp server/requirements.txt server/plant_service/
           cp -r server/common server/plant_service/common
           cd server/plant_service
@@ -85,9 +75,8 @@ stages:
           cd ../..
         fi
 
-        # 2. Auth Service
+        # 2. Build Auth Service
         if [ "$(au_upd)" == "true" ]; then
-          echo "Building Auth Service..."
           cp server/requirements.txt server/auth_service/
           cp -r server/common server/auth_service/common
           cd server/auth_service
@@ -96,9 +85,8 @@ stages:
           cd ../..
         fi
 
-        # 3. AI Service
+        # 3. Build AI Service
         if [ "$(ai_upd)" == "true" ]; then
-          echo "Building AI Service..."
           cp server/requirements.txt server/ai_service/
           cp -r server/common server/ai_service/common
           cd server/ai_service
@@ -108,7 +96,6 @@ stages:
         fi
       displayName: "Inject Code & Build Backend"
 
-    # --- Frontend Build ---
     - script: |
         set -e
         if [ "$(f_upd)" == "true" ]; then
@@ -120,15 +107,13 @@ stages:
         fi
       displayName: "Build and Push Frontend"
 
-# --- STAGE 2: GitOps Sync ---
 - stage: GitOps_Update
   displayName: "2. GitOps Sync"
   dependsOn: [Detect_and_Resolve, Build_and_Push]
   condition: succeeded()
   jobs:
   - job: UpdateManifest
-    pool:
-      vmImage: 'ubuntu-latest'
+    pool: { vmImage: 'ubuntu-latest' }
     variables:
       f_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.f_changed'] ]
       p_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.p_changed'] ]
@@ -139,20 +124,18 @@ stages:
       persistCredentials: true 
     - script: |
         sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
-        
         [ "$(f_upd)" == "true" ] && yq -i ".frontend.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
         [ "$(p_upd)" == "true" ] && yq -i ".plant.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
         [ "$(au_upd)" == "true" ] && yq -i ".auth.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
         [ "$(ai_upd)" == "true" ] && yq -i ".ai.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
         
-        git config --global user.email "devops@navikenz.com"
+        git config --global user.email "pipeline@navikenz.com"
         git config --global user.name "GitOps Bot"
-        
         if ! git diff --exit-code vhg-chart/values.yaml; then
           git add vhg-chart/values.yaml
-          git commit -m "GitOps: update images to build $(Build.BuildId) [skip ci]"
-          git push origin HEAD:fresh
+          git commit -m "GitOps: update build $(Build.BuildId) [skip ci]"
+          git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" push origin fresh
         else
-          echo "No manifest changes detected."
+          echo "No image tags to update."
         fi
-      displayName: "Sync Helm Tags"
+      displayName: "Sync Tags to Git"
