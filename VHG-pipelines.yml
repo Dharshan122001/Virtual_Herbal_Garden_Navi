@@ -68,6 +68,7 @@ stages:
         containerRegistry: '$(dockerRegistryConn)'
         repository: '$(dockerUser)/plant-service'
         command: 'buildAndPush'
+        # USE ABSOLUTE PATHS HERE
         dockerfile: '$(Build.SourcesDirectory)/server/plant_service/Dockerfile'
         buildContext: '$(Build.SourcesDirectory)'
         tags: '$(Build.BuildId)'
