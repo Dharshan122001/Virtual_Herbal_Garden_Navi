@@ -16,7 +16,6 @@ variables:
     value: 'dharshan3690'
 
 stages:
-# --- STAGE 0: Smart Impact Analysis ---
 - stage: Detect_and_Resolve
   displayName: "0. Smart Detect"
   jobs:
@@ -28,8 +27,6 @@ stages:
       fetchDepth: 0 
     - script: |
         CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "ALL")
-        echo "Files modified: $CHANGED_FILES"
-        
         f=false; p=false; au=false; ai=false;
 
         if [ "$CHANGED_FILES" == "ALL" ]; then
@@ -44,14 +41,12 @@ stages:
              esac
            done
         fi
-
         echo "##vso[task.setvariable variable=f_changed;isOutput=true]$f"
         echo "##vso[task.setvariable variable=p_changed;isOutput=true]$p"
         echo "##vso[task.setvariable variable=au_changed;isOutput=true]$au"
         echo "##vso[task.setvariable variable=ai_changed;isOutput=true]$ai"
       name: TagLogic
 
-# --- STAGE 1: Build and Push ---
 - stage: Build_and_Push
   displayName: "1. Build and Push"
   dependsOn: Detect_and_Resolve
@@ -66,6 +61,10 @@ stages:
       ai_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.ai_changed'] ]
     steps:
     # --- Plant Service ---
+    - script: cp -r server/common server/plant_service/common
+      displayName: "Inject Common into Plant"
+      condition: eq(variables.p_upd, 'true')
+
     - task: Docker@2
       displayName: "Push Plant Service"
       condition: eq(variables.p_upd, 'true')
@@ -74,10 +73,14 @@ stages:
         repository: '$(dockerUser)/plant-service'
         command: 'buildAndPush'
         dockerfile: 'server/plant_service/Dockerfile'
-        buildContext: '.' # This is critical for Monorepo path resolution
+        buildContext: 'server/plant_service' 
         tags: '$(Build.BuildId)'
 
     # --- Auth Service ---
+    - script: cp -r server/common server/auth_service/common
+      displayName: "Inject Common into Auth"
+      condition: eq(variables.au_upd, 'true')
+
     - task: Docker@2
       displayName: "Push Auth Service"
       condition: eq(variables.au_upd, 'true')
@@ -86,10 +89,14 @@ stages:
         repository: '$(dockerUser)/auth-service'
         command: 'buildAndPush'
         dockerfile: 'server/auth_service/Dockerfile'
-        buildContext: '.'
+        buildContext: 'server/auth_service'
         tags: '$(Build.BuildId)'
 
     # --- AI Service ---
+    - script: cp -r server/common server/ai_service/common
+      displayName: "Inject Common into AI"
+      condition: eq(variables.ai_upd, 'true')
+
     - task: Docker@2
       displayName: "Push AI Service"
       condition: eq(variables.ai_upd, 'true')
@@ -98,21 +105,19 @@ stages:
         repository: '$(dockerUser)/ai-service'
         command: 'buildAndPush'
         dockerfile: 'server/ai_service/Dockerfile'
-        buildContext: '.'
+        buildContext: 'server/ai_service'
         tags: '$(Build.BuildId)'
 
     # --- Frontend ---
     - task: NodeTool@0
-      displayName: 'Install Node.js'
+      inputs: { versionSpec: '20.x' }
       condition: eq(variables.f_upd, 'true')
-      inputs:
-        versionSpec: '20.x'
 
     - script: |
         cd client
         npm install
         npm run build
-      displayName: 'Build Frontend Project'
+      displayName: 'Build Frontend'
       condition: eq(variables.f_upd, 'true')
 
     - task: Docker@2
@@ -123,18 +128,16 @@ stages:
         repository: '$(dockerUser)/navi-frontend'
         command: 'buildAndPush'
         dockerfile: 'client/Dockerfile'
-        buildContext: '.'
+        buildContext: 'client'
         tags: '$(Build.BuildId)'
 
-# --- STAGE 2: GitOps Sync ---
 - stage: GitOps_Update
   displayName: "2. GitOps Sync"
   dependsOn: [Detect_and_Resolve, Build_and_Push]
   condition: succeeded()
   jobs:
   - job: UpdateManifest
-    pool:
-      vmImage: 'ubuntu-latest'
+    pool: { vmImage: 'ubuntu-latest' }
     variables:
       f_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.f_changed'] ]
       p_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.p_changed'] ]
@@ -149,12 +152,11 @@ stages:
         [ "$(p_upd)" == "true" ] && yq -i ".plant.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
         [ "$(au_upd)" == "true" ] && yq -i ".auth.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
         [ "$(ai_upd)" == "true" ] && yq -i ".ai.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
-        
-        git config --global user.email "devops@navikenz.com"
-        git config --global user.name "Pipeline"
+        git config --global user.email "pipeline@navikenz.com"
+        git config --global user.name "GitOps Bot"
         if ! git diff --exit-code vhg-chart/values.yaml; then
           git add vhg-chart/values.yaml
-          git commit -m "GitOps: image update $(Build.BuildId) [skip ci]"
+          git commit -m "GitOps: deploy $(Build.BuildId) [skip ci]"
           git push origin HEAD:fresh
         fi
-      displayName: "Sync Tags"
+      displayName: "Sync to Git"

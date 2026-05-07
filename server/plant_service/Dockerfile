@@ -1,31 +1,22 @@
-# FROM python:3.10-slim-buster
-
-# WORKDIR /app
-
-# COPY . /app
-
-# RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-# RUN pip install --no-cache-dir -r requirements.txt
-
-# EXPOSE 8005
-
-# CMD ["python", "-m", "uvicorn", "plant_service.main:app", "--host", "0.0.0.0", "--port", "8005"]
-
 FROM python:3.10-slim-buster
 
 WORKDIR /app
 
-# Paths are relative to the repository root because buildContext is '.'
-COPY server/plant_service/requirements.txt .
+# 1. Since the context is now 'server/plant_service/', 
+# the requirements.txt is right here in the current folder.
+COPY requirements.txt .
 
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the service and common folder specifically
-COPY server/plant_service/ ./plant_service/
-COPY server/common/ ./common/
+# 2. Copy the plant_service code into a subfolder 
+# so 'import plant_service.main' works correctly
+COPY . ./plant_service/
+
+# 3. Copy the 'common' folder (which the pipeline will provide)
+COPY common/ ./common/
 
 EXPOSE 8005
 
-# Run using the module path so common is importable
+# Run as a module so it can see the common folder at the same level
 CMD ["python", "-m", "uvicorn", "plant_service.main:app", "--host", "0.0.0.0", "--port", "8005"]
