@@ -27,7 +27,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 BASE_URL = os.getenv("BASE_URL", "https://virtual-herbal-garden-r1uw.onrender.com")
 
 # =======================
-# HELPERS # try2
+# HELPERS # try3
 # =======================
 def create_access_token(data: dict):
     payload = data.copy()
