@@ -16,6 +16,7 @@ variables:
     value: 'dharshan3690'
 
 stages:
+# 0. Identify what changed
 - stage: Detect_and_Resolve
   displayName: "0. Smart Detect"
   jobs:
@@ -45,6 +46,7 @@ stages:
         echo "##vso[task.setvariable variable=ai_changed;isOutput=true]$ai"
       name: TagLogic
 
+# 1. Build only modified services
 - stage: Build_and_Push
   displayName: "1. Build and Push"
   dependsOn: Detect_and_Resolve
@@ -58,59 +60,52 @@ stages:
       f_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.f_changed'] ]
     steps:
     - task: Docker@2
-      displayName: "Docker Hub Login"
+      displayName: "Login"
       inputs:
         containerRegistry: '$(dockerRegistryConn)'
         command: 'login'
 
     - script: |
         set -e
-        # 1. Build Plant Service
+        # Build Plant Service
         if [ "$(p_upd)" == "true" ]; then
           cp server/requirements.txt server/plant_service/
           cp -r server/common server/plant_service/common
-          cd server/plant_service
-          docker build -t $(dockerUser)/plant-service:$(Build.BuildId) .
+          cd server/plant_service && docker build -t $(dockerUser)/plant-service:$(Build.BuildId) .
           docker push $(dockerUser)/plant-service:$(Build.BuildId)
           cd ../..
         fi
-
-        # 2. Build Auth Service
+        # Build Auth Service
         if [ "$(au_upd)" == "true" ]; then
           cp server/requirements.txt server/auth_service/
           cp -r server/common server/auth_service/common
-          cd server/auth_service
-          docker build -t $(dockerUser)/auth-service:$(Build.BuildId) .
+          cd server/auth_service && docker build -t $(dockerUser)/auth-service:$(Build.BuildId) .
           docker push $(dockerUser)/auth-service:$(Build.BuildId)
           cd ../..
         fi
-
-        # 3. Build AI Service
+        # Build AI Service
         if [ "$(ai_upd)" == "true" ]; then
           cp server/requirements.txt server/ai_service/
           cp -r server/common server/ai_service/common
-          cd server/ai_service
-          docker build -t $(dockerUser)/ai-service:$(Build.BuildId) .
+          cd server/ai_service && docker build -t $(dockerUser)/ai-service:$(Build.BuildId) .
           docker push $(dockerUser)/ai-service:$(Build.BuildId)
           cd ../..
         fi
-      displayName: "Inject Code & Build Backend"
+      displayName: "Inject and Build Backend"
 
     - script: |
         set -e
         if [ "$(f_upd)" == "true" ]; then
-          cd client
-          npm install
-          npm run build
+          cd client && npm install && npm run build
           docker build -t $(dockerUser)/navi-frontend:$(Build.BuildId) .
           docker push $(dockerUser)/navi-frontend:$(Build.BuildId)
         fi
-      displayName: "Build and Push Frontend"
+      displayName: "Build Frontend"
 
+# 2. Update Helm Chart
 - stage: GitOps_Update
   displayName: "2. GitOps Sync"
   dependsOn: [Detect_and_Resolve, Build_and_Push]
-  condition: succeeded()
   jobs:
   - job: UpdateManifest
     pool: { vmImage: 'ubuntu-latest' }
@@ -129,13 +124,12 @@ stages:
         [ "$(au_upd)" == "true" ] && yq -i ".auth.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
         [ "$(ai_upd)" == "true" ] && yq -i ".ai.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
         
-        git config --global user.email "pipeline@navikenz.com"
-        git config --global user.name "GitOps Bot"
+        git config --global user.email "devops@navikenz.com"
+        git config --global user.name "PipelineBot"
         if ! git diff --exit-code vhg-chart/values.yaml; then
           git add vhg-chart/values.yaml
-          git commit -m "GitOps: update build $(Build.BuildId) [skip ci]"
-          git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" push origin fresh
-        else
-          echo "No image tags to update."
+          git commit -m "GitOps: deploy $(Build.BuildId) [skip ci]"
+          # THE FIX: Explicitly push current HEAD to the 'fresh' branch
+          git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" push origin HEAD:fresh
         fi
-      displayName: "Sync Tags to Git"
+      displayName: "Sync Manifest"
