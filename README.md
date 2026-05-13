@@ -90,3 +90,16 @@ az storage container create \
 
 
 terraform destroy -var="db_password=Vinu9945385205" -var="frontend_tag=1764" -var="plant_tag=1743" -var="auth_tag=1743" -var="ai_tag=1743" -var="my_ip=$(curl -s ifconfig.me)"
+
+
+terraform destory -var-file="secrets.tfvars" -lock=false
+terraform apply -var-file="secrets.tfvars" -lock=false \                                          
+  -target=helm_release.ingress_nginx \
+  -target=kubernetes_secret_v1.vhg_db_config \
+  -target=azurerm_postgresql_flexible_server_firewall_rule.allow_azure
+
+terraform destory -var-file="secrets.tfvars" -lock=false \                                          
+  -target=kubernetes_namespace_v1.argocd \    
+  -target=kubernetes_namespace_v1.vhg_namespace \                     
+  -target=kubernetes_secret_v1.vhg_repo_creds \
+  -target=helm_release.argocd
