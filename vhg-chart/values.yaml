@@ -1,7 +1,7 @@
 namespace: vhg-1
 frontend:
   image: dharshan3690/navi-frontend
-  tag: latest
+  tag: "1800"
   port: 80
 plant:
   image: dharshan3690/plant-service
