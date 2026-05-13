@@ -21,7 +21,7 @@ if not PLANTNET_API_KEY:
     raise RuntimeError("PLANTNET_API_KEY missing")
 
 # =========================
-# APP
+# APP # try2
 # =========================
 app = FastAPI(title="Herbal Garden - AI Service")
 setup_cors(app)
