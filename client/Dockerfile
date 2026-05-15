@@ -1,0 +1,61 @@
+# # # --- Simplified Production Nginx Dockerfile ---
+# # FROM nginx:alpine
+
+# # # 1. Clean default files
+# # RUN rm -rf /usr/share/nginx/html/*
+
+# # # 2. Copy the 'dist' folder we just built locally
+# # COPY dist /usr/share/nginx/html
+
+# # # 3. Copy your custom config and entrypoint
+# # COPY nginx.conf /etc/nginx/conf.d/default.conf
+# # COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# # # 4. Permissions and Setup
+# # RUN chmod +x /usr/local/bin/entrypoint.sh
+# # RUN touch /usr/share/nginx/html/config.js && chmod 666 /usr/share/nginx/html/config.js
+
+# # EXPOSE 80
+
+# # ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+# # CMD ["nginx", "-g", "daemon off;"]
+
+
+# FROM nginx:alpine
+
+# RUN rm -rf /usr/share/nginx/html/*
+
+# # Copy from the client subfolder
+# COPY client/dist /usr/share/nginx/html
+# COPY client/nginx.conf /etc/nginx/conf.d/default.conf
+# COPY client/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# RUN chmod +x /usr/local/bin/entrypoint.sh
+# RUN touch /usr/share/nginx/html/config.js && chmod 666 /usr/share/nginx/html/config.js
+
+# EXPOSE 80
+
+# ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+# CMD ["nginx", "-g", "daemon off;"]
+
+FROM nginx:alpine
+
+# 1. Clean default files
+RUN rm -rf /usr/share/nginx/html/*
+
+# 2. Copy the 'dist' folder (already built by npm run build in the pipeline)
+# Build context is '.', so dist is in the current directory
+COPY dist /usr/share/nginx/html
+
+# 3. Copy your custom config and entrypoint
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# 4. Permissions and Setup
+RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN touch /usr/share/nginx/html/config.js && chmod 666 /usr/share/nginx/html/config.js
+
+EXPOSE 80
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]

@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plant-service
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: plant-service
+  template:
+    metadata:
+      labels:
+        app: plant-service
+    spec:
+      containers:
+      - name: plant-service
+        image: "{{ .Values.plant.image }}:{{ .Values.plant.tag }}"
+        ports:
+        - containerPort: 8005
+
+        envFrom:
+        - secretRef:
+            name: vhg-secrets
+
+        livenessProbe:
+          httpGet:
+            path: /docs
+            port: 8005
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+        readinessProbe:
+          httpGet:
+            path: /docs
+            port: 8005
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "20m"
+          limits:
+            memory: "256Mi"
+            cpu: "150m"
