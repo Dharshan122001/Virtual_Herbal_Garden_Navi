@@ -11,7 +11,9 @@ resource "helm_release" "datadog_otel" {
   chart      = "opentelemetry-collector"
   namespace  = kubernetes_namespace_v1.datadog.metadata[0].name
   version    = "0.110.0"
-  wait       = true
+
+  # CHANGE TO FALSE: Prevents Terraform from freezing if pods take time to pull images
+  wait = false
 
   set = [
     {
@@ -30,7 +32,6 @@ resource "helm_release" "datadog_otel" {
     image:
       repository: "otel/opentelemetry-collector-contrib"
 
-    # EXPOSE PORTS ON THE KUBERNETES INTERNAL LOAD BALANCER SERVICE Layer
     ports:
       otlp:
         enabled: true
@@ -69,7 +70,7 @@ resource "helm_release" "datadog_otel" {
         datadog:
           api:
             key: "${var.datadog_api_key}"
-          site: "${var.datadog_site}"
+            site: "${var.datadog_site}"
 
       service:
         pipelines:

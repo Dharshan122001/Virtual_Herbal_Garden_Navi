@@ -10,12 +10,25 @@ if [[ ! -f "secrets.tfvars" ]]; then
   exit 1
 fi
 
-# Cleanup failed Helm release to avoid name reuse conflicts
+# Robust Cleanup Engine for Failed/Stuck Helm States
 if command -v helm >/dev/null 2>&1; then
-  release_status="$(helm status datadog-otel -n datadog 2>/dev/null | grep -E '^STATUS:' | awk '{print $2}' || true)"
-  if [[ "$release_status" == "failed" ]]; then
-    echo "==> Found failed Helm release datadog-otel in namespace datadog. Uninstalling it before Terraform apply."
-    helm uninstall datadog-otel -n datadog || true
+  echo "==> Verifying datadog-otel Helm release status..."
+  
+  # Fetch status safely. If the release doesn't exist, helm returns an error, handled gracefully by '|| true'
+  raw_status="$(helm status datadog-otel -n datadog 2>/dev/null | grep -i "status:" || echo "")"
+  
+  # If a release exists, check if it's healthy. If it is NOT "deployed", purge it to unlock Terraform.
+  if [[ -n "$raw_status" ]]; then
+    if [[ "$raw_status" != *"deployed"* ]]; then
+      echo "==> Found non-healthy/stuck Helm release datadog-otel (Raw: $raw_status)."
+      echo "==> Purging corrupted release state before running Terraform..."
+      helm uninstall datadog-otel -n datadog --wait || true
+      
+      # Optional: Double-check and delete remaining hanging pods if necessary
+      kubectl delete pods -l app.kubernetes.io/name=opentelemetry-collector -n datadog --force --grace-period=0 2>/dev/null || true
+    else
+      echo "==> Existing datadog-otel release is healthy and deployed. Proceeding cleanly."
+    fi
   fi
 fi
 
