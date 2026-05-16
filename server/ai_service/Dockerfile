@@ -6,8 +6,11 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-RUN opentelemetry-bootstrap -a install
+
+# ❌ REMOVED: RUN opentelemetry-bootstrap -a install
 
 COPY . .
 EXPOSE 8007
-CMD ["opentelemetry-instrument", "python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8007"]
+
+# ✅ UPDATED: Run uvicorn natively without the legacy wrapper
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8007"]
