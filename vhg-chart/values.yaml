@@ -9,11 +9,11 @@ plant:
   port: 8005
 auth:
   image: dharshan3690/auth-service
-  tag: "1846"
+  tag: "1850"
   port: 8006
 ai:
   image: dharshan3690/ai-service
-  tag: "1846"
+  tag: "1850"
   port: 8007
 ingress:
   enabled: true
