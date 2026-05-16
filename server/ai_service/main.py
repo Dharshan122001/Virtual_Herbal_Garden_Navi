@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 
 from common import schemas
 from common.utils import setup_cors
-from common.otel import init_tracer, instrument_app
 
 # =========================
 # ENV
@@ -21,17 +20,11 @@ if not GROQ_API_KEY:
 if not PLANTNET_API_KEY:
     raise RuntimeError("PLANTNET_API_KEY missing")
 
-# --- Initialize OpenTelemetry ---
-init_tracer("ai-service")
-
 # =========================
-# APP
+# APP # try3
 # =========================
 app = FastAPI(title="Herbal Garden - AI Service")
 setup_cors(app)
-
-# Execute core tracing attachments explicitly post-instantiation
-instrument_app(app)
 
 # =========================
 # HEALTH
@@ -95,6 +88,9 @@ async def identify_plant(image: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="File must be an image")
 
     try:
+        # --------------------------
+        # 1️⃣ Identify via PlantNet
+        # --------------------------
         image_bytes = await image.read()
 
         files = {

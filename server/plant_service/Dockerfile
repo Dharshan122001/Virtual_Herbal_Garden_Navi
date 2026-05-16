@@ -1,22 +1,18 @@
 FROM python:3.10-slim-buster
 
-# Force the container runtime path mapping engine to recognize the app root natively
-ENV PYTHONPATH="/app"
 WORKDIR /app
 
-# Step 1: Force system dependencies configuration loops
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-
-# Step 2: Push requirements downstream separately to isolate layer caching
+# 1. Install dependencies
+# The pipeline will copy requirements.txt into this folder before building
 COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Step 3: Explicitly inherit the shared library maps cleanly 
-COPY common/ ./common/
-
-# Step 4: Inject service logical configurations
+# 2. Copy the service code and the common folder 
+# (Common will also be injected by the pipeline)
 COPY . .
 
 EXPOSE 8005
 
+# Run main directly since we are now inside the service directory
 CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8005"]
