@@ -29,7 +29,7 @@ spec:
         - name: OTEL_EXPORTER_OTLP_PROTOCOL
           value: "http/protobuf"
         - name: OTEL_PROPAGATORS
-          value: "tracecontext,baggage,b3,datadog"
+          value: "tracecontext,baggage"
         - name: OTEL_SERVICE_NAME
           value: "auth-service"
         - name: OTEL_ENV
