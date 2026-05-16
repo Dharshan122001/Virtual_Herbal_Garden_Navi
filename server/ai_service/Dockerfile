@@ -1,10 +1,11 @@
 FROM python:3.10-slim-buster
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-RUN pip install --no-cache-dir -r requirements.txt
 
-# ADD THIS LINE: Installs the underlying dependency shims natively into the image environment
+# FORCE INITIAL TOOLING ASSEMBLY BEFORE COPYPASSES
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 RUN opentelemetry-bootstrap -a install
 
 COPY . .
