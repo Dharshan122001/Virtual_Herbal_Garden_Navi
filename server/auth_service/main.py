@@ -12,20 +12,18 @@ from common.database import get_db
 from common import schemas
 from common.utils import setup_cors
 from common.gmail_service import send_email
-
-
+from common.otel import init_tracer, instrument_app
 
 load_dotenv()
 
 # --- Initialize OpenTelemetry ---
-# Setting service resource tags so they map flawlessly to DataDog facets
-
+init_tracer("auth-service")
 
 app = FastAPI(title="Herbal Garden - Auth Service")
 setup_cors(app)
 
-# Instrument FastAPI app
-
+# Instrument runtime lifecycle context hooks
+instrument_app(app)
 
 # =======================
 # SECURITY CONFIG
@@ -36,7 +34,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 BASE_URL = os.getenv("BASE_URL", "https://virtual-herbal-garden-r1uw.onrender.com")
 
 # =======================
-# HELPERS # try3
+# HELPERS
 # =======================
 def create_access_token(data: dict):
     payload = data.copy()
@@ -90,9 +88,7 @@ async def register(user_data: schemas.UserCreate, db: Session = Depends(get_db))
     ).mappings().first()
 
     db.commit()
-    
 
-    # Send welcome email (non-blocking)
     try:
         send_email(
             to=user_data.email,
@@ -160,7 +156,6 @@ async def forgot_password(data: schemas.ResetCodeCreate, db: Session = Depends(g
         )
         db.commit()
         
-        reset_link = f"{BASE_URL}/reset-password?code={reset_id}"
         try:
             send_email(
                to=data.email,
@@ -175,7 +170,6 @@ async def forgot_password(data: schemas.ResetCodeCreate, db: Session = Depends(g
         except Exception as e:
             print("Email failed:", e)
 
-    # Always return success (security best practice)
     return {"message": "If the account exists, a reset email has been sent."}
 
 # =======================

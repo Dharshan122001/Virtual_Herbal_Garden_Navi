@@ -23,14 +23,13 @@ spec:
         image: "{{ .Values.auth.image }}:{{ .Values.auth.tag }}"
         ports:
         - containerPort: 8006
-
         env:
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: "http://{{ .Values.otel.collectorHost }}:{{ .Values.otel.collectorPort }}"
         - name: OTEL_EXPORTER_OTLP_PROTOCOL
           value: "http/protobuf"
         - name: OTEL_PROPAGATORS
-          value: "tracecontext,baggage"
+          value: "tracecontext,baggage,b3,datadog"
         - name: OTEL_SERVICE_NAME
           value: "auth-service"
         - name: OTEL_ENV
@@ -44,21 +43,18 @@ spec:
         envFrom:
         - secretRef:
             name: vhg-secrets
-
         livenessProbe:
           httpGet:
-            path: /docs
+            path: /
             port: 8006
           initialDelaySeconds: 30
           periodSeconds: 10
-
         readinessProbe:
           httpGet:
-            path: /docs
+            path: /
             port: 8006
           initialDelaySeconds: 10
           periodSeconds: 5
-
         resources:
           requests:
             memory: "64Mi"

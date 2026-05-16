@@ -11,9 +11,7 @@ resource "helm_release" "datadog_otel" {
   chart      = "opentelemetry-collector"
   namespace  = kubernetes_namespace_v1.datadog.metadata[0].name
   version    = "0.110.0"
-
-  # CHANGE TO FALSE: Prevents Terraform from freezing if pods take time to pull images
-  wait = false
+  wait       = false
 
   set = [
     {
@@ -70,7 +68,7 @@ resource "helm_release" "datadog_otel" {
         datadog:
           api:
             key: "${var.datadog_api_key}"
-            site: "${var.datadog_site}"
+          site: "${var.datadog_site}"
 
       service:
         pipelines:

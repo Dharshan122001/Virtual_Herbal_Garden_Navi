@@ -23,15 +23,13 @@ spec:
         image: "{{ .Values.plant.image }}:{{ .Values.plant.tag }}"
         ports:
         - containerPort: 8005
-
         env:
-        # POINT TO INTERNAL HTTP ENDPOINT
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: "http://{{ .Values.otel.collectorHost }}:{{ .Values.otel.collectorPort }}"
         - name: OTEL_EXPORTER_OTLP_PROTOCOL
           value: "http/protobuf"
         - name: OTEL_PROPAGATORS
-          value: "tracecontext,baggage"
+          value: "tracecontext,baggage,b3,datadog"
         - name: OTEL_SERVICE_NAME
           value: "plant-service"
         - name: OTEL_ENV
@@ -45,21 +43,18 @@ spec:
         envFrom:
         - secretRef:
             name: vhg-secrets
-
         livenessProbe:
           httpGet:
-            path: /docs
+            path: /
             port: 8005
           initialDelaySeconds: 30
           periodSeconds: 10
-
         readinessProbe:
           httpGet:
-            path: /docs
+            path: /
             port: 8005
           initialDelaySeconds: 10
           periodSeconds: 5
-
         resources:
           requests:
             memory: "64Mi"
