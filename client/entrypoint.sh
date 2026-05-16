@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-# Use the absolute path to the nginx html folder
+# Use the absolute path to the nginx html folder try
 CONFIG_FILE="/usr/share/nginx/html/config.js"
 
 echo "Writing config to $CONFIG_FILE"
