@@ -1,3 +1,4 @@
+setuptools>=65.5.1
 fastapi==0.115.12
 uvicorn[standard]==0.33.0
 pydantic==2.10.6
@@ -18,23 +19,11 @@ httpx
 google-api-python-client
 google-auth
 google-auth-oauthlib
-
-
-# --- DATA MIGRATION & UTILS ---
 pandas==2.2.3
-openpyxl  # Optional: if you ever need to export to Excel instead of CSV
-
-# --- DATABASE DRIVERS ---
-psycopg2-binary==2.9.10  # You already have this, but ensure it's here
-sqlalchemy==2.0.41      # You already have this
-
-# --- GOOGLE AUTH FIXES ---
-# (Adding these ensures the Google APIs you're using don't crash)
+openpyxl
 google-auth-httplib2
 
-
 # --- AUTOMATED OPEN-TELEMETRY INSTRUMENTATION ENGINE ---
-
 opentelemetry-api==1.24.0
 opentelemetry-sdk==1.24.0
 opentelemetry-exporter-otlp==1.24.0
@@ -42,6 +31,4 @@ opentelemetry-instrumentation-fastapi==0.45b0
 opentelemetry-instrumentation-requests==0.45b0
 opentelemetry-instrumentation-sqlalchemy==0.45b0
 opentelemetry-propagator-b3==1.24.0
-# --- ADD THIS TO YOUR BOTTOM ENGINES SECTION ---
 opentelemetry-exporter-otlp-proto-http==1.24.0
-setuptools>=65.5.1
