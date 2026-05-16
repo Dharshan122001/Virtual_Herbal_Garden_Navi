@@ -1,19 +1,19 @@
 namespace: vhg-1
 frontend:
   image: dharshan3690/navi-frontend
-  tag: "1800"
+  tag: "1854"
   port: 80
 plant:
   image: dharshan3690/plant-service
-  tag: "1798"
+  tag: "1854"
   port: 8005
 auth:
   image: dharshan3690/auth-service
-  tag: latest
+  tag: "1854"
   port: 8006
 ai:
   image: dharshan3690/ai-service
-  tag: latest
+  tag: "1854"
   port: 8007
 ingress:
   enabled: true
