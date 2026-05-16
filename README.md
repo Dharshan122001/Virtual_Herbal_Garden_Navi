@@ -107,4 +107,7 @@ terraform destory -var-file="secrets.tfvars" -lock=false \
 
 terraform apply -var-file="secrets.tfvars" -target=azurerm_kubernetes_cluster.aks -target=azurerm_public_ip.ingress_ip -target=azurerm_postgresql_flexible_server.db
 
-terraform apply -var-file="secrets.tfvars" -target=helm_release.argocd -target=helm_release.ingress_nginx -target=kubernetes_secret_v1.vhg_repo_creds -target=kubernetes_secret_v1.vhg_db_config
+terraform apply -var-file="secrets.tfvars" -target=helm_release.argocd -target=helm_release.ingress_nginx -target=kubernetes_secret_v1.vhg_repo_creds -target=kubernetes_secret_v1.vhg_db_configyes
+
+
+python3 -c "import bcrypt; print(bcrypt.hashpw(b'YourSecurePasswordHere', bcrypt.gensalt(10)).decode('utf-8'))"

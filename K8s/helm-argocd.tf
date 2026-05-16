@@ -33,11 +33,15 @@ resource "helm_release" "argocd" {
   namespace  = kubernetes_namespace_v1.argocd.metadata[0].name
   version    = "7.3.11"
 
-  # Updated syntax: use '=' and wrap in [ ] for a list of objects
+  # Combined arguments and admin password into a single valid block
   set = [
     {
       name  = "server.extraArgs"
-      value = "{--insecure}"
+      value = "{--insecure,--rootpath=/argocd}"
+    },
+    {
+      name  = "server.admin.password"
+      value = "$2b$10$TUXthuYynorDnn/XNZRJtObS464dToxDIHdq8qtDSjiUhFM7V5i42"
     }
   ]
 
