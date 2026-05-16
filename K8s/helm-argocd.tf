@@ -44,7 +44,7 @@ resource "helm_release" "argocd" {
   depends_on = [kubernetes_secret_v1.vhg_repo_creds]
 }
 
-# 4. The ArgoCD Application (Points to your 'fresh' branch)
+# 4. The ArgoCD Application (Points to your 'DataDog' branch)
 resource "kubernetes_manifest" "vhg_app_gitops" {
   manifest = {
     apiVersion = "argoproj.io/v1alpha1"
@@ -57,7 +57,7 @@ resource "kubernetes_manifest" "vhg_app_gitops" {
       project = "default"
       source = {
         repoURL        = "https://dev.azure.com/navikenz/DevOps%20POCs/_git/DevOps%20POCs"
-        targetRevision = "fresh"
+        targetRevision = "DataDog"
         path           = "vhg-chart"
       }
       destination = {
