@@ -55,25 +55,5 @@ spec:
                 port:
                   number: 80
 
----
-# BLOCK 3: ARGOCD (Exposes ArgoCD Dashboard on a dedicated context path)
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: argocd-server-ingress
-  namespace: argocd # Must target the namespace where ArgoCD lives
-  annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS" # ArgoCD talks TLS natively
-spec:
-  ingressClassName: {{ .Values.ingress.className }}
-  rules:
-    - http:
-        paths:
-          - path: /argocd
-            pathType: Prefix
-            backend:
-              service:
-                name: argocd-server
-                port:
-                  number: 443
+
 {{- end }}
