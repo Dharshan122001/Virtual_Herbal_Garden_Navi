@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - fresh
+      - DataDog
   paths:
     include:
       - client/*
@@ -139,7 +139,7 @@ stages:
           git add vhg-chart/values.yaml
           git commit -m "GitOps: deploy build $(Build.BuildId) [skip ci]"
           # Fixed push for detached HEAD CI environment
-          git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" push origin HEAD:fresh
+          git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" push origin HEAD:DataDog
         else
           echo "No manifest changes needed."
         fi
