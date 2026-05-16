@@ -110,4 +110,8 @@ terraform apply -var-file="secrets.tfvars" -target=azurerm_kubernetes_cluster.ak
 terraform apply -var-file="secrets.tfvars" -target=helm_release.argocd -target=helm_release.ingress_nginx -target=kubernetes_secret_v1.vhg_repo_creds -target=kubernetes_secret_v1.vhg_db_configyes
 
 
-python3 -c "import bcrypt; print(bcrypt.hashpw(b'YourSecurePasswordHere', bcrypt.gensalt(10)).decode('utf-8'))"
+python3 -c "import bcrypt; print(bcrypt.hashpw(b'Vinu@9945385205', bcrypt.gensalt(10)).decode('utf-8'))"
+terraform import -var-file="secrets.tfvars" kubernetes_manifest.argocd_ingress "apiVersion=networking.k8s.io/v1,kind=Ingress,namespace=argocd,name=argocd-server-ingress"
+
+
+kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 --decode; echo

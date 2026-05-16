@@ -33,18 +33,6 @@ resource "helm_release" "argocd" {
   namespace  = kubernetes_namespace_v1.argocd.metadata[0].name
   version    = "7.3.11"
 
-  # Combined arguments and admin password into a single valid block
-  set = [
-    {
-      name  = "server.extraArgs"
-      value = "{--insecure,--rootpath=/argocd}"
-    },
-    {
-      name  = "server.admin.password"
-      value = "$2b$10$TUXthuYynorDnn/XNZRJtObS464dToxDIHdq8qtDSjiUhFM7V5i42"
-    }
-  ]
-
   depends_on = [kubernetes_secret_v1.vhg_repo_creds]
 }
 
@@ -77,5 +65,47 @@ resource "kubernetes_manifest" "vhg_app_gitops" {
       }
     }
   }
+  depends_on = [helm_release.argocd]
+}
+
+# 5. Dedicated Ingress to expose ArgoCD Server UI via Nginx
+resource "kubernetes_manifest" "argocd_ingress" {
+  manifest = {
+    apiVersion = "networking.k8s.io/v1"
+    kind       = "Ingress"
+    metadata = {
+      name      = "argocd-server-ingress"
+      namespace = "argocd"
+      annotations = {
+        # CHANGE THIS FROM "HTTPS" TO "HTTP"
+        "nginx.ingress.kubernetes.io/backend-protocol" = "HTTP"
+      }
+    }
+    spec = {
+      ingressClassName = "nginx"
+      rules = [
+        {
+          http = {
+            paths = [
+              {
+                path     = "/argocd"
+                pathType = "Prefix"
+                backend = {
+                  service = {
+                    name = "argocd-server"
+                    port = {
+                      # CHANGE THIS FROM 443 TO 80
+                      number = 80
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+
   depends_on = [helm_release.argocd]
 }
