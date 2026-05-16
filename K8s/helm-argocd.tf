@@ -19,7 +19,7 @@ resource "kubernetes_secret_v1" "vhg_repo_creds" {
   data = {
     type     = "git"
     url      = "https://dev.azure.com/navikenz/DevOps%20POCs/_git/DevOps%20POCs"
-    password = var.azure_devops_pat 
+    password = var.azure_devops_pat
   }
 
   depends_on = [kubernetes_namespace_v1.argocd]
@@ -57,7 +57,7 @@ resource "kubernetes_manifest" "vhg_app_gitops" {
       project = "default"
       source = {
         repoURL        = "https://dev.azure.com/navikenz/DevOps%20POCs/_git/DevOps%20POCs"
-        targetRevision = "fresh"
+        targetRevision = "DataDog"
         path           = "vhg-chart"
       }
       destination = {

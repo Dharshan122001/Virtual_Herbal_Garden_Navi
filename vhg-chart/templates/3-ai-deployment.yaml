@@ -24,6 +24,21 @@ spec:
         ports:
         - containerPort: 8007
 
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://{{ .Values.otel.collectorHost }}:{{ .Values.otel.collectorPort }}"
+        - name: OTEL_EXPORTER_OTLP_TRACES_PROTOCOL
+          value: "grpc"
+        - name: OTEL_EXPORTER_OTLP_METRICS_PROTOCOL
+          value: "grpc"
+        - name: OTEL_SERVICE_NAME
+          value: "ai-service"
+        - name: OTEL_ENV
+          value: "{{ .Values.otel.env }}"
+        - name: DD_ENV
+          value: "{{ .Values.otel.env }}"
+        - name: DD_SERVICE
+          value: "ai-service"
         envFrom:
         - secretRef:
             name: vhg-secrets

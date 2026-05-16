@@ -18,3 +18,13 @@ ai:
 ingress:
   enabled: true
   className: nginx
+
+rum:
+  appId: ""
+  clientToken: ""
+  site: "datadoghq.com"
+
+otel:
+  collectorHost: "datadog-otel-opentelemetry-collector.datadog.svc.cluster.local"
+  collectorPort: 4317
+  env: "production"
