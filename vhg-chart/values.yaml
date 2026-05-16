@@ -19,12 +19,13 @@ ingress:
   enabled: true
   className: nginx
 
+# ... keep your existing configurations ...
 rum:
-  appId: ""
-  clientToken: ""
-  site: "datadoghq.com"
+  appId: "00e9c62c-5245-4154-bba7-ac9fc0af256d"
+  clientToken: "pub143fff5a3e12cc5661044443cd7ba787"
+  site: "us5.datadoghq.com"
 
 otel:
   collectorHost: "datadog-otel-opentelemetry-collector.datadog.svc.cluster.local"
-  collectorPort: 4317
+  collectorPort: "4318"
   env: "production"

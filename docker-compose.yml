@@ -6,6 +6,14 @@ services:
     container_name: plant-service-container
     env_file:
       - ./server/.env
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel_collector:4317
+      - OTEL_SERVICE_NAME=plant-service
+      - OTEL_ENV=development
+      - DD_ENV=development
+      - DD_SERVICE=plant-service
+      - DD_TRACE_ENABLED=true
+      - DATADOG_SITE=${DATADOG_SITE:-datadoghq.com}
     dns:
       - 8.8.8.8
       - 1.1.1.1
@@ -22,6 +30,14 @@ services:
     container_name: auth-service-container
     env_file:
       - ./server/.env
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel_collector:4317
+      - OTEL_SERVICE_NAME=auth-service
+      - OTEL_ENV=development
+      - DD_ENV=development
+      - DD_SERVICE=auth-service
+      - DD_TRACE_ENABLED=true
+      - DATADOG_SITE=${DATADOG_SITE:-datadoghq.com}
     dns:
       - 8.8.8.8
       - 1.1.1.1
@@ -38,6 +54,13 @@ services:
     container_name: ai-service-container
     env_file:
       - ./server/.env
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel_collector:4317
+      - OTEL_SERVICE_NAME=ai-service
+      - OTEL_ENV=development
+      - DD_ENV=development
+      - DD_SERVICE=ai-service
+      - DATADOG_SITE=${DATADOG_SITE:-datadoghq.com}
     dns:
       - 8.8.8.8
       - 1.1.1.1
@@ -52,6 +75,13 @@ services:
       context: ./client
       dockerfile: Dockerfile
     container_name: frontend-container
+    env_file:
+      - ./client/.env
+    environment:
+      - VITE_DATADOG_RUM_APP_ID=${VITE_DATADOG_RUM_APP_ID}
+      - VITE_DATADOG_RUM_CLIENT_TOKEN=${VITE_DATADOG_RUM_CLIENT_TOKEN}
+      - VITE_DATADOG_SITE=${DATADOG_SITE:-datadoghq.com}
+      - VITE_OTEL_ENV=development
     dns:
       - 8.8.8.8
       - 1.1.1.1
@@ -63,3 +93,17 @@ services:
       - ai_service
     env_file:
       - ./client/.env
+
+  otel_collector:
+    image: otel/opentelemetry-collector-contrib:0.110.0
+    container_name: otel-collector
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ./otel-config.yaml:/etc/otel-collector-config.yaml:ro
+    environment:
+      - DD_API_KEY=${DATADOG_API_KEY}
+      - DD_SITE=${DATADOG_SITE:-datadoghq.com}
+    command: ["--config", "/etc/otel-collector-config.yaml"]
+    restart: unless-stopped

@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 from common import schemas
 from common.utils import setup_cors
 
+# OpenTelemetry Tracing Initialization
+
+
 # =========================
 # ENV
 # =========================
@@ -20,11 +23,16 @@ if not GROQ_API_KEY:
 if not PLANTNET_API_KEY:
     raise RuntimeError("PLANTNET_API_KEY missing")
 
+# --- Initialize OpenTelemetry ---
+# Setting service resource tags so they map flawlessly to DataDog facets
+
+
 # =========================
 # APP # try3
 # =========================
 app = FastAPI(title="Herbal Garden - AI Service")
 setup_cors(app)
+
 
 # =========================
 # HEALTH

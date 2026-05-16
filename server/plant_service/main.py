@@ -4,6 +4,14 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List, Optional
 
+# OpenTelemetry Tracing Initialization
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.sdk.resources import Resource
+
 # Absolute imports from your monorepo structure
 from common.database import get_db
 from common import schemas
@@ -24,11 +32,26 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env_path = BASE_DIR / ".env"
 load_dotenv(dotenv_path=env_path)
 
+# --- Initialize OpenTelemetry ---
+# Setting service resource tags so they map flawlessly to DataDog facets
+resource = Resource.create(attributes={
+    "service.name": os.getenv("OTEL_SERVICE_NAME", "plant-service"),
+    "deployment.environment": os.getenv("OTEL_ENV", "production")
+})
+
+provider = TracerProvider(resource=resource)
+# The OTLPSpanExporter automatically looks for OTEL_EXPORTER_OTLP_ENDPOINT
+processor = BatchSpanProcessor(OTLPSpanExporter())
+provider.add_span_processor(processor)
+trace.set_tracer_provider(provider)
+
 # 2. Force Load
 
 
 app = FastAPI(title="Herbal Garden - Plant Service")
 setup_cors(app)
+# Instrument FastAPI app
+FastAPIInstrumentor.instrument_app(app)
 # trying the pipelien changes is done but not working at all
 #--- for gitops ----
 @app.get("/api/v1/test-deploy")

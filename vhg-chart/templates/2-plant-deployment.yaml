@@ -25,12 +25,13 @@ spec:
         - containerPort: 8005
 
         env:
+        # POINT TO INTERNAL HTTP ENDPOINT
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: "http://{{ .Values.otel.collectorHost }}:{{ .Values.otel.collectorPort }}"
-        - name: OTEL_EXPORTER_OTLP_TRACES_PROTOCOL
-          value: "grpc"
-        - name: OTEL_EXPORTER_OTLP_METRICS_PROTOCOL
-          value: "grpc"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "http/protobuf"
+        - name: OTEL_PROPAGATORS
+          value: "tracecontext,baggage"
         - name: OTEL_SERVICE_NAME
           value: "plant-service"
         - name: OTEL_ENV
@@ -39,6 +40,8 @@ spec:
           value: "{{ .Values.otel.env }}"
         - name: DD_SERVICE
           value: "plant-service"
+        - name: DD_VERSION
+          value: "{{ .Values.plant.tag }}"
         envFrom:
         - secretRef:
             name: vhg-secrets

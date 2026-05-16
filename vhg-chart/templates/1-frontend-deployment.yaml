@@ -28,6 +28,14 @@ spec:
           value: "/api/auth"
         - name: VITE_AI_API_URL
           value: "/api/ai"
+        - name: VITE_DATADOG_RUM_APP_ID
+          value: "{{ .Values.rum.appId }}"
+        - name: VITE_DATADOG_RUM_CLIENT_TOKEN
+          value: "{{ .Values.rum.clientToken }}"
+        - name: VITE_DATADOG_SITE
+          value: "{{ .Values.rum.site }}"
+        - name: VITE_OTEL_ENV
+          value: "{{ .Values.otel.env }}"
 
         livenessProbe:
           httpGet:

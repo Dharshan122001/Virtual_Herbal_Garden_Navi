@@ -108,7 +108,7 @@ stages:
         fi
       displayName: "Build Frontend"
 
-# --- STAGE 2: GitOps Sync ---
+## --- STAGE 2: GitOps Sync ---
 - stage: GitOps_Update
   displayName: "2. GitOps Sync"
   dependsOn: [Detect_and_Resolve, Build_and_Push]
@@ -138,7 +138,8 @@ stages:
         if ! git diff --exit-code vhg-chart/values.yaml; then
           git add vhg-chart/values.yaml
           git commit -m "GitOps: deploy build $(Build.BuildId) [skip ci]"
-          # Fixed push for detached HEAD CI environment
+          
+          # CRITICAL ROUTING FIX: Correct target branch sync path from 'fresh' to 'DataDog'
           git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" push origin HEAD:DataDog
         else
           echo "No manifest changes needed."

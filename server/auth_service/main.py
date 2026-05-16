@@ -13,10 +13,19 @@ from common import schemas
 from common.utils import setup_cors
 from common.gmail_service import send_email
 
+
+
 load_dotenv()
+
+# --- Initialize OpenTelemetry ---
+# Setting service resource tags so they map flawlessly to DataDog facets
+
 
 app = FastAPI(title="Herbal Garden - Auth Service")
 setup_cors(app)
+
+# Instrument FastAPI app
+
 
 # =======================
 # SECURITY CONFIG
