@@ -1,4 +1,4 @@
-// /client/src/components/AIChatAssistant.jsx
+// /client/src/components/AIChatAssistant.jsx try
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import ReactMarkdown from "react-markdown";
