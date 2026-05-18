@@ -13,6 +13,10 @@ resource "helm_release" "datadog" {
     datadog:
       apiKey: "${var.datadog_api_key}"
       site: "${var.datadog_site}"
+      apm:
+        portEnabled: true
+      logs:
+         enabled: true
       tags:
         - "env:aks"
         - "service_namespace:virtual-herbal-garden"
