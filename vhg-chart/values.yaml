@@ -3,6 +3,14 @@ frontend:
   image: dharshan3690/navi-frontend
   tag: "1858"
   port: 80
+  rum:
+    enabled: false
+    applicationId: ""
+    clientToken: ""
+    service: "vhg-frontend"
+    sessionSampleRate: "100"
+    replaySampleRate: "0"
+    replayEnabled: false
 plant:
   image: dharshan3690/plant-service
   tag: "1859"
@@ -22,6 +30,7 @@ observability:
   enabled: true
   otlpEndpoint: "http://$(HOST_IP):4317"
   environment: "aks"
+  datadogSite: "us5.datadoghq.com"
   serviceNamespace: "virtual-herbal-garden"
   tracesSampler: "parentbased_traceidratio"
   tracesSamplerArg: "1.0"

@@ -16,6 +16,7 @@ flowchart LR
   plant -- OTLP gRPC --> dd[Datadog Agent on same AKS node]
   auth -- OTLP gRPC --> dd
   ai -- OTLP gRPC --> dd
+  browser -- RUM events --> datadog
   dd --> datadog[Datadog APM, metrics, logs]
 ```
 
@@ -26,6 +27,7 @@ flowchart LR
 - Outbound HTTP calls made through `requests`, including Groq and PlantNet.
 - OTLP metrics export from the Python SDK.
 - Container logs through the Datadog Agent Helm chart.
+- Optional frontend browser monitoring through Datadog RUM.
 
 ## Deployment Flow
 
@@ -53,6 +55,22 @@ flowchart LR
    - `vhg-auth-service`
    - `vhg-plant-service`
    - `vhg-ai-service`
+
+## Frontend RUM
+
+The frontend is monitored at the Kubernetes/container layer by default. Browser-side Datadog RUM is wired in but disabled until a RUM application ID and client token are provided.
+
+Create a Datadog RUM browser application, then set these chart values:
+
+```yaml
+frontend:
+  rum:
+    enabled: true
+    applicationId: "<datadog-rum-application-id>"
+    clientToken: "<datadog-rum-client-token>"
+```
+
+The frontend RUM service is `vhg-frontend`. Resource tracing is configured for `/api/plant`, `/api/auth`, and `/api/ai`.
 
 ## Validation Commands
 

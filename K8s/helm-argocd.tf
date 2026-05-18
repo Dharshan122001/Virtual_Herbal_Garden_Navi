@@ -51,12 +51,16 @@ resource "helm_release" "argocd" {
 # 4. The ArgoCD Application (Points to your 'DataDog' branch)
 # Installed through a tiny Helm chart so Terraform does not need Kubernetes
 # API discovery for the Argo CD CRD during the first plan.
-resource "terraform_data" "adopt_existing_vhg_app" {
+resource "terraform_data" "adopt_existing_argocd_bootstrap_objects" {
   provisioner "local-exec" {
     command = <<-EOT
       if kubectl get application vhg-app -n argocd >/dev/null 2>&1; then
         kubectl label application vhg-app -n argocd app.kubernetes.io/managed-by=Helm --overwrite
         kubectl annotate application vhg-app -n argocd meta.helm.sh/release-name=vhg-app meta.helm.sh/release-namespace=argocd --overwrite
+      fi
+      if kubectl get ingress argocd-server-ingress -n argocd >/dev/null 2>&1; then
+        kubectl label ingress argocd-server-ingress -n argocd app.kubernetes.io/managed-by=Helm --overwrite
+        kubectl annotate ingress argocd-server-ingress -n argocd meta.helm.sh/release-name=vhg-app meta.helm.sh/release-namespace=argocd --overwrite
       fi
     EOT
   }
@@ -69,6 +73,7 @@ resource "helm_release" "vhg_app_gitops" {
   chart                      = "${path.module}/argocd-app-chart"
   namespace                  = kubernetes_namespace_v1.argocd.metadata[0].name
   disable_openapi_validation = true
+  replace                    = true
   timeout                    = 300
   wait                       = true
 
@@ -81,40 +86,8 @@ resource "helm_release" "vhg_app_gitops" {
     EOF
   ]
 
-  depends_on = [terraform_data.adopt_existing_vhg_app]
-}
-
-# 5. Dedicated Ingress to expose ArgoCD Server UI via Nginx
-resource "kubernetes_ingress_v1" "argocd_ingress" {
-  metadata {
-    name      = "argocd-server-ingress"
-    namespace = kubernetes_namespace_v1.argocd.metadata[0].name
-    annotations = {
-      "nginx.ingress.kubernetes.io/backend-protocol" = "HTTP"
-    }
-  }
-
-  spec {
-    ingress_class_name = "nginx"
-
-    rule {
-      http {
-        path {
-          path      = "/argocd"
-          path_type = "Prefix"
-
-          backend {
-            service {
-              name = "argocd-server"
-              port {
-                number = 80
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  depends_on = [helm_release.argocd, helm_release.ingress_nginx]
+  depends_on = [
+    terraform_data.adopt_existing_argocd_bootstrap_objects,
+    helm_release.ingress_nginx
+  ]
 }

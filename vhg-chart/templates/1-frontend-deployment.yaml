@@ -28,6 +28,26 @@ spec:
           value: "/api/auth"
         - name: VITE_AI_API_URL
           value: "/api/ai"
+        - name: DATADOG_RUM_ENABLED
+          value: "{{ .Values.frontend.rum.enabled }}"
+        - name: DATADOG_RUM_APPLICATION_ID
+          value: "{{ .Values.frontend.rum.applicationId }}"
+        - name: DATADOG_RUM_CLIENT_TOKEN
+          value: "{{ .Values.frontend.rum.clientToken }}"
+        - name: DATADOG_SITE
+          value: "{{ .Values.observability.datadogSite }}"
+        - name: DATADOG_ENV
+          value: "{{ .Values.observability.environment }}"
+        - name: DATADOG_VERSION
+          value: "{{ .Values.frontend.tag }}"
+        - name: DATADOG_RUM_SERVICE
+          value: "{{ .Values.frontend.rum.service }}"
+        - name: DATADOG_RUM_SESSION_SAMPLE_RATE
+          value: "{{ .Values.frontend.rum.sessionSampleRate }}"
+        - name: DATADOG_RUM_REPLAY_SAMPLE_RATE
+          value: "{{ .Values.frontend.rum.replaySampleRate }}"
+        - name: DATADOG_RUM_REPLAY_ENABLED
+          value: "{{ .Values.frontend.rum.replayEnabled }}"
 
         livenessProbe:
           httpGet:
