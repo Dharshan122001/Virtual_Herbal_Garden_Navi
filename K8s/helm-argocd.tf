@@ -51,6 +51,19 @@ resource "helm_release" "argocd" {
 # 4. The ArgoCD Application (Points to your 'DataDog' branch)
 # Installed through a tiny Helm chart so Terraform does not need Kubernetes
 # API discovery for the Argo CD CRD during the first plan.
+resource "terraform_data" "adopt_existing_vhg_app" {
+  provisioner "local-exec" {
+    command = <<-EOT
+      if kubectl get application vhg-app -n argocd >/dev/null 2>&1; then
+        kubectl label application vhg-app -n argocd app.kubernetes.io/managed-by=Helm --overwrite
+        kubectl annotate application vhg-app -n argocd meta.helm.sh/release-name=vhg-app meta.helm.sh/release-namespace=argocd --overwrite
+      fi
+    EOT
+  }
+
+  depends_on = [helm_release.argocd]
+}
+
 resource "helm_release" "vhg_app_gitops" {
   name                       = "vhg-app"
   chart                      = "${path.module}/argocd-app-chart"
@@ -68,7 +81,7 @@ resource "helm_release" "vhg_app_gitops" {
     EOF
   ]
 
-  depends_on = [helm_release.argocd]
+  depends_on = [terraform_data.adopt_existing_vhg_app]
 }
 
 # 5. Dedicated Ingress to expose ArgoCD Server UI via Nginx
