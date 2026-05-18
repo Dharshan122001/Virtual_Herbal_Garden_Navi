@@ -4,6 +4,7 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 from dotenv import load_dotenv
 #try2
 from common import schemas
+from common.observability import configure_observability
 from common.utils import setup_cors
 
 # =========================
@@ -25,6 +26,7 @@ if not PLANTNET_API_KEY:
 # =========================
 app = FastAPI(title="Herbal Garden - AI Service")
 setup_cors(app)
+configure_observability(app, "vhg-ai-service")
 
 # =========================
 # HEALTH

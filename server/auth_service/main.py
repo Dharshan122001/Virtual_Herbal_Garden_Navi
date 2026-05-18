@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from jose import jwt
 #try2
 from common.database import get_db
+from common.observability import configure_observability
 from common import schemas
 from common.utils import setup_cors
 from common.gmail_service import send_email
@@ -17,6 +18,7 @@ load_dotenv()
 
 app = FastAPI(title="Herbal Garden - Auth Service")
 setup_cors(app)
+configure_observability(app, "vhg-auth-service")
 
 # =======================
 # SECURITY CONFIG

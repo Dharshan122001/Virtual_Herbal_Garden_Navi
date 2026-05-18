@@ -43,6 +43,7 @@
 #     finally:
 #         db.close()
 import os
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -52,6 +53,9 @@ engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True
 )
+
+if os.getenv("OTEL_SDK_DISABLED", "false").lower() != "true":
+    SQLAlchemyInstrumentor().instrument(engine=engine)
 
 SessionLocal = sessionmaker(
     autocommit=False,

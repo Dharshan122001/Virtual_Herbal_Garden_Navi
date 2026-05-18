@@ -7,6 +7,7 @@ from typing import List, Optional
 
 # Absolute imports from your monorepo structure
 from common.database import get_db
+from common.observability import configure_observability
 from common import schemas
 from common.utils import setup_cors
 
@@ -30,6 +31,7 @@ load_dotenv(dotenv_path=env_path)
 
 app = FastAPI(title="Herbal Garden - Plant Service")
 setup_cors(app)
+configure_observability(app, "vhg-plant-service")
 # trying the pipelien changes is done but not working at all
 #--- for gitops ----
 @app.get("/api/v1/test-deploy")

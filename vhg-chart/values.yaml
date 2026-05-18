@@ -18,3 +18,12 @@ ai:
 ingress:
   enabled: true
   className: nginx
+observability:
+  enabled: true
+  otlpEndpoint: "http://$(HOST_IP):4317"
+  environment: "aks"
+  serviceNamespace: "virtual-herbal-garden"
+  tracesSampler: "parentbased_traceidratio"
+  tracesSamplerArg: "1.0"
+  metricExportInterval: "30000"
+  excludedUrls: "/docs,/openapi.json"

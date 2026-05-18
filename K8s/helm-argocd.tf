@@ -19,7 +19,7 @@ resource "kubernetes_secret_v1" "vhg_repo_creds" {
   data = {
     type     = "git"
     url      = "https://dev.azure.com/navikenz/DevOps%20POCs/_git/DevOps%20POCs"
-    password = var.azure_devops_pat 
+    password = var.azure_devops_pat
   }
 
   depends_on = [kubernetes_namespace_v1.argocd]
@@ -32,6 +32,18 @@ resource "helm_release" "argocd" {
   chart      = "argo-cd"
   namespace  = kubernetes_namespace_v1.argocd.metadata[0].name
   version    = "7.3.11"
+
+  values = [
+    <<-EOF
+    configs:
+      params:
+        server.insecure: true
+    server:
+      extraArgs:
+        - --rootpath=/argocd
+        - --basehref=/argocd
+    EOF
+  ]
 
   depends_on = [kubernetes_secret_v1.vhg_repo_creds]
 }

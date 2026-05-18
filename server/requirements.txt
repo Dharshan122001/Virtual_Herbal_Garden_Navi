@@ -30,3 +30,11 @@ sqlalchemy==2.0.41      # You already have this
 # --- GOOGLE AUTH FIXES ---
 # (Adding these ensures the Google APIs you're using don't crash)
 google-auth-httplib2
+
+# --- OBSERVABILITY ---
+opentelemetry-api==1.31.1
+opentelemetry-sdk==1.31.1
+opentelemetry-exporter-otlp-proto-grpc==1.31.1
+opentelemetry-instrumentation-fastapi==0.52b1
+opentelemetry-instrumentation-requests==0.52b1
+opentelemetry-instrumentation-sqlalchemy==0.52b1

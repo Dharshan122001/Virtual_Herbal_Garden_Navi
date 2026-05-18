@@ -27,6 +27,31 @@ spec:
         envFrom:
         - secretRef:
             name: vhg-secrets
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: OTEL_SERVICE_VERSION
+          value: "{{ .Values.ai.tag }}"
+        - name: OTEL_DEPLOYMENT_ENVIRONMENT
+          value: "{{ .Values.observability.environment }}"
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "{{ .Values.observability.otlpEndpoint }}"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "grpc"
+        - name: OTEL_TRACES_SAMPLER
+          value: "{{ .Values.observability.tracesSampler }}"
+        - name: OTEL_TRACES_SAMPLER_ARG
+          value: "{{ .Values.observability.tracesSamplerArg }}"
+        - name: OTEL_METRIC_EXPORT_INTERVAL
+          value: "{{ .Values.observability.metricExportInterval }}"
+        - name: OTEL_PYTHON_FASTAPI_EXCLUDED_URLS
+          value: "{{ .Values.observability.excludedUrls }}"
+        - name: OTEL_SDK_DISABLED
+          value: "{{ not .Values.observability.enabled }}"
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.namespace={{ .Values.observability.serviceNamespace }},k8s.namespace.name={{ .Values.namespace }},k8s.deployment.name=ai-service"
 
         livenessProbe:
           httpGet:
