@@ -1,7 +1,7 @@
 namespace: vhg-1
 frontend:
   image: dharshan3690/navi-frontend
-  tag: "1858"
+  tag: "1860"
   port: 80
   rum:
     enabled: false
