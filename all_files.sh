@@ -37,7 +37,6 @@ K8s/outputs.tf \
 K8s/providers.tf \
 K8s/secrets.tfvars \
 K8s/variables.tf \
-K8s/terraform_apply.sh \
 VHG-pipelines.yml
 
 do

@@ -4,13 +4,13 @@ frontend:
   tag: "1860"
   port: 80
   rum:
-    enabled: false
-    applicationId: ""
-    clientToken: ""
+    enabled: true
+    applicationId: "6e70653f-5b87-4945-a9e8-3e5da4e5e583"
+    clientToken: "pubb693ad8f16f0580f6e609113ed67c985"
     service: "vhg-frontend"
     sessionSampleRate: "100"
     replaySampleRate: "0"
-    replayEnabled: false
+    replayEnabled: true
 plant:
   image: dharshan3690/plant-service
   tag: "1859"
