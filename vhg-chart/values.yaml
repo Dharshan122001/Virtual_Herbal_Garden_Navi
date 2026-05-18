@@ -9,7 +9,7 @@ frontend:
     clientToken: "pubb693ad8f16f0580f6e609113ed67c985"
     service: "vhg-frontend"
     sessionSampleRate: "100"
-    replaySampleRate: "0"
+    replaySampleRate: "100"
     replayEnabled: true
 plant:
   image: dharshan3690/plant-service
