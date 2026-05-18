@@ -115,3 +115,5 @@ terraform import -var-file="secrets.tfvars" kubernetes_manifest.argocd_ingress "
 
 
 kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 --decode; echo
+
+finally Done
