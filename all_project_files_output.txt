@@ -123,6 +123,41 @@ createRoot(document.getElementById("root")).render(
     </BrowserRouter>
   </StrictMode>
 );
+\n\n==================== client/src/observability.js ====================\n
+import { datadogRum } from "@datadog/browser-rum";
+
+const config = window.appConfig || {};
+
+export function initBrowserMonitoring() {
+  if (config.DATADOG_RUM_ENABLED !== "true") {
+    return;
+  }
+
+  if (!config.DATADOG_RUM_APPLICATION_ID || !config.DATADOG_RUM_CLIENT_TOKEN) {
+    console.warn("Datadog RUM is enabled but application ID or client token is missing.");
+    return;
+  }
+
+  datadogRum.init({
+    applicationId: config.DATADOG_RUM_APPLICATION_ID,
+    clientToken: config.DATADOG_RUM_CLIENT_TOKEN,
+    site: config.DATADOG_SITE || "datadoghq.com",
+    service: config.DATADOG_RUM_SERVICE || "vhg-frontend",
+    env: config.DATADOG_ENV || "aks",
+    version: config.DATADOG_VERSION || "local",
+    sessionSampleRate: Number(config.DATADOG_RUM_SESSION_SAMPLE_RATE || 100),
+    sessionReplaySampleRate: Number(config.DATADOG_RUM_REPLAY_SAMPLE_RATE || 0),
+    defaultPrivacyLevel: "mask-user-input",
+    trackResources: true,
+    trackLongTasks: true,
+    trackUserInteractions: true,
+    allowedTracingUrls: [/\/api\/plant/, /\/api\/auth/, /\/api\/ai/],
+  });
+
+  if (config.DATADOG_RUM_REPLAY_ENABLED === "true") {
+    datadogRum.startSessionReplayRecording();
+  }
+}
 \n\n==================== server/requirements.txt ====================\n
 fastapi==0.115.12
 uvicorn[standard]==0.33.0
@@ -179,7 +214,7 @@ import os
 import requests
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from dotenv import load_dotenv
-#try2
+#Try1
 from common import schemas
 from common.observability import configure_observability
 from common.utils import setup_cors
@@ -316,7 +351,7 @@ from sqlalchemy import text
 from passlib.context import CryptContext
 from dotenv import load_dotenv
 from jose import jwt
-#try2
+#Try1
 from common.database import get_db
 from common.observability import configure_observability
 from common import schemas
@@ -570,8 +605,7 @@ from fastapi import FastAPI, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List, Optional
-#try2
-
+#Try1
 # Absolute imports from your monorepo structure
 from common.database import get_db
 from common.observability import configure_observability
@@ -791,7 +825,7 @@ metadata:
 namespace: vhg-1
 frontend:
   image: dharshan3690/navi-frontend
-  tag: "1858"
+  tag: "1864"
   port: 80
   rum:
     enabled: true
@@ -799,19 +833,19 @@ frontend:
     clientToken: "pubb693ad8f16f0580f6e609113ed67c985"
     service: "vhg-frontend"
     sessionSampleRate: "100"
-    replaySampleRate: "0"
+    replaySampleRate: "100"
     replayEnabled: true
 plant:
   image: dharshan3690/plant-service
-  tag: "1859"
+  tag: "1864"
   port: 8005
 auth:
   image: dharshan3690/auth-service
-  tag: "1859"
+  tag: "1864"
   port: 8006
 ai:
   image: dharshan3690/ai-service
-  tag: "1859"
+  tag: "1864"
   port: 8007
 ingress:
   enabled: true
@@ -939,7 +973,7 @@ spec:
         - name: OTEL_DEPLOYMENT_ENVIRONMENT
           value: "{{ .Values.observability.environment }}"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
-          value: "{{ .Values.observability.otlpEndpoint }}"
+          value: "http://datadog.datadog.svc.cluster.local:4317"
         - name: OTEL_EXPORTER_OTLP_PROTOCOL
           value: "grpc"
         - name: OTEL_TRACES_SAMPLER
@@ -1016,7 +1050,7 @@ spec:
         - name: OTEL_DEPLOYMENT_ENVIRONMENT
           value: "{{ .Values.observability.environment }}"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
-          value: "{{ .Values.observability.otlpEndpoint }}"
+          value: "http://datadog.datadog.svc.cluster.local:4317"
         - name: OTEL_EXPORTER_OTLP_PROTOCOL
           value: "grpc"
         - name: OTEL_TRACES_SAMPLER
@@ -1093,7 +1127,7 @@ spec:
         - name: OTEL_DEPLOYMENT_ENVIRONMENT
           value: "{{ .Values.observability.environment }}"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
-          value: "{{ .Values.observability.otlpEndpoint }}"
+          value: "http://datadog.datadog.svc.cluster.local:4317"
         - name: OTEL_EXPORTER_OTLP_PROTOCOL
           value: "grpc"
         - name: OTEL_TRACES_SAMPLER
@@ -1494,6 +1528,10 @@ resource "helm_release" "datadog" {
     datadog:
       apiKey: "${var.datadog_api_key}"
       site: "${var.datadog_site}"
+      apm:
+        portEnabled: true
+      logs:
+         enabled: true
       tags:
         - "env:aks"
         - "service_namespace:virtual-herbal-garden"
@@ -1680,6 +1718,63 @@ variable "datadog_site" {
   type    = string
   default = "datadoghq.com"
 }
+\n\n==================== K8s/argocd-app-chart/templates/application.yaml ====================\n
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vhg-app
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name | quote }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace | quote }}
+spec:
+  project: default
+  source:
+    repoURL: {{ .Values.repoURL | quote }}
+    targetRevision: {{ .Values.targetRevision | quote }}
+    path: {{ .Values.path | quote }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .Values.destinationNamespace | quote }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+\n\n==================== K8s/argocd-app-chart/templates/ingress.yaml ====================\n
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name | quote }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace | quote }}
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /argocd
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80
+\n\n==================== K8s/argocd-app-chart/Chart.yaml ====================\n
+apiVersion: v2
+name: vhg-argocd-app
+description: Argo CD Application for Virtual Herbal Garden
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
 \n\n==================== VHG-pipelines.yml ====================\n
 trigger:
   branches:

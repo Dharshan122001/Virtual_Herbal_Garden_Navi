@@ -5,6 +5,7 @@ client/Dockerfile \
 client/entrypoint.sh \
 client/index.html \
 client/src/main.jsx \
+client/src/observability.js \
 server/requirements.txt \
 server/ai_service/Dockerfile \
 server/ai_service/main.py \
@@ -37,6 +38,9 @@ K8s/outputs.tf \
 K8s/providers.tf \
 K8s/secrets.tfvars \
 K8s/variables.tf \
+K8s/argocd-app-chart/templates/application.yaml \
+K8s/argocd-app-chart/templates/ingress.yaml \
+K8s/argocd-app-chart/Chart.yaml \
 VHG-pipelines.yml
 
 do
