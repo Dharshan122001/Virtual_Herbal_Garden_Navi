@@ -49,75 +49,59 @@ resource "helm_release" "argocd" {
 }
 
 # 4. The ArgoCD Application (Points to your 'DataDog' branch)
-resource "kubernetes_manifest" "vhg_app_gitops" {
-  manifest = {
-    apiVersion = "argoproj.io/v1alpha1"
-    kind       = "Application"
-    metadata = {
-      name      = "vhg-app"
-      namespace = "argocd"
-    }
-    spec = {
-      project = "default"
-      source = {
-        repoURL        = "https://dev.azure.com/navikenz/DevOps%20POCs/_git/DevOps%20POCs"
-        targetRevision = "DataDog"
-        path           = "vhg-chart"
-      }
-      destination = {
-        server    = "https://kubernetes.default.svc"
-        namespace = "vhg-1"
-      }
-      syncPolicy = {
-        automated = {
-          prune    = true
-          selfHeal = true
-        }
-        syncOptions = ["CreateNamespace=true"]
-      }
-    }
-  }
+# Installed through a tiny Helm chart so Terraform does not need Kubernetes
+# API discovery for the Argo CD CRD during the first plan.
+resource "helm_release" "vhg_app_gitops" {
+  name                       = "vhg-app"
+  chart                      = "${path.module}/argocd-app-chart"
+  namespace                  = kubernetes_namespace_v1.argocd.metadata[0].name
+  disable_openapi_validation = true
+  timeout                    = 300
+  wait                       = true
+
+  values = [
+    <<-EOF
+    repoURL: "https://dev.azure.com/navikenz/DevOps%20POCs/_git/DevOps%20POCs"
+    targetRevision: "DataDog"
+    path: "vhg-chart"
+    destinationNamespace: "vhg-1"
+    EOF
+  ]
+
   depends_on = [helm_release.argocd]
 }
 
 # 5. Dedicated Ingress to expose ArgoCD Server UI via Nginx
-resource "kubernetes_manifest" "argocd_ingress" {
-  manifest = {
-    apiVersion = "networking.k8s.io/v1"
-    kind       = "Ingress"
-    metadata = {
-      name      = "argocd-server-ingress"
-      namespace = "argocd"
-      annotations = {
-        # CHANGE THIS FROM "HTTPS" TO "HTTP"
-        "nginx.ingress.kubernetes.io/backend-protocol" = "HTTP"
-      }
-    }
-    spec = {
-      ingressClassName = "nginx"
-      rules = [
-        {
-          http = {
-            paths = [
-              {
-                path     = "/argocd"
-                pathType = "Prefix"
-                backend = {
-                  service = {
-                    name = "argocd-server"
-                    port = {
-                      # CHANGE THIS FROM 443 TO 80
-                      number = 80
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        }
-      ]
+resource "kubernetes_ingress_v1" "argocd_ingress" {
+  metadata {
+    name      = "argocd-server-ingress"
+    namespace = kubernetes_namespace_v1.argocd.metadata[0].name
+    annotations = {
+      "nginx.ingress.kubernetes.io/backend-protocol" = "HTTP"
     }
   }
 
-  depends_on = [helm_release.argocd]
+  spec {
+    ingress_class_name = "nginx"
+
+    rule {
+      http {
+        path {
+          path      = "/argocd"
+          path_type = "Prefix"
+
+          backend {
+            service {
+              name = "argocd-server"
+              port {
+                number = 80
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  depends_on = [helm_release.argocd, helm_release.ingress_nginx]
 }
