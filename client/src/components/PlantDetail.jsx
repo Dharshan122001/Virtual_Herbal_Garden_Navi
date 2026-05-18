@@ -34,7 +34,7 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
     } finally {
       setLoading(false);
     }
-  }, [plantIdNum, PLANT_API]);
+  }, [plantIdNum, PLANT_SERVICE_URL]);
 
   useEffect(() => { fetchPlantDetail(); }, [fetchPlantDetail]);
 
