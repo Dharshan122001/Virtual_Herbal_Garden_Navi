@@ -14,42 +14,28 @@ COPY . .
 RUN npm run build
 
 
-# ==================================
-# STAGE 2 — NGINX Runtime
-# ==================================
-FROM nginx:alpine
+# =========================
+# STAGE 2 — Runtime
+# =========================
+FROM python:3.10-slim
 
-# Install wget for optional debugging/healthchecks
-RUN apk add --no-cache wget
+WORKDIR /app
 
-# Remove default nginx static files
-RUN rm -rf /usr/share/nginx/html/*
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-# Copy built Vite app
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /install /usr/local
+COPY . .
 
-# Copy nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Create numeric non-root user
+RUN groupadd -g 1001 appgroup && \
+    useradd -u 1001 -g appgroup -s /sbin/nologin appuser
 
-# Copy startup script
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+USER 1001:1001
 
-# Prepare runtime files + permissions
-RUN touch /usr/share/nginx/html/config.js && \
-    touch /var/run/nginx.pid && \
-    chmod +x /usr/local/bin/entrypoint.sh && \
-    chown -R nginx:nginx \
-      /usr/share/nginx/html \
-      /var/cache/nginx \
-      /var/log/nginx \
-      /etc/nginx \
-      /var/run/nginx.pid
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+CMD python -c "import os, urllib.request; urllib.request.urlopen('http://localhost:' + os.environ.get('PORT', '8000') + '/docs')" || exit 1
 
-# Run as non-root user
-USER nginx
+EXPOSE 8000
 
-EXPOSE 8080
-
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["sh", "-c", "uvicorn ${MODULE_NAME}:app --host 0.0.0.0 --port ${PORT}"]

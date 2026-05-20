@@ -93,7 +93,7 @@ stages:
           
           # 4. Build using the workspace as context
           cd "${WORKSPACE}"
-          docker build -t $(dockerUser)/${image_name}:$(Build.BuildId) .
+          docker build --no-cache -t $(dockerUser)/${image_name}:$(Build.BuildId) .
           docker push $(dockerUser)/${image_name}:$(Build.BuildId)
           
           # 5. Clean up workspace and return safely
