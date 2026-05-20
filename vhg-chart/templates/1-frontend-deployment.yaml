@@ -3,102 +3,73 @@ kind: Deployment
 metadata:
   name: frontend
   namespace: {{ .Values.namespace }}
-
 spec:
   replicas: 1
-
   strategy:
     type: RollingUpdate
-
   selector:
     matchLabels:
       app: frontend
-
   template:
     metadata:
       labels:
         app: frontend
-
     spec:
       containers:
       - name: frontend
-
         image: "{{ .Values.frontend.image }}:{{ .Values.frontend.tag }}"
         imagePullPolicy: Always
-
         ports:
-        - containerPort: 80
-
-        securityContext:
-          runAsNonRoot: true
-          allowPrivilegeEscalation: false
-
+        - containerPort: 8080
         env:
         - name: VITE_PLANT_API_URL
           value: "/api/plant"
-
         - name: VITE_AUTH_API_URL
           value: "/api/auth"
-
         - name: VITE_AI_API_URL
           value: "/api/ai"
-
         - name: DATADOG_RUM_ENABLED
-          value: "{{ .Values.frontend.rum.enabled }}"
-
+          value: {{ .Values.frontend.rum.enabled | quote }}
         - name: DATADOG_RUM_APPLICATION_ID
-          value: "{{ .Values.frontend.rum.applicationId }}"
-
+          value: {{ .Values.frontend.rum.applicationId | quote }}
         - name: DATADOG_RUM_CLIENT_TOKEN
-          value: "{{ .Values.frontend.rum.clientToken }}"
-
+          value: {{ .Values.frontend.rum.clientToken | quote }}
         - name: DATADOG_SITE
-          value: "{{ .Values.observability.datadogSite }}"
-
+          value: {{ .Values.observability.datadogSite | quote }}
         - name: DATADOG_ENV
-          value: "{{ .Values.observability.environment }}"
-
+          value: {{ .Values.observability.environment | quote }}
         - name: DATADOG_VERSION
-          value: "{{ .Values.frontend.tag }}"
-
+          value: {{ .Values.frontend.tag | quote }}
         - name: DATADOG_RUM_SERVICE
-          value: "{{ .Values.frontend.rum.service }}"
-
+          value: {{ .Values.frontend.rum.service | quote }}
         - name: DATADOG_RUM_SESSION_SAMPLE_RATE
-          value: "{{ .Values.frontend.rum.sessionSampleRate }}"
-
+          value: {{ .Values.frontend.rum.sessionSampleRate | quote }}
         - name: DATADOG_RUM_REPLAY_SAMPLE_RATE
-          value: "{{ .Values.frontend.rum.replaySampleRate }}"
-
+          value: {{ .Values.frontend.rum.replaySampleRate | quote }}
         - name: DATADOG_RUM_REPLAY_ENABLED
-          value: "{{ .Values.frontend.rum.replayEnabled }}"
-
+          value: {{ .Values.frontend.rum.replayEnabled | quote }}
         startupProbe:
           httpGet:
             path: /
-            port: 80
+            port: 8080
           failureThreshold: 30
           periodSeconds: 10
-
         livenessProbe:
           httpGet:
             path: /
-            port: 80
+            port: 8080
           initialDelaySeconds: 20
           periodSeconds: 10
-
         readinessProbe:
           httpGet:
             path: /
-            port: 80
+            port: 8080
           initialDelaySeconds: 10
           periodSeconds: 5
-
         resources:
           requests:
             memory: "16Mi"
             cpu: "20m"
-
           limits:
             memory: "64Mi"
             cpu: "100m"

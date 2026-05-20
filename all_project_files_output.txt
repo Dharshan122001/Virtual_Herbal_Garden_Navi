@@ -223,8 +223,9 @@ COPY . .
 RUN adduser --disabled-password --gecos '' appuser
 USER appuser
 
+# Adjusted healthcheck script path checking target sub-routes natively
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:${PORT:-8000}/docs')" || exit 1
+CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:' + os.environ.get('PORT', '8000') + '/docs')" || exit 1
 
 EXPOSE 8000
 
@@ -233,7 +234,7 @@ import os
 import requests
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from dotenv import load_dotenv
-#Try3
+#Try1
 from common import schemas
 from common.observability import configure_observability
 from common.utils import setup_cors
@@ -370,7 +371,7 @@ from sqlalchemy import text
 from passlib.context import CryptContext
 from dotenv import load_dotenv
 from jose import jwt
-#Try3
+#Try1
 from common.database import get_db
 from common.observability import configure_observability
 from common import schemas
@@ -574,7 +575,7 @@ from fastapi import FastAPI, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List, Optional
-#Try3
+#Try1
 # Absolute imports from your monorepo structure
 from common.database import get_db
 from common.observability import configure_observability
@@ -794,7 +795,7 @@ metadata:
 namespace: vhg-1
 frontend:
   image: dharshan3690/navi-frontend
-  tag: "1864"
+  tag: "1866"
   port: 80
   rum:
     enabled: true
@@ -806,15 +807,15 @@ frontend:
     replayEnabled: true
 plant:
   image: dharshan3690/plant-service
-  tag: "1864"
+  tag: "1866"
   port: 8005
 auth:
   image: dharshan3690/auth-service
-  tag: "1864"
+  tag: "1866"
   port: 8006
 ai:
   image: dharshan3690/ai-service
-  tag: "1864"
+  tag: "1866"
   port: 8007
 ingress:
   enabled: true
@@ -1955,7 +1956,7 @@ stages:
     - script: |
         set -e
 
-        # Reusable function to build isolated contexts using the shared server/Dockerfile
+        # Reusable function to build isolated contexts preserving monorepo layout
         build_backend_service() {
           local service_dir=$1    # e.g., "plant_service"
           local image_name=$2     # e.g., "plant-service"
@@ -1968,15 +1969,16 @@ stages:
           local WORKSPACE="server/build_${service_dir}"
           mkdir -p "${WORKSPACE}"
           
-          # 2. Sync core shared components and code into the transient workspace root
+          # 2. Sync global components into workspace root
           cp server/requirements.txt "${WORKSPACE}/"
           cp server/Dockerfile "${WORKSPACE}/"
           cp -r server/common "${WORKSPACE}/common"
           
-          # 3. Move the microservice main app files directly to the root of the workspace context
-          cp -r server/${service_dir}/* "${WORKSPACE}/"
+          # 3. Preserve the folder nesting structure so Python resolves module paths natively
+          mkdir -p "${WORKSPACE}/${service_dir}"
+          cp -r server/${service_dir}/* "${WORKSPACE}/${service_dir}/"
           
-          # 4. Build using the workspace as context, keeping final image sizes small and lean
+          # 4. Build using the workspace as context
           cd "${WORKSPACE}"
           docker build -t $(dockerUser)/${image_name}:$(Build.BuildId) .
           docker push $(dockerUser)/${image_name}:$(Build.BuildId)
@@ -2006,8 +2008,9 @@ stages:
         set -e
         if [ "$(f_upd)" == "true" ]; then
           cd client
-          docker build -t $(dockerUser)/frontend:$(Build.BuildId) .
-          docker push $(dockerUser)/frontend:$(Build.BuildId)
+          # Aligned image name to navi-frontend to match Helm chart standards
+          docker build -t $(dockerUser)/navi-frontend:$(Build.BuildId) .
+          docker push $(dockerUser)/navi-frontend:$(Build.BuildId)
         fi
       displayName: "Build Frontend"
 
