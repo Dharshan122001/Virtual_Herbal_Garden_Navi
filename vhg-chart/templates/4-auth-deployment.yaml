@@ -3,55 +3,91 @@ kind: Deployment
 metadata:
   name: auth-service
   namespace: {{ .Values.namespace }}
+
 spec:
   replicas: 1
+
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 0
       maxUnavailable: 1
+
   selector:
     matchLabels:
       app: auth-service
+
   template:
     metadata:
       labels:
         app: auth-service
+
     spec:
       containers:
       - name: auth-service
+
         image: "{{ .Values.auth.image }}:{{ .Values.auth.tag }}"
+        imagePullPolicy: Always
+
         ports:
         - containerPort: 8006
+
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
 
         envFrom:
         - secretRef:
             name: vhg-secrets
+
         env:
         - name: HOST_IP
           valueFrom:
             fieldRef:
               fieldPath: status.hostIP
+
+        - name: MODULE_NAME
+          value: "auth_service.main"
+
+        - name: PORT
+          value: "8006"
+
         - name: OTEL_SERVICE_VERSION
           value: "{{ .Values.auth.tag }}"
+
         - name: OTEL_DEPLOYMENT_ENVIRONMENT
           value: "{{ .Values.observability.environment }}"
+
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: "http://datadog.datadog.svc.cluster.local:4317"
+
         - name: OTEL_EXPORTER_OTLP_PROTOCOL
           value: "grpc"
+
         - name: OTEL_TRACES_SAMPLER
           value: "{{ .Values.observability.tracesSampler }}"
+
         - name: OTEL_TRACES_SAMPLER_ARG
           value: "{{ .Values.observability.tracesSamplerArg }}"
+
         - name: OTEL_METRIC_EXPORT_INTERVAL
           value: "{{ .Values.observability.metricExportInterval }}"
+
         - name: OTEL_PYTHON_FASTAPI_EXCLUDED_URLS
           value: "{{ .Values.observability.excludedUrls }}"
+
         - name: OTEL_SDK_DISABLED
           value: "{{ not .Values.observability.enabled }}"
+
         - name: OTEL_RESOURCE_ATTRIBUTES
           value: "service.namespace={{ .Values.observability.serviceNamespace }},k8s.namespace.name={{ .Values.namespace }},k8s.deployment.name=auth-service"
+
+        startupProbe:
+          httpGet:
+            path: /docs
+            port: 8006
+          failureThreshold: 30
+          periodSeconds: 10
 
         livenessProbe:
           httpGet:
@@ -71,6 +107,7 @@ spec:
           requests:
             memory: "64Mi"
             cpu: "20m"
+
           limits:
             memory: "256Mi"
             cpu: "150m"

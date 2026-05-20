@@ -80,7 +80,7 @@ resource "helm_release" "vhg_app_gitops" {
   values = [
     <<-EOF
     repoURL: "https://dev.azure.com/navikenz/DevOps%20POCs/_git/DevOps%20POCs"
-    targetRevision: "DataDog"
+    targetRevision: "genai"
     path: "vhg-chart"
     destinationNamespace: "vhg-1"
     EOF

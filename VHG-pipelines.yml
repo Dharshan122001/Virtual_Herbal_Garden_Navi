@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - DataDog
+      - genai
   paths:
     include:
       - client/*
@@ -61,38 +61,45 @@ stages:
       f_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.f_changed'] ]
     steps:
     - task: Docker@2
-      displayName: "Login"
+      displayName: "Login to DockerHub"
       inputs:
         containerRegistry: '$(dockerRegistryConn)'
         command: 'login'
 
     - script: |
         set -e
+
+        # Reusable function to handle shared contexts and docker operations
+        build_backend_service() {
+          local service_dir=$1    # directory name inside server/
+          local image_name=$2     # target repository tag identifier
+          
+          echo "========================================="
+          echo "Building backend module: ${image_name}"
+          echo "========================================="
+          
+          cp server/requirements.txt server/${service_dir}/
+          cp -r server/common server/${service_dir}/common
+          
+          cd server/${service_dir}
+          docker build -t $(dockerUser)/${image_name}:$(Build.BuildId) .
+          docker push $(dockerUser)/${image_name}:$(Build.BuildId)
+          cd ../..
+        }
+
         # 1. Build Plant Service
         if [ "$(p_upd)" == "true" ]; then
-          cp server/requirements.txt server/plant_service/
-          cp -r server/common server/plant_service/common
-          cd server/plant_service && docker build -t $(dockerUser)/plant-service:$(Build.BuildId) .
-          docker push $(dockerUser)/plant-service:$(Build.BuildId)
-          cd ../..
+          build_backend_service "plant_service" "plant-service"
         fi
 
         # 2. Build Auth Service
         if [ "$(au_upd)" == "true" ]; then
-          cp server/requirements.txt server/auth_service/
-          cp -r server/common server/auth_service/common
-          cd server/auth_service && docker build -t $(dockerUser)/auth-service:$(Build.BuildId) .
-          docker push $(dockerUser)/auth-service:$(Build.BuildId)
-          cd ../..
+          build_backend_service "auth_service" "auth-service"
         fi
 
         # 3. Build AI Service
         if [ "$(ai_upd)" == "true" ]; then
-          cp server/requirements.txt server/ai_service/
-          cp -r server/common server/ai_service/common
-          cd server/ai_service && docker build -t $(dockerUser)/ai-service:$(Build.BuildId) .
-          docker push $(dockerUser)/ai-service:$(Build.BuildId)
-          cd ../..
+          build_backend_service "ai_service" "ai-service"
         fi
       displayName: "Build Backend Services"
 
@@ -100,11 +107,9 @@ stages:
         set -e
         if [ "$(f_upd)" == "true" ]; then
           cd client
-          npm install
-          npm run build
-          # Context is now '.', relative to the 'client' folder
-          docker build -t $(dockerUser)/navi-frontend:$(Build.BuildId) .
-          docker push $(dockerUser)/navi-frontend:$(Build.BuildId)
+          # Optimized: Multi-stage Dockerfile natively builds app production artifacts 
+          docker build -t $(dockerUser)/frontend:$(Build.BuildId) .
+          docker push $(dockerUser)/frontend:$(Build.BuildId)
         fi
       displayName: "Build Frontend"
 
@@ -138,8 +143,8 @@ stages:
         if ! git diff --exit-code vhg-chart/values.yaml; then
           git add vhg-chart/values.yaml
           git commit -m "GitOps: deploy build $(Build.BuildId) [skip ci]"
-          # Fixed push for detached HEAD CI environment
-          git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" push origin HEAD:DataDog
+          # Dynamic fallback resolution targeting DataDog branch path explicitly
+          git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" push origin HEAD:genai
         else
           echo "No manifest changes needed."
         fi

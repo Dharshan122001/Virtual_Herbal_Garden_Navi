@@ -3,55 +3,91 @@ kind: Deployment
 metadata:
   name: plant-service
   namespace: {{ .Values.namespace }}
+
 spec:
   replicas: 1
+
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 0
       maxUnavailable: 1
+
   selector:
     matchLabels:
       app: plant-service
+
   template:
     metadata:
       labels:
         app: plant-service
+
     spec:
       containers:
       - name: plant-service
+
         image: "{{ .Values.plant.image }}:{{ .Values.plant.tag }}"
+        imagePullPolicy: Always
+
         ports:
         - containerPort: 8005
+
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
 
         envFrom:
         - secretRef:
             name: vhg-secrets
+
         env:
         - name: HOST_IP
           valueFrom:
             fieldRef:
               fieldPath: status.hostIP
+
+        - name: MODULE_NAME
+          value: "plant_service.main"
+
+        - name: PORT
+          value: "8005"
+
         - name: OTEL_SERVICE_VERSION
           value: "{{ .Values.plant.tag }}"
+
         - name: OTEL_DEPLOYMENT_ENVIRONMENT
           value: "{{ .Values.observability.environment }}"
+
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: "http://datadog.datadog.svc.cluster.local:4317"
+
         - name: OTEL_EXPORTER_OTLP_PROTOCOL
           value: "grpc"
+
         - name: OTEL_TRACES_SAMPLER
           value: "{{ .Values.observability.tracesSampler }}"
+
         - name: OTEL_TRACES_SAMPLER_ARG
           value: "{{ .Values.observability.tracesSamplerArg }}"
+
         - name: OTEL_METRIC_EXPORT_INTERVAL
           value: "{{ .Values.observability.metricExportInterval }}"
+
         - name: OTEL_PYTHON_FASTAPI_EXCLUDED_URLS
           value: "{{ .Values.observability.excludedUrls }}"
+
         - name: OTEL_SDK_DISABLED
           value: "{{ not .Values.observability.enabled }}"
+
         - name: OTEL_RESOURCE_ATTRIBUTES
           value: "service.namespace={{ .Values.observability.serviceNamespace }},k8s.namespace.name={{ .Values.namespace }},k8s.deployment.name=plant-service"
+
+        startupProbe:
+          httpGet:
+            path: /docs
+            port: 8005
+          failureThreshold: 30
+          periodSeconds: 10
 
         livenessProbe:
           httpGet:
@@ -65,12 +101,13 @@ spec:
             path: /docs
             port: 8005
           initialDelaySeconds: 10
-          periodSeconds: 5
+          periodSeconds: 10
 
         resources:
           requests:
             memory: "64Mi"
             cpu: "20m"
+
           limits:
             memory: "256Mi"
             cpu: "150m"
