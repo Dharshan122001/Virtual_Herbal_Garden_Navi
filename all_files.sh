@@ -4,6 +4,7 @@ for f in \
 client/Dockerfile \
 client/entrypoint.sh \
 client/index.html \
+client/src/apiConfig.js \
 client/src/main.jsx \
 client/src/observability.js \
 server/requirements.txt \

@@ -69,22 +69,35 @@ stages:
     - script: |
         set -e
 
-        # Reusable function to handle shared contexts and docker operations
+        # Reusable function to build isolated contexts using the shared server/Dockerfile
         build_backend_service() {
-          local service_dir=$1    # directory name inside server/
-          local image_name=$2     # target repository tag identifier
+          local service_dir=$1    # e.g., "plant_service"
+          local image_name=$2     # e.g., "plant-service"
           
           echo "========================================="
-          echo "Building backend module: ${image_name}"
+          echo "Preparing context & building: ${image_name}"
           echo "========================================="
           
-          cp server/requirements.txt server/${service_dir}/
-          cp -r server/common server/${service_dir}/common
+          # 1. Create an isolated transient workspace for this service's context
+          local WORKSPACE="server/build_${service_dir}"
+          mkdir -p "${WORKSPACE}"
           
-          cd server/${service_dir}
+          # 2. Sync core shared components and code into the transient workspace root
+          cp server/requirements.txt "${WORKSPACE}/"
+          cp server/Dockerfile "${WORKSPACE}/"
+          cp -r server/common "${WORKSPACE}/common"
+          
+          # 3. Move the microservice main app files directly to the root of the workspace context
+          cp -r server/${service_dir}/* "${WORKSPACE}/"
+          
+          # 4. Build using the workspace as context, keeping final image sizes small and lean
+          cd "${WORKSPACE}"
           docker build -t $(dockerUser)/${image_name}:$(Build.BuildId) .
           docker push $(dockerUser)/${image_name}:$(Build.BuildId)
+          
+          # 5. Clean up workspace and return safely
           cd ../..
+          rm -rf "${WORKSPACE}"
         }
 
         # 1. Build Plant Service
@@ -107,7 +120,6 @@ stages:
         set -e
         if [ "$(f_upd)" == "true" ]; then
           cd client
-          # Optimized: Multi-stage Dockerfile natively builds app production artifacts 
           docker build -t $(dockerUser)/frontend:$(Build.BuildId) .
           docker push $(dockerUser)/frontend:$(Build.BuildId)
         fi
@@ -143,7 +155,6 @@ stages:
         if ! git diff --exit-code vhg-chart/values.yaml; then
           git add vhg-chart/values.yaml
           git commit -m "GitOps: deploy build $(Build.BuildId) [skip ci]"
-          # Dynamic fallback resolution targeting DataDog branch path explicitly
           git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" push origin HEAD:genai
         else
           echo "No manifest changes needed."
