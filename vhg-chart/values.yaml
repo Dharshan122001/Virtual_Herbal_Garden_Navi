@@ -1,7 +1,7 @@
 namespace: vhg-1
 frontend:
   image: dharshan3690/navi-frontend
-  tag: "1869"
+  tag: "1870"
   port: 80
   rum:
     enabled: true
@@ -13,15 +13,15 @@ frontend:
     replayEnabled: true
 plant:
   image: dharshan3690/plant-service
-  tag: "1868"
+  tag: "1870"
   port: 8005
 auth:
   image: dharshan3690/auth-service
-  tag: "1868"
+  tag: "1870"
   port: 8006
 ai:
   image: dharshan3690/ai-service
-  tag: "1868"
+  tag: "1870"
   port: 8007
 ingress:
   enabled: true
