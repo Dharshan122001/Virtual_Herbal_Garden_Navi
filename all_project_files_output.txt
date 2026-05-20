@@ -1,0 +1,2048 @@
+\n\n==================== client/Dockerfile ====================\n
+# =========================
+# STAGE 1 — Build React App
+# =========================
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm ci
+
+COPY . .
+
+RUN npm run build
+
+
+# =========================
+# STAGE 2 — NGINX Runtime
+# =========================
+FROM nginx:alpine
+
+RUN rm -rf /usr/share/nginx/html/*
+
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+RUN touch /usr/share/nginx/html/config.js \
+    && chmod 666 /usr/share/nginx/html/config.js
+
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+CMD wget --no-verbose --tries=1 --spider http://localhost || exit 1
+
+EXPOSE 80
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+CMD ["nginx", "-g", "daemon off;"]\n\n==================== client/entrypoint.sh ====================\n
+#!/bin/sh
+set -e
+
+# Use the absolute path to the nginx html folder try
+CONFIG_FILE="/usr/share/nginx/html/config.js"
+
+echo "Writing config to $CONFIG_FILE"
+
+# Create the file with the values from Azure Env Vars
+cat <<EOF > $CONFIG_FILE
+window.appConfig = {
+  VITE_PLANT_API_URL: "$VITE_PLANT_API_URL",
+  VITE_AUTH_API_URL: "$VITE_AUTH_API_URL",
+  VITE_AI_API_URL: "$VITE_AI_API_URL",
+  DATADOG_RUM_ENABLED: "$DATADOG_RUM_ENABLED",
+  DATADOG_RUM_APPLICATION_ID: "$DATADOG_RUM_APPLICATION_ID",
+  DATADOG_RUM_CLIENT_TOKEN: "$DATADOG_RUM_CLIENT_TOKEN",
+  DATADOG_SITE: "$DATADOG_SITE",
+  DATADOG_ENV: "$DATADOG_ENV",
+  DATADOG_VERSION: "$DATADOG_VERSION",
+  DATADOG_RUM_SERVICE: "$DATADOG_RUM_SERVICE",
+  DATADOG_RUM_SESSION_SAMPLE_RATE: "$DATADOG_RUM_SESSION_SAMPLE_RATE",
+  DATADOG_RUM_REPLAY_SAMPLE_RATE: "$DATADOG_RUM_REPLAY_SAMPLE_RATE",
+  DATADOG_RUM_REPLAY_ENABLED: "$DATADOG_RUM_REPLAY_ENABLED"
+};
+EOF
+
+echo "Content of $CONFIG_FILE:"
+cat $CONFIG_FILE
+
+# Start Nginx
+exec "$@"
+\n\n==================== client/index.html ====================\n
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vite + React</title>
+  <script src="/config.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>\n\n==================== client/src/apiConfig.js ====================\n
+export const PLANT_SERVICE_URL = window.appConfig?.VITE_PLANT_API_URL || "http://localhost:8005";
+export const AUTH_SERVICE_URL  = window.appConfig?.VITE_AUTH_API_URL  || "http://localhost:8006";
+export const AI_SERVICE_URL    = window.appConfig?.VITE_AI_API_URL    || "http://localhost:8007";\n\n==================== client/src/main.jsx ====================\n
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import "./index.css";
+import App from "./App.jsx";
+import { initBrowserMonitoring } from "./observability.js";
+
+initBrowserMonitoring();
+
+createRoot(document.getElementById("root")).render(
+  <StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </StrictMode>
+);
+\n\n==================== client/src/observability.js ====================\n
+import { datadogRum } from "@datadog/browser-rum";
+
+const config = window.appConfig || {};
+
+export function initBrowserMonitoring() {
+  if (config.DATADOG_RUM_ENABLED !== "true") {
+    return;
+  }
+
+  if (!config.DATADOG_RUM_APPLICATION_ID || !config.DATADOG_RUM_CLIENT_TOKEN) {
+    console.warn("Datadog RUM is enabled but application ID or client token is missing.");
+    return;
+  }
+
+  datadogRum.init({
+    applicationId: config.DATADOG_RUM_APPLICATION_ID,
+    clientToken: config.DATADOG_RUM_CLIENT_TOKEN,
+    site: config.DATADOG_SITE || "datadoghq.com",
+    service: config.DATADOG_RUM_SERVICE || "vhg-frontend",
+    env: config.DATADOG_ENV || "aks",
+    version: config.DATADOG_VERSION || "local",
+    sessionSampleRate: Number(config.DATADOG_RUM_SESSION_SAMPLE_RATE || 100),
+    sessionReplaySampleRate: Number(config.DATADOG_RUM_REPLAY_SAMPLE_RATE || 0),
+    defaultPrivacyLevel: "mask-user-input",
+    trackResources: true,
+    trackLongTasks: true,
+    trackUserInteractions: true,
+    allowedTracingUrls: [/\/api\/plant/, /\/api\/auth/, /\/api\/ai/],
+  });
+
+  if (config.DATADOG_RUM_REPLAY_ENABLED === "true") {
+    datadogRum.startSessionReplayRecording();
+  }
+}
+\n\n==================== server/requirements.txt ====================\n
+fastapi==0.115.12
+uvicorn[standard]==0.33.0
+pydantic==2.10.6
+pydantic[email]
+psycopg2-binary==2.9.10
+sqlalchemy==2.0.41
+python-multipart==0.0.20
+python-dotenv==1.0.1
+python-jose
+google-generativeai
+Pillow==10.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+fastapi-mail==1.4.1
+watchfiles
+httpcore
+httpx
+google-api-python-client
+google-auth
+google-auth-oauthlib
+
+# --- DATA MIGRATION & UTILS ---
+pandas==2.2.3
+openpyxl  # Optional: if you ever need to export to Excel instead of CSV
+
+# --- DATABASE DRIVERS ---
+psycopg2-binary==2.9.10  # You already have this, but ensure it's here
+sqlalchemy==2.0.41      # You already have this
+
+# --- GOOGLE AUTH FIXES ---
+# (Adding these ensures the Google APIs you're using don't crash)
+google-auth-httplib2
+
+# --- OBSERVABILITY ---
+opentelemetry-api==1.31.1
+opentelemetry-sdk==1.31.1
+opentelemetry-exporter-otlp-proto-grpc==1.31.1
+opentelemetry-instrumentation-fastapi==0.52b1
+opentelemetry-instrumentation-requests==0.52b1
+opentelemetry-instrumentation-sqlalchemy==0.52b1
+\n\n==================== server/Dockerfile ====================\n
+# =========================
+# STAGE 1 — Builder
+# =========================
+FROM python:3.10-slim AS builder
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+
+RUN pip install --upgrade pip setuptools wheel
+
+RUN pip install --prefix=/install --no-cache-dir -r requirements.txt
+
+
+# =========================
+# STAGE 2 — Runtime
+# =========================
+FROM python:3.10-slim
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+COPY --from=builder /install /usr/local
+
+COPY . .
+
+# Non-root user
+RUN adduser --disabled-password --gecos '' appuser
+USER appuser
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:${PORT:-8000}/docs')" || exit 1
+
+EXPOSE 8000
+
+CMD ["sh", "-c", "uvicorn ${MODULE_NAME}:app --host 0.0.0.0 --port ${PORT}"]\n\n==================== server/ai_service/main.py ====================\n
+import os
+import requests
+from fastapi import FastAPI, HTTPException, UploadFile, File
+from dotenv import load_dotenv
+#Try3
+from common import schemas
+from common.observability import configure_observability
+from common.utils import setup_cors
+
+# =========================
+# ENV
+# =========================
+load_dotenv()
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+PLANTNET_API_KEY = os.getenv("PLANTNET_API_KEY")
+
+if not GROQ_API_KEY:
+    raise RuntimeError("GROQ_API_KEY missing")
+
+if not PLANTNET_API_KEY:
+    raise RuntimeError("PLANTNET_API_KEY missing")
+
+# =========================
+# APP # try3
+# =========================
+app = FastAPI(title="Herbal Garden - AI Service")
+setup_cors(app)
+configure_observability(app, "vhg-ai-service")
+
+# =========================
+# HEALTH
+# =========================
+@app.get("/")
+async def health():
+    return {"status": "AI Service running (Groq + PlantNet)"}
+
+# =========================
+# AI CHAT (Groq)
+# =========================
+@app.post("/ai/chat", response_model=schemas.ChatResponse)
+async def chat_with_ai(chat_request: schemas.ChatRequest):
+    try:
+        payload = {
+            "model": "llama-3.1-8b-instant",
+            "messages": [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a herbal expert assistant. "
+                        "Explain plants, medicinal uses, safety, allergies, "
+                        "and traditional remedies clearly and concisely."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": chat_request.message
+                }
+            ],
+            "temperature": 0.4
+        }
+
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        res = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            json=payload,
+            headers=headers,
+            timeout=20
+        )
+
+        res.raise_for_status()
+        ai_text = res.json()["choices"][0]["message"]["content"]
+
+        return {"response": ai_text}
+
+    except Exception as e:
+        print("AI CHAT ERROR:", str(e))
+        raise HTTPException(status_code=500, detail="AI chat failed")
+
+# =========================
+# PLANT IDENTIFICATION (PlantNet + Groq)
+# =========================
+@app.post("/ai/identify", response_model=schemas.PlantIdentificationResponse)
+async def identify_plant(image: UploadFile = File(...)):
+    if not image.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+
+    try:
+        # --------------------------
+        # 1️⃣ Identify via PlantNet
+        # --------------------------
+        image_bytes = await image.read()
+
+        files = {
+            "images": ("plant.jpg", image_bytes, image.content_type)
+        }
+
+        data = {"organs": "leaf"}
+
+        url = f"https://my-api.plantnet.org/v2/identify/all?api-key={PLANTNET_API_KEY}"
+
+        res = requests.post(url, files=files, data=data, timeout=30)
+        res.raise_for_status()
+
+        result = res.json()
+        results = result.get("results", [])
+
+        if not results:
+            return {
+                "plant_name": "Unknown Plant"
+            }
+
+        best = results[0]
+        species = best.get("species", {})
+
+        common_names = species.get("commonNames") or []
+        scientific_name = species.get("scientificName", "Unknown")
+
+        plant_name = common_names[0] if common_names else scientific_name
+
+        return {
+            "plant_name": plant_name
+        }
+
+    except Exception as e:
+        print("PLANT IDENTIFY ERROR:", str(e))
+        raise HTTPException(status_code=500, detail="Plant identification failed")
+\n\n==================== server/auth_service/main.py ====================\n
+import os
+import uuid
+import datetime
+from fastapi import FastAPI, Depends, HTTPException
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+from passlib.context import CryptContext
+from dotenv import load_dotenv
+from jose import jwt
+#Try3
+from common.database import get_db
+from common.observability import configure_observability
+from common import schemas
+from common.utils import setup_cors
+from common.gmail_service import send_email
+
+load_dotenv()
+
+app = FastAPI(title="Herbal Garden - Auth Service")
+setup_cors(app)
+configure_observability(app, "vhg-auth-service")
+
+# =======================
+# SECURITY CONFIG
+# =======================
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+BASE_URL = os.getenv("BASE_URL", "https://virtual-herbal-garden-r1uw.onrender.com")
+
+# =======================
+# HELPERS # try3
+# =======================
+def create_access_token(data: dict):
+    payload = data.copy()
+    payload["exp"] = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+def hash_password(password: str) -> str:
+    if len(password.encode("utf-8")) > 72:
+        raise HTTPException(status_code=400, detail="Password too long")
+    return pwd_context.hash(password)
+
+def verify_password(plain: str, hashed: str) -> bool:
+    if not plain or len(plain.encode("utf-8")) > 72:
+        return False
+    return pwd_context.verify(plain, hashed)
+
+# =======================
+# HEALTH
+# =======================
+@app.get("/")
+async def health():
+    return {"status": "Auth Service running"}
+
+# =======================
+# REGISTER
+# =======================
+@app.post("/auth/register")
+async def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+    exists = db.execute(
+        text("SELECT 1 FROM public.users WHERE email = :e"),
+        {"e": user_data.email}
+    ).first()
+
+    if exists:
+        raise HTTPException(status_code=400, detail="Email already exists")
+
+    hashed = hash_password(user_data.password)
+
+    user = db.execute(
+        text("""
+            INSERT INTO public.users (email, hashed_password, first_name, last_name)
+            VALUES (:email, :pw, :fn, :ln)
+            RETURNING email, first_name
+        """),
+        {
+            "email": user_data.email,
+            "pw": hashed,
+            "fn": user_data.first_name,
+            "ln": user_data.last_name
+        }
+    ).mappings().first()
+
+    db.commit()
+    
+
+    # Send welcome email (non-blocking)
+    try:
+        send_email(
+            to=user_data.email,
+            subject="Welcome to Herbal Garden 🌿",
+            html=f"""
+            <h3>Welcome to Herbal Garden 🌿</h3>
+            <p>Your account has been created.</p>
+            """
+        )
+    except Exception as e:
+        print("Email failed:", e)
+
+    return {
+        "id": user["email"],
+        "email": user["email"],
+        "first_name": user["first_name"]
+    }
+
+# =======================
+# LOGIN
+# =======================
+@app.post("/auth/login")
+def login(data: schemas.UserCreate, db: Session = Depends(get_db)):
+    user = db.execute(
+        text("""
+            SELECT email, first_name, hashed_password
+            FROM public.users WHERE email = :email
+        """),
+        {"email": data.email}
+    ).mappings().first()
+
+    if not user or not verify_password(data.password, user["hashed_password"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    token = create_access_token({"sub": user["email"], "id": user["email"]})
+
+    return {
+        "access_token": token,
+        "user": {
+            "id": user["email"],
+            "email": user["email"],
+            "first_name": user["first_name"]
+        }
+    }
+
+# =======================
+# FORGOT PASSWORD
+# =======================
+@app.post("/auth/forgot-password")
+async def forgot_password(data: schemas.ResetCodeCreate, db: Session = Depends(get_db)):
+    user = db.execute(
+        text("SELECT email FROM public.users WHERE email = :e"),
+        {"e": data.email}
+    ).first()
+
+    if user:
+        reset_id = str(uuid.uuid4())
+
+        db.execute(
+            text("""
+                INSERT INTO public.resetcode (email, "resetId", status, created_at, expired_in)
+                VALUES (:email, :rid, 'pending', NOW(), INTERVAL '1 hour')
+            """),
+            {"email": data.email, "rid": reset_id}
+        )
+        db.commit()
+        
+        reset_link = f"{BASE_URL}/reset-password?code={reset_id}"
+        try:
+            send_email(
+               to=data.email,
+               subject="Herbal Garden – Password Reset Code",
+               html=f"""
+                   <h3>Password Reset</h3>
+                   <p>Use the reset code below to set a new password:</p>
+                   <h2 style="letter-spacing:2px">{reset_id}</h2>
+                   <p>This code expires in 3 Minutes.</p>
+                   <p>If you didn’t request this, you can safely ignore this email.</p> """
+            )
+        except Exception as e:
+            print("Email failed:", e)
+
+    # Always return success (security best practice)
+    return {"message": "If the account exists, a reset email has been sent."}
+
+# =======================
+# RESET PASSWORD
+# =======================
+@app.post("/auth/reset-password")
+async def reset_password(data: schemas.ResetCodeVerify, db: Session = Depends(get_db)):
+    record = db.execute(
+        text("""
+            SELECT id FROM public.resetcode
+            WHERE email = :email
+              AND "resetId" = :rid
+              AND status = 'pending'
+              AND (created_at + expired_in) > NOW()
+        """),
+        {"email": data.email, "rid": data.resetId}
+    ).mappings().first()
+
+    if not record:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset code")
+
+    new_hash = hash_password(data.new_password)
+
+    db.execute(
+        text("UPDATE public.users SET hashed_password = :p WHERE email = :e"),
+        {"p": new_hash, "e": data.email}
+    )
+
+    db.execute(
+        text("UPDATE public.resetcode SET status = 'used' WHERE id = :id"),
+        {"id": record["id"]}
+    )
+
+    db.commit()
+
+    return {"message": "Password updated successfully"}
+\n\n==================== server/plant_service/main.py ====================\n
+#/server/plant_service/main.py
+from fastapi import FastAPI, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+from typing import List, Optional
+#Try3
+# Absolute imports from your monorepo structure
+from common.database import get_db
+from common.observability import configure_observability
+from common import schemas
+from common.utils import setup_cors
+
+from pathlib import Path
+from dotenv import load_dotenv
+
+
+import os
+import subprocess
+from fastapi.responses import FileResponse
+import io
+from fastapi.responses import StreamingResponse
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+env_path = BASE_DIR / ".env"
+load_dotenv(dotenv_path=env_path)
+
+# 2. Force Load
+
+
+app = FastAPI(title="Herbal Garden - Plant Service")
+setup_cors(app)
+configure_observability(app, "vhg-plant-service")
+# trying the pipelien changes is done but not working at all
+#--- for gitops ----
+@app.get("/api/v1/test-deploy")
+async def test_api():
+    return {
+        "message": "GitOps Pipeline Success!",
+        "service": "Plant Service",
+        "version": "v1.0.1"
+    }
+
+# try4
+
+
+# --- Plant Catalog Endpoints ---
+
+@app.get("/")
+async def health_check():
+    return {"status": "Plant Service is running"}
+
+@app.get("/plants", response_model=List[schemas.Plant])
+def list_plants(
+    search_query: Optional[str] = Query(None, description="Search by name, description, or uses"), 
+    db: Session = Depends(get_db)
+):
+    """Fetch all plants or filter by search query."""
+    query_str = "SELECT * FROM public.plants"
+    params = {}
+    
+    if search_query:
+        # We use ARRAY_TO_STRING to search inside the 'uses' TEXT[] array in Postgres
+        query_str += """ 
+            WHERE common_name ILIKE :search 
+            OR scientific_name ILIKE :search 
+            OR description ILIKE :search
+            OR ARRAY_TO_STRING(uses, ' ') ILIKE :search
+        """
+        params["search"] = f"%{search_query}%"
+    
+    result = db.execute(text(query_str), params).fetchall()
+    parsed_plants = []
+    for row in result:
+        plant_dict = row._asdict()
+        parsed_plants.append(schemas.Plant(**plant_dict))
+
+    return parsed_plants
+
+@app.get("/plants/{plant_id}", response_model=schemas.Plant)
+def get_plant_detail(plant_id: int, db: Session = Depends(get_db)):
+    """Fetch a single plant by its ID."""
+    query = text("SELECT * FROM public.plants WHERE plant_id = :id")
+    result = db.execute(query, {"id": plant_id}).first()
+    
+    if not result:
+        raise HTTPException(status_code=404, detail="Plant not found")
+    return schemas.Plant(**result._asdict())
+
+# --- Bookmark Endpoints ---
+
+@app.get("/bookmarks/user/{email}", response_model=List[schemas.Bookmark])
+def get_user_bookmarks(email: str, db: Session = Depends(get_db)):
+    """Retrieve all bookmarks for a specific user email."""
+    query = text("""
+        SELECT bookmark_id, email, plant_id, bookmarked_at 
+        FROM public.bookmarks WHERE email = :email
+    """)
+    result = db.execute(query, {"email": email}).fetchall()
+    if not result:
+        return []
+    return [schemas.Bookmark(**row._asdict()) for row in result]
+
+@app.post("/bookmarks/", response_model=schemas.Bookmark)
+def add_bookmark(bookmark: schemas.BookmarkCreate, db: Session = Depends(get_db)):
+    """Create a bookmark link between a user (email) and a plant."""
+    # 1. Verify the plant exists
+    plant = db.execute(
+        text("SELECT 1 FROM public.plants WHERE plant_id = :pid"), 
+        {"pid": bookmark.plant_id}
+    ).first()
+    if not plant:
+        raise HTTPException(status_code=404, detail="Plant does not exist")
+    
+    # 2. check whether the plant is already bookamrked ?
+    existing_bookmark_query = text("SELECT bookmark_id FROM public.bookmarks WHERE email = :user_mail_id AND plant_id = :plant_id;")
+    existing_bookmark = db.execute(existing_bookmark_query, {
+        "user_mail_id": bookmark.email,
+        "plant_id": bookmark.plant_id
+    }).first()
+    if existing_bookmark:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This plant is already bookmarked by this user.")
+    # 2. Insert bookmark (using 'user_email' to match your updated schema)
+    query = text("""
+        INSERT INTO public.bookmarks (email, plant_id)
+        VALUES (:email, :pid)
+        RETURNING bookmark_id, email, plant_id, bookmarked_at;
+    """)
+    try:
+        result = db.execute(query, {"email": bookmark.email, "pid": bookmark.plant_id}).first()
+        db.commit()
+        if result:
+            return schemas.Bookmark(**result._asdict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Bookmark could not be created.")
+        
+    except Exception as e:
+        db.rollback()
+        # Usually happens if the unique constraint (user_email, plant_id) is violated
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Error creating bookmark: {e}")
+
+
+
+@app.delete("/bookmarks/{email}/{plant_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_bookmark(email: str, plant_id: int, db: Session = Depends(get_db)):
+    """Remove a specific bookmark."""
+    query = text("DELETE FROM public.bookmarks WHERE email = :email AND plant_id = :pid RETURNING bookmark_id")
+    result = db.execute(query, {"email": email, "pid": plant_id}).first()
+    db.commit()
+    if not result:
+        raise HTTPException(status_code=404, detail="Bookmark not found for this user and plant")
+    return
+
+
+
+
+@app.get("/system/backup-db")
+def backup_database(db: Session = Depends(get_db)):
+    """
+    Backup using Pure Python/SQL (No pg_dump required).
+    """
+    try:
+        # Get all table names in the public schema
+        result = db.execute(text(
+            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
+        ))
+        tables = [row[0] for row in result.fetchall()]
+        
+        output = io.StringIO()
+        output.write("-- Emergency Data Rescue Dump\n")
+        
+        for table in tables:
+            output.write(f"\n-- Table: {table}\n")
+            # Select all rows from the table
+            rows = db.execute(text(f"SELECT * FROM public.{table}")).fetchall()
+            
+            if rows:
+                # Get column names
+                columns = rows[0]._fields
+                for row in rows:
+                    vals = [f"'{str(v)}'" if v is not None else "NULL" for v in row]
+                    insert_stmt = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(vals)});\n"
+                    output.write(insert_stmt)
+                    
+        output.seek(0)
+        return StreamingResponse(
+            io.BytesIO(output.getvalue().encode()),
+            media_type="application/sql",
+            headers={"Content-Disposition": "attachment; filename=emergency_dump.sql"}
+        )
+
+    except Exception as e:
+        return {"error": f"Python-only backup failed: {str(e)}"}
+\n\n==================== vhg-chart/Chart.yaml ====================\n
+apiVersion: v2
+name: vhg-chart
+description: A Helm chart for Kubernetes
+
+# A chart can be either an 'application' or a 'library' chart.
+#
+# Application charts are a collection of templates that can be packaged into versioned archives
+# to be deployed.
+#
+# Library charts provide useful utilities or functions for the chart developer. They're included as
+# a dependency of application charts to inject those utilities and functions into the rendering
+# pipeline. Library charts do not define any templates and therefore cannot be deployed.
+type: application
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 0.1.0
+
+# This is the version number of the application being deployed. This version number should be
+# incremented each time you make changes to the application. Versions are not expected to
+# follow Semantic Versioning. They should reflect the version the application is using.
+# It is recommended to use it with quotes.
+appVersion: "1.16.0"
+\n\n==================== vhg-chart/1a-namespace.yaml ====================\n
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.namespace }}\n\n==================== vhg-chart/values.yaml ====================\n
+namespace: vhg-1
+frontend:
+  image: dharshan3690/navi-frontend
+  tag: "1864"
+  port: 80
+  rum:
+    enabled: true
+    applicationId: "6e70653f-5b87-4945-a9e8-3e5da4e5e583"
+    clientToken: "pubb693ad8f16f0580f6e609113ed67c985"
+    service: "vhg-frontend"
+    sessionSampleRate: "100"
+    replaySampleRate: "100"
+    replayEnabled: true
+plant:
+  image: dharshan3690/plant-service
+  tag: "1864"
+  port: 8005
+auth:
+  image: dharshan3690/auth-service
+  tag: "1864"
+  port: 8006
+ai:
+  image: dharshan3690/ai-service
+  tag: "1864"
+  port: 8007
+ingress:
+  enabled: true
+  className: nginx
+observability:
+  enabled: true
+  otlpEndpoint: "http://$(HOST_IP):4317"
+  environment: "aks"
+  datadogSite: "us5.datadoghq.com"
+  serviceNamespace: "virtual-herbal-garden"
+  tracesSampler: "parentbased_traceidratio"
+  tracesSamplerArg: "1.0"
+  metricExportInterval: "30000"
+  excludedUrls: "/docs,/openapi.json"
+\n\n==================== vhg-chart/templates/1-frontend-deployment.yaml ====================\n
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: {{ .Values.namespace }}
+
+spec:
+  replicas: 1
+
+  strategy:
+    type: RollingUpdate
+
+  selector:
+    matchLabels:
+      app: frontend
+
+  template:
+    metadata:
+      labels:
+        app: frontend
+
+    spec:
+      containers:
+      - name: frontend
+
+        image: "{{ .Values.frontend.image }}:{{ .Values.frontend.tag }}"
+        imagePullPolicy: Always
+
+        ports:
+        - containerPort: 80
+
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+
+        env:
+        - name: VITE_PLANT_API_URL
+          value: "/api/plant"
+
+        - name: VITE_AUTH_API_URL
+          value: "/api/auth"
+
+        - name: VITE_AI_API_URL
+          value: "/api/ai"
+
+        - name: DATADOG_RUM_ENABLED
+          value: "{{ .Values.frontend.rum.enabled }}"
+
+        - name: DATADOG_RUM_APPLICATION_ID
+          value: "{{ .Values.frontend.rum.applicationId }}"
+
+        - name: DATADOG_RUM_CLIENT_TOKEN
+          value: "{{ .Values.frontend.rum.clientToken }}"
+
+        - name: DATADOG_SITE
+          value: "{{ .Values.observability.datadogSite }}"
+
+        - name: DATADOG_ENV
+          value: "{{ .Values.observability.environment }}"
+
+        - name: DATADOG_VERSION
+          value: "{{ .Values.frontend.tag }}"
+
+        - name: DATADOG_RUM_SERVICE
+          value: "{{ .Values.frontend.rum.service }}"
+
+        - name: DATADOG_RUM_SESSION_SAMPLE_RATE
+          value: "{{ .Values.frontend.rum.sessionSampleRate }}"
+
+        - name: DATADOG_RUM_REPLAY_SAMPLE_RATE
+          value: "{{ .Values.frontend.rum.replaySampleRate }}"
+
+        - name: DATADOG_RUM_REPLAY_ENABLED
+          value: "{{ .Values.frontend.rum.replayEnabled }}"
+
+        startupProbe:
+          httpGet:
+            path: /
+            port: 80
+          failureThreshold: 30
+          periodSeconds: 10
+
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+        resources:
+          requests:
+            memory: "16Mi"
+            cpu: "20m"
+
+          limits:
+            memory: "64Mi"
+            cpu: "100m"\n\n==================== vhg-chart/templates/2-plant-deployment.yaml ====================\n
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plant-service
+  namespace: {{ .Values.namespace }}
+
+spec:
+  replicas: 1
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+
+  selector:
+    matchLabels:
+      app: plant-service
+
+  template:
+    metadata:
+      labels:
+        app: plant-service
+
+    spec:
+      containers:
+      - name: plant-service
+
+        image: "{{ .Values.plant.image }}:{{ .Values.plant.tag }}"
+        imagePullPolicy: Always
+
+        ports:
+        - containerPort: 8005
+
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+
+        envFrom:
+        - secretRef:
+            name: vhg-secrets
+
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+
+        - name: MODULE_NAME
+          value: "plant_service.main"
+
+        - name: PORT
+          value: "8005"
+
+        - name: OTEL_SERVICE_VERSION
+          value: "{{ .Values.plant.tag }}"
+
+        - name: OTEL_DEPLOYMENT_ENVIRONMENT
+          value: "{{ .Values.observability.environment }}"
+
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://datadog.datadog.svc.cluster.local:4317"
+
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "grpc"
+
+        - name: OTEL_TRACES_SAMPLER
+          value: "{{ .Values.observability.tracesSampler }}"
+
+        - name: OTEL_TRACES_SAMPLER_ARG
+          value: "{{ .Values.observability.tracesSamplerArg }}"
+
+        - name: OTEL_METRIC_EXPORT_INTERVAL
+          value: "{{ .Values.observability.metricExportInterval }}"
+
+        - name: OTEL_PYTHON_FASTAPI_EXCLUDED_URLS
+          value: "{{ .Values.observability.excludedUrls }}"
+
+        - name: OTEL_SDK_DISABLED
+          value: "{{ not .Values.observability.enabled }}"
+
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.namespace={{ .Values.observability.serviceNamespace }},k8s.namespace.name={{ .Values.namespace }},k8s.deployment.name=plant-service"
+
+        startupProbe:
+          httpGet:
+            path: /docs
+            port: 8005
+          failureThreshold: 30
+          periodSeconds: 10
+
+        livenessProbe:
+          httpGet:
+            path: /docs
+            port: 8005
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+        readinessProbe:
+          httpGet:
+            path: /docs
+            port: 8005
+          initialDelaySeconds: 10
+          periodSeconds: 10
+
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "20m"
+
+          limits:
+            memory: "256Mi"
+            cpu: "150m"\n\n==================== vhg-chart/templates/3-ai-deployment.yaml ====================\n
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-service
+  namespace: {{ .Values.namespace }}
+
+spec:
+  replicas: 1
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+
+  selector:
+    matchLabels:
+      app: ai-service
+
+  template:
+    metadata:
+      labels:
+        app: ai-service
+
+    spec:
+      containers:
+      - name: ai-service
+
+        image: "{{ .Values.ai.image }}:{{ .Values.ai.tag }}"
+        imagePullPolicy: Always
+
+        ports:
+        - containerPort: 8007
+
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+
+        envFrom:
+        - secretRef:
+            name: vhg-secrets
+
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+
+        - name: MODULE_NAME
+          value: "ai_service.main"
+
+        - name: PORT
+          value: "8007"
+
+        - name: OTEL_SERVICE_VERSION
+          value: "{{ .Values.ai.tag }}"
+
+        - name: OTEL_DEPLOYMENT_ENVIRONMENT
+          value: "{{ .Values.observability.environment }}"
+
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://datadog.datadog.svc.cluster.local:4317"
+
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "grpc"
+
+        - name: OTEL_TRACES_SAMPLER
+          value: "{{ .Values.observability.tracesSampler }}"
+
+        - name: OTEL_TRACES_SAMPLER_ARG
+          value: "{{ .Values.observability.tracesSamplerArg }}"
+
+        - name: OTEL_METRIC_EXPORT_INTERVAL
+          value: "{{ .Values.observability.metricExportInterval }}"
+
+        - name: OTEL_PYTHON_FASTAPI_EXCLUDED_URLS
+          value: "{{ .Values.observability.excludedUrls }}"
+
+        - name: OTEL_SDK_DISABLED
+          value: "{{ not .Values.observability.enabled }}"
+
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.namespace={{ .Values.observability.serviceNamespace }},k8s.namespace.name={{ .Values.namespace }},k8s.deployment.name=ai-service"
+
+        startupProbe:
+          httpGet:
+            path: /docs
+            port: 8007
+          failureThreshold: 30
+          periodSeconds: 10
+
+        livenessProbe:
+          httpGet:
+            path: /docs
+            port: 8007
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+        readinessProbe:
+          httpGet:
+            path: /docs
+            port: 8007
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "20m"
+
+          limits:
+            memory: "256Mi"
+            cpu: "150m"\n\n==================== vhg-chart/templates/4-auth-deployment.yaml ====================\n
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: {{ .Values.namespace }}
+
+spec:
+  replicas: 1
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+
+  selector:
+    matchLabels:
+      app: auth-service
+
+  template:
+    metadata:
+      labels:
+        app: auth-service
+
+    spec:
+      containers:
+      - name: auth-service
+
+        image: "{{ .Values.auth.image }}:{{ .Values.auth.tag }}"
+        imagePullPolicy: Always
+
+        ports:
+        - containerPort: 8006
+
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+
+        envFrom:
+        - secretRef:
+            name: vhg-secrets
+
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+
+        - name: MODULE_NAME
+          value: "auth_service.main"
+
+        - name: PORT
+          value: "8006"
+
+        - name: OTEL_SERVICE_VERSION
+          value: "{{ .Values.auth.tag }}"
+
+        - name: OTEL_DEPLOYMENT_ENVIRONMENT
+          value: "{{ .Values.observability.environment }}"
+
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://datadog.datadog.svc.cluster.local:4317"
+
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "grpc"
+
+        - name: OTEL_TRACES_SAMPLER
+          value: "{{ .Values.observability.tracesSampler }}"
+
+        - name: OTEL_TRACES_SAMPLER_ARG
+          value: "{{ .Values.observability.tracesSamplerArg }}"
+
+        - name: OTEL_METRIC_EXPORT_INTERVAL
+          value: "{{ .Values.observability.metricExportInterval }}"
+
+        - name: OTEL_PYTHON_FASTAPI_EXCLUDED_URLS
+          value: "{{ .Values.observability.excludedUrls }}"
+
+        - name: OTEL_SDK_DISABLED
+          value: "{{ not .Values.observability.enabled }}"
+
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.namespace={{ .Values.observability.serviceNamespace }},k8s.namespace.name={{ .Values.namespace }},k8s.deployment.name=auth-service"
+
+        startupProbe:
+          httpGet:
+            path: /docs
+            port: 8006
+          failureThreshold: 30
+          periodSeconds: 10
+
+        livenessProbe:
+          httpGet:
+            path: /docs
+            port: 8006
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+        readinessProbe:
+          httpGet:
+            path: /docs
+            port: 8006
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "20m"
+
+          limits:
+            memory: "256Mi"
+            cpu: "150m"\n\n==================== vhg-chart/templates/backend-service.yaml ====================\n
+apiVersion: v1
+kind: Service
+metadata:
+  name: plant-service
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: plant-service
+  ports:
+  - port: 8005
+    targetPort: 8005
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: auth-service
+  ports:
+  - port: 8006
+    targetPort: 8006
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-service
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: ai-service
+  ports:
+  - port: 8007
+    targetPort: 8007\n\n==================== vhg-chart/templates/frontend-service.yaml ====================\n
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 80\n\n==================== vhg-chart/templates/hpa-ai.yaml ====================\n
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ai-service-hpa
+  namespace: {{ .Values.namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ai-service
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70\n\n==================== vhg-chart/templates/hpa-auth.yaml ====================\n
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: auth-service-hpa
+  namespace: {{ .Values.namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: auth-service
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70\n\n==================== vhg-chart/templates/hpa-frontend.yaml ====================\n
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: frontend-hpa
+  namespace: {{ .Values.namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: frontend
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70\n\n==================== vhg-chart/templates/hpa-plant.yaml ====================\n
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: plant-service-hpa
+  namespace: {{ .Values.namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: plant-service
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70\n\n==================== vhg-chart/templates/ingress.yaml ====================\n
+{{- if .Values.ingress.enabled }}
+# BLOCK 1: API (Handles /api/* and REWRITES them)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vhg-api-ingress
+  namespace: {{ .Values.namespace }}
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    - http:
+        paths:
+          - path: /api/plant(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: plant-service
+                port:
+                  number: 8005
+          - path: /api/auth(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: auth-service
+                port:
+                  number: 8006
+          - path: /api/ai(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ai-service
+                port:
+                  number: 8007
+---
+# BLOCK 2: FRONTEND (Handles / and static files with NO REWRITE)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vhg-frontend-ingress
+  namespace: {{ .Values.namespace }}
+  # IMPORTANT: No rewrite-target annotation here!
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+
+
+{{- end }}\n\n==================== vhg-chart/templates/secret.yaml ====================\n
+apiVersion: v1
+kind: Secret
+metadata:
+  name: vhg-secrets
+  namespace: {{ .Values.namespace }}
+type: Opaque
+stringData:
+  DATABASE_URL: "postgresql://neondb_owner:npg_NhUByevj4lH5@ep-wild-bread-ahufw93p-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require"
+  SECRET_KEY: "finiteloop_secret_secure_key_123"
+  ALGORITHM: "HS256"
+  PYTHON_VERSION: "3.10.13"
+
+  CORS_ORIGINS: "*"
+
+  POSTGRES_DB: "neondb"
+  POSTGRES_HOST: "ep-wild-bread-ahufw93p-pooler.c-3.us-east-1.aws.neon.tech"
+  POSTGRES_PASSWORD: "npg_NhUByevj4lH5"
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: "neondb_owner"
+
+  MAIL_FROM: "dharshan122001@gmail.com"
+  MAIL_PASSWORD: "nxwgqsnu jhfk khof"
+  MAIL_PORT: "587"
+  MAIL_SERVER: "smtp.gmail.com"
+  MAIL_SSL_TLS: "False"
+  MAIL_STARTTLS: "True"
+  MAIL_USERNAME: "dharshan122001@gmail.com"
+
+  GEMINI_API_KEY: "AIzaSyDU2IRX8vjA5dtEfcuJ6IRAKuv4Ij1CBL4"
+  GROQ_API_KEY: "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"
+  PLANTNET_API_KEY: "2b10axG37F0YebW32fCdNG7Q"
+
+  GMAIL_CLIENT_ID: "491680937929-m88h1v3rkremor2v6025aes8l2egqufd.apps.googleusercontent.com"
+  GMAIL_CLIENT_SECRET: "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"
+  GMAIL_REFRESH_TOKEN: "1//0gNUjID8oBv9JCgYIARAAGBASNwF-L9IrkeSzw_VBE71GWQIe4JP-lOM0FYZvbSQAWSfOCPt_Fn4_JCaBvAuCfKBKb-sMagwih8k"\n\n==================== K8s/aks.tf ====================\n
+resource "azurerm_public_ip" "ingress_ip" {
+  name                = "vhg-ingress-ip"
+  location            = local.location
+  resource_group_name = data.azurerm_resource_group.existing_rg.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+  domain_name_label   = "vhg-garden-dharshan"
+}\n\n==================== K8s/helm-app.tf ====================\n
+# 1. Create the Application Namespace
+resource "kubernetes_namespace_v1" "vhg_namespace" {
+  metadata {
+    name = "vhg-1"
+  }
+  depends_on = [azurerm_kubernetes_cluster.aks]
+}
+
+# 2. Database Connectivity Secret
+# Argo CD will deploy the pods, but they will pull DB details from this secret
+resource "kubernetes_secret_v1" "vhg_db_config" {
+  metadata {
+    name      = "vhg-db-config"
+    namespace = kubernetes_namespace_v1.vhg_namespace.metadata[0].name
+  }
+
+  data = {
+    POSTGRES_HOST     = azurerm_postgresql_flexible_server.db.fqdn
+    POSTGRES_USER     = azurerm_postgresql_flexible_server.db.administrator_login
+    POSTGRES_PASSWORD = var.db_password
+    POSTGRES_PORT     = "5432"
+    POSTGRES_DB       = "neondb"
+  }
+
+  depends_on = [
+    azurerm_postgresql_flexible_server.db,
+    kubernetes_namespace_v1.vhg_namespace
+  ]
+}\n\n==================== K8s/helm-argocd.tf ====================\n
+# 1. Create the ArgoCD Namespace (v1 used to remove warnings)
+resource "kubernetes_namespace_v1" "argocd" {
+  metadata {
+    name = "argocd"
+  }
+  depends_on = [azurerm_kubernetes_cluster.aks]
+}
+
+# 2. Automated Repository Credentials
+resource "kubernetes_secret_v1" "vhg_repo_creds" {
+  metadata {
+    name      = "vhg-repo-creds"
+    namespace = kubernetes_namespace_v1.argocd.metadata[0].name
+    labels = {
+      "argocd.argoproj.io/secret-type" = "repository"
+    }
+  }
+
+  data = {
+    type     = "git"
+    url      = "https://dev.azure.com/navikenz/DevOps%20POCs/_git/DevOps%20POCs"
+    password = var.azure_devops_pat
+  }
+
+  depends_on = [kubernetes_namespace_v1.argocd]
+}
+
+# 3. Install Argo CD
+resource "helm_release" "argocd" {
+  name       = "argocd"
+  repository = "https://argoproj.github.io/argo-helm"
+  chart      = "argo-cd"
+  namespace  = kubernetes_namespace_v1.argocd.metadata[0].name
+  version    = "7.3.11"
+
+  values = [
+    <<-EOF
+    configs:
+      params:
+        server.insecure: true
+    server:
+      extraArgs:
+        - --rootpath=/argocd
+        - --basehref=/argocd
+    EOF
+  ]
+
+  depends_on = [kubernetes_secret_v1.vhg_repo_creds]
+}
+
+# 4. The ArgoCD Application (Points to your 'DataDog' branch)
+# Installed through a tiny Helm chart so Terraform does not need Kubernetes
+# API discovery for the Argo CD CRD during the first plan.
+resource "terraform_data" "adopt_existing_argocd_bootstrap_objects" {
+  provisioner "local-exec" {
+    command = <<-EOT
+      if kubectl get application vhg-app -n argocd >/dev/null 2>&1; then
+        kubectl label application vhg-app -n argocd app.kubernetes.io/managed-by=Helm --overwrite
+        kubectl annotate application vhg-app -n argocd meta.helm.sh/release-name=vhg-app meta.helm.sh/release-namespace=argocd --overwrite
+      fi
+      if kubectl get ingress argocd-server-ingress -n argocd >/dev/null 2>&1; then
+        kubectl label ingress argocd-server-ingress -n argocd app.kubernetes.io/managed-by=Helm --overwrite
+        kubectl annotate ingress argocd-server-ingress -n argocd meta.helm.sh/release-name=vhg-app meta.helm.sh/release-namespace=argocd --overwrite
+      fi
+    EOT
+  }
+
+  depends_on = [helm_release.argocd]
+}
+
+resource "helm_release" "vhg_app_gitops" {
+  name                       = "vhg-app"
+  chart                      = "${path.module}/argocd-app-chart"
+  namespace                  = kubernetes_namespace_v1.argocd.metadata[0].name
+  disable_openapi_validation = true
+  replace                    = true
+  timeout                    = 300
+  wait                       = true
+
+  values = [
+    <<-EOF
+    repoURL: "https://dev.azure.com/navikenz/DevOps%20POCs/_git/DevOps%20POCs"
+    targetRevision: "genai"
+    path: "vhg-chart"
+    destinationNamespace: "vhg-1"
+    EOF
+  ]
+
+  depends_on = [
+    terraform_data.adopt_existing_argocd_bootstrap_objects,
+    helm_release.ingress_nginx
+  ]
+}
+\n\n==================== K8s/helm-datadog.tf ====================\n
+resource "helm_release" "datadog" {
+  name             = "datadog"
+  repository       = "https://helm.datadoghq.com"
+  chart            = "datadog"
+  namespace        = "datadog"
+  create_namespace = true
+
+  timeout = 900
+  wait    = true
+
+  values = [
+    <<-EOF
+    datadog:
+      apiKey: "${var.datadog_api_key}"
+      site: "${var.datadog_site}"
+      apm:
+        portEnabled: true
+      logs:
+         enabled: true
+      tags:
+        - "env:aks"
+        - "service_namespace:virtual-herbal-garden"
+        - "project:vhg-aks"
+      logs:
+        enabled: true
+        containerCollectAll: true
+      otlp:
+        receiver:
+          protocols:
+            grpc:
+              enabled: true
+            http:
+              enabled: true
+        logs:
+          enabled: false
+    clusterAgent:
+      enabled: true
+    kubeStateMetricsCore:
+      enabled: true
+    EOF
+  ]
+
+  depends_on = [azurerm_kubernetes_cluster.aks]
+}
+\n\n==================== K8s/helm-nginx.tf ====================\n
+resource "helm_release" "ingress_nginx" {
+  name             = "ingress-nginx"
+  repository       = "https://kubernetes.github.io/ingress-nginx"
+  chart            = "ingress-nginx"
+  namespace        = "ingress-nginx"
+  create_namespace = true
+
+  # 15 minutes to allow Azure to provision the Load Balancer hardware
+  timeout = 900
+  wait    = true
+
+  # Ensure the cluster and permissions are ready before installing
+  depends_on = [
+    azurerm_kubernetes_cluster.aks,
+    azurerm_role_assignment.aks_network_contributor,
+    azurerm_public_ip.ingress_ip
+  ]
+
+  values = [
+    <<-EOF
+    controller:
+      service:
+        loadBalancerIP: "${azurerm_public_ip.ingress_ip.ip_address}"
+        externalTrafficPolicy: Local
+        annotations:
+          service.beta.kubernetes.io/azure-load-balancer-resource-group: "${data.azurerm_resource_group.existing_rg.name}"
+    EOF
+  ]
+}\n\n==================== K8s/main.tf ====================\n
+terraform {
+  required_version = ">= 1.5.0"
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 4.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+
+data "azurerm_resource_group" "existing_rg" {
+  name = "Darshan.k_lean_rg"
+}
+
+locals {
+  location = "canadacentral"
+  common_tags = {
+    owner   = "dharshan.k@navikenz.com"
+    project = "vhg-aks"
+  }
+}
+
+# ✅ AKS Cluster
+resource "azurerm_kubernetes_cluster" "aks" {
+  name                = "vhg-aks"
+  location            = local.location
+  resource_group_name = data.azurerm_resource_group.existing_rg.name
+  dns_prefix          = "vhg"
+
+  default_node_pool {
+    name       = "default"
+    node_count = 2
+    vm_size    = "Standard_B2s"
+  }
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  tags = local.common_tags
+
+  provisioner "local-exec" {
+    command = "sleep 30 && az aks get-credentials --resource-group ${self.resource_group_name} --name ${self.name} --overwrite-existing"
+  }
+}
+
+# ✅ AUTOMATION: Assign Network Contributor role to AKS Managed Identity
+# This removes the need for manual CLI commands
+resource "azurerm_role_assignment" "aks_network_contributor" {
+  scope                = data.azurerm_resource_group.existing_rg.id
+  role_definition_name = "Network Contributor"
+  principal_id         = azurerm_kubernetes_cluster.aks.identity[0].principal_id
+
+  depends_on = [azurerm_kubernetes_cluster.aks]
+}
+
+# ✅ PostgreSQL Flexible Server
+resource "azurerm_postgresql_flexible_server" "db" {
+  name                   = "vhg-db-can-final-v1" # Fresh unique name
+  resource_group_name    = data.azurerm_resource_group.existing_rg.name
+  location               = local.location
+  administrator_login    = "vhgadmin"
+  administrator_password = var.db_password
+  version                = "13"
+  sku_name               = "B_Standard_B1ms"
+  storage_mb             = 32768
+  tags                   = local.common_tags
+
+  lifecycle {
+    ignore_changes = [zone]
+  }
+}
+
+resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure" {
+  name             = "allow-azure"
+  server_id        = azurerm_postgresql_flexible_server.db.id
+  start_ip_address = "0.0.0.0"
+  end_ip_address   = "0.0.0.0"
+}\n\n==================== K8s/outputs.tf ====================\n
+output "db_host" {
+  value = azurerm_postgresql_flexible_server.db.fqdn
+}
+
+output "cluster_name" {
+  value = azurerm_kubernetes_cluster.aks.name
+}
+
+output "app_ip" {
+  value = "Run: kubectl get ingress -n vhg-1"
+}\n\n==================== K8s/providers.tf ====================\n
+provider "kubernetes" {
+  host                   = azurerm_kubernetes_cluster.aks.kube_config[0].host
+  client_certificate     = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].client_certificate)
+  client_key             = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].client_key)
+  cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].cluster_ca_certificate)
+}
+
+provider "helm" {
+  kubernetes = {
+    host                   = azurerm_kubernetes_cluster.aks.kube_config[0].host
+    client_certificate     = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].client_certificate)
+    client_key             = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].client_key)
+    cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].cluster_ca_certificate)
+  }
+}\n\n==================== K8s/secrets.tfvars ====================\n
+azure_devops_pat = "DSIV8yq8uz5G5hxdYDu2T3EYPLItyxwlPPiUpC9tDArsf4IaoxEBJQQJ99CEACAAAAAu9fM3AAASAZDO4dVK"
+db_password      = "Vinu9945385205"
+datadog_api_key="653d5e9ce09b11393cc0c86ec6421d40"
+datadog_site="us5.datadoghq.com"\n\n==================== K8s/variables.tf ====================\n
+variable "db_password" {
+  type      = string
+  sensitive = true
+}
+variable "azure_devops_pat" {
+  type      = string
+  sensitive = true
+}
+
+variable "datadog_api_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "datadog_site" {
+  type    = string
+  default = "datadoghq.com"
+}
+\n\n==================== K8s/argocd-app-chart/templates/application.yaml ====================\n
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vhg-app
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name | quote }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace | quote }}
+spec:
+  project: default
+  source:
+    repoURL: {{ .Values.repoURL | quote }}
+    targetRevision: {{ .Values.targetRevision | quote }}
+    path: {{ .Values.path | quote }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .Values.destinationNamespace | quote }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+\n\n==================== K8s/argocd-app-chart/templates/ingress.yaml ====================\n
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name | quote }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace | quote }}
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /argocd
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80
+\n\n==================== K8s/argocd-app-chart/Chart.yaml ====================\n
+apiVersion: v2
+name: vhg-argocd-app
+description: Argo CD Application for Virtual Herbal Garden
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+\n\n==================== VHG-pipelines.yml ====================\n
+trigger:
+  branches:
+    include:
+      - genai
+  paths:
+    include:
+      - client/*
+      - server/*
+      - vhg-chart/*
+
+variables:
+  - group: vhg-secrets
+  - name: dockerRegistryConn
+    value: 'DockerHubConn' 
+  - name: dockerUser
+    value: 'dharshan3690'
+
+stages:
+# --- STAGE 0: Identify Changes ---
+- stage: Detect_and_Resolve
+  displayName: "0. Smart Detect"
+  jobs:
+  - job: ResolveTags
+    pool: { vmImage: 'ubuntu-latest' }
+    steps:
+    - checkout: self
+      fetchDepth: 0 
+    - script: |
+        CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "ALL")
+        f=false; p=false; au=false; ai=false;
+
+        if [ "$CHANGED_FILES" == "ALL" ]; then
+           f=true; p=true; au=true; ai=true;
+        else
+           for file in $CHANGED_FILES; do
+             case "$file" in
+               client/*) f=true ;;
+               server/plant_service/*|server/common/*|server/requirements.txt) p=true ;;
+               server/auth_service/*|server/common/*|server/requirements.txt) au=true ;;
+               server/ai_service/*|server/common/*|server/requirements.txt) ai=true ;;
+             esac
+           done
+        fi
+        echo "##vso[task.setvariable variable=f_changed;isOutput=true]$f"
+        echo "##vso[task.setvariable variable=p_changed;isOutput=true]$p"
+        echo "##vso[task.setvariable variable=au_changed;isOutput=true]$au"
+        echo "##vso[task.setvariable variable=ai_changed;isOutput=true]$ai"
+      name: TagLogic
+
+# --- STAGE 1: Build and Push Images ---
+- stage: Build_and_Push
+  displayName: "1. Build and Push"
+  dependsOn: Detect_and_Resolve
+  jobs:
+  - job: DockerBuild
+    pool: { vmImage: 'ubuntu-latest' }
+    variables:
+      p_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.p_changed'] ]
+      au_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.au_changed'] ]
+      ai_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.ai_changed'] ]
+      f_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.f_changed'] ]
+    steps:
+    - task: Docker@2
+      displayName: "Login to DockerHub"
+      inputs:
+        containerRegistry: '$(dockerRegistryConn)'
+        command: 'login'
+
+    - script: |
+        set -e
+
+        # Reusable function to build isolated contexts using the shared server/Dockerfile
+        build_backend_service() {
+          local service_dir=$1    # e.g., "plant_service"
+          local image_name=$2     # e.g., "plant-service"
+          
+          echo "========================================="
+          echo "Preparing context & building: ${image_name}"
+          echo "========================================="
+          
+          # 1. Create an isolated transient workspace for this service's context
+          local WORKSPACE="server/build_${service_dir}"
+          mkdir -p "${WORKSPACE}"
+          
+          # 2. Sync core shared components and code into the transient workspace root
+          cp server/requirements.txt "${WORKSPACE}/"
+          cp server/Dockerfile "${WORKSPACE}/"
+          cp -r server/common "${WORKSPACE}/common"
+          
+          # 3. Move the microservice main app files directly to the root of the workspace context
+          cp -r server/${service_dir}/* "${WORKSPACE}/"
+          
+          # 4. Build using the workspace as context, keeping final image sizes small and lean
+          cd "${WORKSPACE}"
+          docker build -t $(dockerUser)/${image_name}:$(Build.BuildId) .
+          docker push $(dockerUser)/${image_name}:$(Build.BuildId)
+          
+          # 5. Clean up workspace and return safely
+          cd ../..
+          rm -rf "${WORKSPACE}"
+        }
+
+        # 1. Build Plant Service
+        if [ "$(p_upd)" == "true" ]; then
+          build_backend_service "plant_service" "plant-service"
+        fi
+
+        # 2. Build Auth Service
+        if [ "$(au_upd)" == "true" ]; then
+          build_backend_service "auth_service" "auth-service"
+        fi
+
+        # 3. Build AI Service
+        if [ "$(ai_upd)" == "true" ]; then
+          build_backend_service "ai_service" "ai-service"
+        fi
+      displayName: "Build Backend Services"
+
+    - script: |
+        set -e
+        if [ "$(f_upd)" == "true" ]; then
+          cd client
+          docker build -t $(dockerUser)/frontend:$(Build.BuildId) .
+          docker push $(dockerUser)/frontend:$(Build.BuildId)
+        fi
+      displayName: "Build Frontend"
+
+# --- STAGE 2: GitOps Sync ---
+- stage: GitOps_Update
+  displayName: "2. GitOps Sync"
+  dependsOn: [Detect_and_Resolve, Build_and_Push]
+  condition: succeeded()
+  jobs:
+  - job: UpdateManifest
+    pool: { vmImage: 'ubuntu-latest' }
+    variables:
+      f_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.f_changed'] ]
+      p_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.p_changed'] ]
+      au_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.au_changed'] ]
+      ai_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.ai_changed'] ]
+    steps:
+    - checkout: self
+      persistCredentials: true 
+    - script: |
+        sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
+        
+        [ "$(f_upd)" == "true" ] && yq -i ".frontend.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
+        [ "$(p_upd)" == "true" ] && yq -i ".plant.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
+        [ "$(au_upd)" == "true" ] && yq -i ".auth.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
+        [ "$(ai_upd)" == "true" ] && yq -i ".ai.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
+        
+        git config --global user.email "pipeline@navikenz.com"
+        git config --global user.name "GitOps Bot"
+        
+        if ! git diff --exit-code vhg-chart/values.yaml; then
+          git add vhg-chart/values.yaml
+          git commit -m "GitOps: deploy build $(Build.BuildId) [skip ci]"
+          git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" push origin HEAD:genai
+        else
+          echo "No manifest changes needed."
+        fi
+      displayName: "Sync Manifest"

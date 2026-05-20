@@ -8,11 +8,9 @@ client/src/apiConfig.js \
 client/src/main.jsx \
 client/src/observability.js \
 server/requirements.txt \
-server/ai_service/Dockerfile \
+server/Dockerfile \
 server/ai_service/main.py \
 server/auth_service/main.py \
-server/auth_service/Dockerfile \
-server/plant_service/Dockerfile \
 server/plant_service/main.py \
 vhg-chart/Chart.yaml \
 vhg-chart/1a-namespace.yaml \

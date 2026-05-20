@@ -69,7 +69,7 @@ stages:
     - script: |
         set -e
 
-        # Reusable function to build isolated contexts using the shared server/Dockerfile
+        # Reusable function to build isolated contexts preserving monorepo layout
         build_backend_service() {
           local service_dir=$1    # e.g., "plant_service"
           local image_name=$2     # e.g., "plant-service"
@@ -82,15 +82,16 @@ stages:
           local WORKSPACE="server/build_${service_dir}"
           mkdir -p "${WORKSPACE}"
           
-          # 2. Sync core shared components and code into the transient workspace root
+          # 2. Sync global components into workspace root
           cp server/requirements.txt "${WORKSPACE}/"
           cp server/Dockerfile "${WORKSPACE}/"
           cp -r server/common "${WORKSPACE}/common"
           
-          # 3. Move the microservice main app files directly to the root of the workspace context
-          cp -r server/${service_dir}/* "${WORKSPACE}/"
+          # 3. Preserve the folder nesting structure so Python resolves module paths natively
+          mkdir -p "${WORKSPACE}/${service_dir}"
+          cp -r server/${service_dir}/* "${WORKSPACE}/${service_dir}/"
           
-          # 4. Build using the workspace as context, keeping final image sizes small and lean
+          # 4. Build using the workspace as context
           cd "${WORKSPACE}"
           docker build -t $(dockerUser)/${image_name}:$(Build.BuildId) .
           docker push $(dockerUser)/${image_name}:$(Build.BuildId)
@@ -120,8 +121,9 @@ stages:
         set -e
         if [ "$(f_upd)" == "true" ]; then
           cd client
-          docker build -t $(dockerUser)/frontend:$(Build.BuildId) .
-          docker push $(dockerUser)/frontend:$(Build.BuildId)
+          # Aligned image name to navi-frontend to match Helm chart standards
+          docker build -t $(dockerUser)/navi-frontend:$(Build.BuildId) .
+          docker push $(dockerUser)/navi-frontend:$(Build.BuildId)
         fi
       displayName: "Build Frontend"
 

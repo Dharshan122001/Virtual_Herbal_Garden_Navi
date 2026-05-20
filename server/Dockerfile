@@ -38,8 +38,9 @@ COPY . .
 RUN adduser --disabled-password --gecos '' appuser
 USER appuser
 
+# Adjusted healthcheck script path checking target sub-routes natively
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:${PORT:-8000}/docs')" || exit 1
+CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:' + os.environ.get('PORT', '8000') + '/docs')" || exit 1
 
 EXPOSE 8000
 
