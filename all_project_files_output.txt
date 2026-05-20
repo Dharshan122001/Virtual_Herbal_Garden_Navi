@@ -1,44 +1,49 @@
 \n\n==================== client/Dockerfile ====================\n
-# =========================
-# STAGE 1 — Build React App
-# =========================
+# ==================================
+# STAGE 1 — Build Vite + React App
+# ==================================
 FROM node:20-alpine AS builder
-
 WORKDIR /app
-
 COPY package*.json ./
-
 RUN npm ci
-
 COPY . .
-
 RUN npm run build
 
-
-# =========================
-# STAGE 2 — NGINX Runtime
-# =========================
+# ==================================
+# STAGE 2 — NGINX Secure Runtime
+# ==================================
 FROM nginx:alpine
 
+# 1. Clean default static assets
 RUN rm -rf /usr/share/nginx/html/*
 
+# 2. Copy compiled assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
-
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# 3. Setup placeholder config file and grant permissions
+RUN touch /usr/share/nginx/html/config.js && chmod +x /usr/local/bin/entrypoint.sh
 
-RUN touch /usr/share/nginx/html/config.js \
-    && chmod 666 /usr/share/nginx/html/config.js
+# 4. Change directory ownerships to standard unprivileged 'nginx' user (UID 101)
+# This allows Nginx to write temporary cache files, logs, and pid files without root
+RUN chown -R nginx:nginx /usr/share/nginx/html \
+                         /var/cache/nginx \
+                         /var/log/nginx \
+                         /etc/nginx \
+                         /var/run
 
+# 5. Switch execution context away from root completely
+USER nginx
+
+# 6. Monitor container health safely on the unprivileged port
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
-CMD wget --no-verbose --tries=1 --spider http://localhost || exit 1
+CMD wget --no-verbose --tries=1 --spider http://localhost:8080 || exit 1
 
-EXPOSE 80
+# Expose unprivileged port (ports under 1024 require root)
+EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
 CMD ["nginx", "-g", "daemon off;"]\n\n==================== client/entrypoint.sh ====================\n
 #!/bin/sh
 set -e
@@ -234,7 +239,7 @@ import os
 import requests
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from dotenv import load_dotenv
-#Try1
+#Try2
 from common import schemas
 from common.observability import configure_observability
 from common.utils import setup_cors
@@ -371,7 +376,7 @@ from sqlalchemy import text
 from passlib.context import CryptContext
 from dotenv import load_dotenv
 from jose import jwt
-#Try1
+#Try2
 from common.database import get_db
 from common.observability import configure_observability
 from common import schemas
@@ -575,7 +580,7 @@ from fastapi import FastAPI, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List, Optional
-#Try1
+#Try2
 # Absolute imports from your monorepo structure
 from common.database import get_db
 from common.observability import configure_observability
@@ -795,7 +800,7 @@ metadata:
 namespace: vhg-1
 frontend:
   image: dharshan3690/navi-frontend
-  tag: "1866"
+  tag: "1867"
   port: 80
   rum:
     enabled: true
@@ -807,15 +812,15 @@ frontend:
     replayEnabled: true
 plant:
   image: dharshan3690/plant-service
-  tag: "1866"
+  tag: "1867"
   port: 8005
 auth:
   image: dharshan3690/auth-service
-  tag: "1866"
+  tag: "1867"
   port: 8006
 ai:
   image: dharshan3690/ai-service
-  tag: "1866"
+  tag: "1867"
   port: 8007
 ingress:
   enabled: true
@@ -836,102 +841,73 @@ kind: Deployment
 metadata:
   name: frontend
   namespace: {{ .Values.namespace }}
-
 spec:
   replicas: 1
-
   strategy:
     type: RollingUpdate
-
   selector:
     matchLabels:
       app: frontend
-
   template:
     metadata:
       labels:
         app: frontend
-
     spec:
       containers:
       - name: frontend
-
         image: "{{ .Values.frontend.image }}:{{ .Values.frontend.tag }}"
         imagePullPolicy: Always
-
         ports:
-        - containerPort: 80
-
-        securityContext:
-          runAsNonRoot: true
-          allowPrivilegeEscalation: false
-
+        - containerPort: 8080
         env:
         - name: VITE_PLANT_API_URL
           value: "/api/plant"
-
         - name: VITE_AUTH_API_URL
           value: "/api/auth"
-
         - name: VITE_AI_API_URL
           value: "/api/ai"
-
         - name: DATADOG_RUM_ENABLED
-          value: "{{ .Values.frontend.rum.enabled }}"
-
+          value: {{ .Values.frontend.rum.enabled | quote }}
         - name: DATADOG_RUM_APPLICATION_ID
-          value: "{{ .Values.frontend.rum.applicationId }}"
-
+          value: {{ .Values.frontend.rum.applicationId | quote }}
         - name: DATADOG_RUM_CLIENT_TOKEN
-          value: "{{ .Values.frontend.rum.clientToken }}"
-
+          value: {{ .Values.frontend.rum.clientToken | quote }}
         - name: DATADOG_SITE
-          value: "{{ .Values.observability.datadogSite }}"
-
+          value: {{ .Values.observability.datadogSite | quote }}
         - name: DATADOG_ENV
-          value: "{{ .Values.observability.environment }}"
-
+          value: {{ .Values.observability.environment | quote }}
         - name: DATADOG_VERSION
-          value: "{{ .Values.frontend.tag }}"
-
+          value: {{ .Values.frontend.tag | quote }}
         - name: DATADOG_RUM_SERVICE
-          value: "{{ .Values.frontend.rum.service }}"
-
+          value: {{ .Values.frontend.rum.service | quote }}
         - name: DATADOG_RUM_SESSION_SAMPLE_RATE
-          value: "{{ .Values.frontend.rum.sessionSampleRate }}"
-
+          value: {{ .Values.frontend.rum.sessionSampleRate | quote }}
         - name: DATADOG_RUM_REPLAY_SAMPLE_RATE
-          value: "{{ .Values.frontend.rum.replaySampleRate }}"
-
+          value: {{ .Values.frontend.rum.replaySampleRate | quote }}
         - name: DATADOG_RUM_REPLAY_ENABLED
-          value: "{{ .Values.frontend.rum.replayEnabled }}"
-
+          value: {{ .Values.frontend.rum.replayEnabled | quote }}
         startupProbe:
           httpGet:
             path: /
-            port: 80
+            port: 8080
           failureThreshold: 30
           periodSeconds: 10
-
         livenessProbe:
           httpGet:
             path: /
-            port: 80
+            port: 8080
           initialDelaySeconds: 20
           periodSeconds: 10
-
         readinessProbe:
           httpGet:
             path: /
-            port: 80
+            port: 8080
           initialDelaySeconds: 10
           periodSeconds: 5
-
         resources:
           requests:
             memory: "16Mi"
             cpu: "20m"
-
           limits:
             memory: "64Mi"
             cpu: "100m"\n\n==================== vhg-chart/templates/2-plant-deployment.yaml ====================\n
@@ -1320,7 +1296,7 @@ spec:
     app: frontend
   ports:
   - port: 80
-    targetPort: 80\n\n==================== vhg-chart/templates/hpa-ai.yaml ====================\n
+    targetPort: 8080\n\n==================== vhg-chart/templates/hpa-ai.yaml ====================\n
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
