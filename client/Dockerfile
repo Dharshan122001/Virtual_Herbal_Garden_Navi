@@ -14,38 +14,42 @@ COPY . .
 RUN npm run build
 
 
-# =========================
-# STAGE 2 — Runtime
-# =========================
-FROM python:3.10-slim
+# ==================================
+# STAGE 2 — NGINX Runtime
+# ==================================
+FROM nginx:alpine
 
-WORKDIR /app
+# Install wget for optional debugging/healthchecks
+RUN apk add --no-cache wget
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+# Remove default nginx static files
+RUN rm -rf /usr/share/nginx/html/*
 
-# 1. Install pip requirements for your Python web framework (FastAPI/Starlette/etc.)
-# Since this image needs to run Uvicorn, you must install it here
-COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Copy built Vite app
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# 2. Copy the compiled frontend assets from Stage 1 into the Python backend folder
-# (Adjust "static" to match whatever folder your Python app uses to mount static files)
-COPY --from=builder /app/dist ./static
+# Copy nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# 3. Copy the rest of your backend server application code
-COPY . .
+# Copy startup script
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
-# Create numeric non-root user
-RUN groupadd -g 1001 appgroup && \
-    useradd -u 1001 -g appgroup -s /sbin/nologin appuser
+# Prepare runtime files + permissions
+RUN touch /usr/share/nginx/html/config.js && \
+    touch /var/run/nginx.pid && \
+    chmod +x /usr/local/bin/entrypoint.sh && \
+    chown -R nginx:nginx \
+      /usr/share/nginx/html \
+      /var/cache/nginx \
+      /var/log/nginx \
+      /etc/nginx \
+      /var/run/nginx.pid
 
-USER 1001:1001
+# Run as non-root user
+USER nginx
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD python -c "import os, urllib.request; urllib.request.urlopen('http://localhost:' + os.environ.get('PORT', '8000') + '/docs')" || exit 1
+EXPOSE 8080
 
-EXPOSE 8000
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
-CMD ["sh", "-c", "uvicorn ${MODULE_NAME}:app --host 0.0.0.0 --port ${PORT}"]
+CMD ["nginx", "-g", "daemon off;"]
