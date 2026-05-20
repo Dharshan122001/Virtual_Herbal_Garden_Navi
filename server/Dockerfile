@@ -34,11 +34,13 @@ COPY --from=builder /install /usr/local
 
 COPY . .
 
-# Non-root user
-RUN adduser --disabled-password --gecos '' appuser
-USER appuser
+# Assign explicit numeric user IDs (UID/GID 1001)
+RUN groupadd -g 1001 appgroup && \
+    useradd -u 1001 -g appgroup -s /sbin/nologin appuser
 
-# Adjusted healthcheck script path checking target sub-routes natively
+# Switch using numbers instead of text strings
+USER 1001:1001
+
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 CMD python -c "import os, urllib.request; urllib.request.urlopen('http://localhost:' + os.environ.get('PORT', '8000') + '/docs')" || exit 1
 
