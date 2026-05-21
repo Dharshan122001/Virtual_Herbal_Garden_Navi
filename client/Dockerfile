@@ -1,55 +1,35 @@
-# ==================================
-# STAGE 1 — Build Vite + React App
-# ==================================
+# -----------------------------
+# Stage 1 - Build React/Vite App
+# -----------------------------
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Copy package files
 COPY package*.json ./
 
-RUN npm ci
+# Install dependencies
+RUN npm install
 
+# Copy full source code
 COPY . .
 
+# Build Vite app
 RUN npm run build
 
-
-# ==================================
-# STAGE 2 — NGINX Runtime
-# ==================================
+# -----------------------------
+# Stage 2 - Nginx Production Server
+# -----------------------------
 FROM nginx:alpine
 
-# Install wget for optional debugging/healthchecks
-RUN apk add --no-cache wget
-
-# Remove default nginx static files
+# Remove default nginx content
 RUN rm -rf /usr/share/nginx/html/*
 
-# Copy built Vite app
+# Copy built app from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Expose nginx port
+EXPOSE 80
 
-# Copy startup script
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-
-# Prepare runtime files + permissions
-RUN touch /usr/share/nginx/html/config.js && \
-    touch /var/run/nginx.pid && \
-    chmod +x /usr/local/bin/entrypoint.sh && \
-    chown -R nginx:nginx \
-      /usr/share/nginx/html \
-      /var/cache/nginx \
-      /var/log/nginx \
-      /etc/nginx \
-      /var/run/nginx.pid
-
-# Run as non-root user
-USER nginx
-
-EXPOSE 8080
-
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
+# Start nginx
 CMD ["nginx", "-g", "daemon off;"]
