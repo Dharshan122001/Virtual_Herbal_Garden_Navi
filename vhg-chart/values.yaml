@@ -1,13 +1,10 @@
 namespace: vhg-1
+
 frontend:
-<<<<<<< HEAD
-  image: dharshan3690/navi-frontend
-  tag: "1880"
-=======
   image: dharshan3690/frontend
   tag: "1874"
->>>>>>> 78ea82c (added few things)
   port: 80
+
   rum:
     enabled: true
     applicationId: "6e70653f-5b87-4945-a9e8-3e5da4e5e583"
@@ -16,21 +13,26 @@ frontend:
     sessionSampleRate: "100"
     replaySampleRate: "100"
     replayEnabled: true
+
 plant:
   image: dharshan3690/plant-service
   tag: "1879"
   port: 8005
+
 auth:
   image: dharshan3690/auth-service
   tag: "1879"
   port: 8006
+
 ai:
   image: dharshan3690/ai-service
   tag: "1879"
   port: 8007
+
 ingress:
   enabled: true
   className: nginx
+
 observability:
   enabled: true
   otlpEndpoint: "http://$(HOST_IP):4317"
