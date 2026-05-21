@@ -1,7 +1,7 @@
 namespace: vhg-1
 frontend:
   image: dharshan3690/frontend
-  tag: "1883"
+  tag: "1884"
   port: 80
   rum:
     enabled: true
