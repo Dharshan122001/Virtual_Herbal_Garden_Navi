@@ -13,7 +13,7 @@ frontend:
     replayEnabled: true
 plant:
   image: dharshan3690/plant-service
-  tag: "1875"
+  tag: "1876"
   port: 8005
 auth:
   image: dharshan3690/auth-service
