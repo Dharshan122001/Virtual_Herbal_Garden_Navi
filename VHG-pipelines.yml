@@ -121,9 +121,9 @@ stages:
         set -e
         if [ "$(f_upd)" == "true" ]; then
           cd client
-          # Aligned image name to navi-frontend to match Helm chart standards
-          docker build -t $(dockerUser)/navi-frontend:$(Build.BuildId) .
-          docker push $(dockerUser)/navi-frontend:$(Build.BuildId)
+          # Aligned image name to frontend to match Helm chart standards
+          docker build -t $(dockerUser)/frontend:$(Build.BuildId) .
+          docker push $(dockerUser)/frontend:$(Build.BuildId)
         fi
       displayName: "Build Frontend"
 

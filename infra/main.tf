@@ -155,7 +155,7 @@ resource "azurerm_linux_web_app" "frontend" {
   tags                = local.common_tags
   site_config {
     application_stack {
-      docker_image_name   = "dharshan3690/navi-frontend:${var.frontend_tag}"
+      docker_image_name   = "dharshan3690/frontend:${var.frontend_tag}"
       docker_registry_url = "https://index.docker.io"
     }
   }
