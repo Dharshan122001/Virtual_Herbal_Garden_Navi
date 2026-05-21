@@ -19,23 +19,16 @@ google-api-python-client
 google-auth
 google-auth-oauthlib
 
-# --- DATA MIGRATION & UTILS ---
 pandas==2.2.3
-openpyxl  # Optional: if you ever need to export to Excel instead of CSV
+openpyxl
 
-# --- DATABASE DRIVERS ---
-psycopg2-binary==2.9.10  # You already have this, but ensure it's here
-sqlalchemy==2.0.41      # You already have this
-
-# --- GOOGLE AUTH FIXES ---
-# (Adding these ensures the Google APIs you're using don't crash)
 google-auth-httplib2
 
-# --- OBSERVABILITY ---
 opentelemetry-api==1.31.1
 opentelemetry-sdk==1.31.1
 opentelemetry-exporter-otlp-proto-grpc==1.31.1
 opentelemetry-instrumentation-fastapi==0.52b1
 opentelemetry-instrumentation-requests==0.52b1
 opentelemetry-instrumentation-sqlalchemy==0.52b1
-packaging
+
+packaging==24.2
