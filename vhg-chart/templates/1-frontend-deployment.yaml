@@ -20,7 +20,7 @@ spec:
         image: "{{ .Values.frontend.image }}:{{ .Values.frontend.tag }}"
         imagePullPolicy: Always
         ports:
-        - containerPort: 8080
+        - containerPort: 80
         env:
         - name: VITE_PLANT_API_URL
           value: "/api/plant"
@@ -51,19 +51,19 @@ spec:
         startupProbe:
           httpGet:
             path: /
-            port: 8080
+            port: 80
           failureThreshold: 30
           periodSeconds: 10
         livenessProbe:
           httpGet:
             path: /
-            port: 8080
+            port: 80
           initialDelaySeconds: 20
           periodSeconds: 10
         readinessProbe:
           httpGet:
             path: /
-            port: 8080
+            port: 80
           initialDelaySeconds: 10
           periodSeconds: 5
         resources:
