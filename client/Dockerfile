@@ -1,6 +1,6 @@
-# -----------------------------
-# Stage 1 - Build React/Vite App
-# -----------------------------
+# ==================================================
+# Stage 1 — Build React/Vite App
+# ==================================================
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -9,27 +9,37 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci
 
-# Copy full source code
+# Copy source code
 COPY . .
 
-# Build Vite app
+# Build app
 RUN npm run build
 
-# -----------------------------
-# Stage 2 - Nginx Production Server
-# -----------------------------
-FROM nginx:alpine
+
+# ==================================================
+# Stage 2 — Production Nginx Server
+# ==================================================
+FROM nginx:1.31-alpine
 
 # Remove default nginx content
 RUN rm -rf /usr/share/nginx/html/*
 
-# Copy built app from builder
+# Copy built app
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Expose nginx port
+# Copy nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy runtime env injector
+COPY entrypoint.sh /entrypoint.sh
+
+# Make executable
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 80
 
-# Start nginx
+ENTRYPOINT ["/entrypoint.sh"]
+
 CMD ["nginx", "-g", "daemon off;"]
