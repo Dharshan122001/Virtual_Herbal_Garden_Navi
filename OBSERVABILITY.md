@@ -1,8 +1,8 @@
-# OpenTelemetry and Datadog Monitoring
+# OpenTelemetry and Prometheus/Grafana Monitoring
 
 ## Target Architecture
 
-The application services emit vendor-neutral OpenTelemetry telemetry and the AKS node-local Datadog Agent forwards it to Datadog.
+The application services emit vendor-neutral OpenTelemetry telemetry. Backend services export metrics using the Prometheus OpenTelemetry exporter, and Grafana visualizes metrics from Prometheus.
 
 ```mermaid
 flowchart LR
@@ -13,78 +13,65 @@ flowchart LR
   plant --> postgres[(PostgreSQL)]
   ai --> groq[Groq API]
   ai --> plantnet[PlantNet API]
-  plant -- OTLP gRPC --> dd[Datadog Agent on same AKS node]
-  auth -- OTLP gRPC --> dd
-  ai -- OTLP gRPC --> dd
-  browser -- RUM events --> datadog
-  dd --> datadog[Datadog APM, metrics, logs]
+  plant --> prom[Prometheus]
+  auth --> prom
+  ai --> prom
+  prom --> grafana[Grafana]
 ```
 
 ## What Is Instrumented
 
 - FastAPI inbound requests for `auth-service`, `plant-service`, and `ai-service`.
-- SQLAlchemy database calls from services that use `common.database`.
+- SQLAlchemy database calls from instrumented services.
 - Outbound HTTP calls made through `requests`, including Groq and PlantNet.
-- OTLP metrics export from the Python SDK.
-- Container logs through the Datadog Agent Helm chart.
-- Optional frontend browser monitoring through Datadog RUM.
+- Prometheus-compatible metrics are exposed from each backend pod on `/metrics`.
+- Prometheus scrapes each backend pod directly using PodMonitor annotations.
 
 ## Deployment Flow
 
-1. Add Datadog credentials to Terraform variables:
+1. Install the Prometheus/Grafana stack in the cluster.
 
    ```bash
-   terraform -chdir=K8s apply \
-     -var='datadog_api_key=<your-datadog-api-key>' \
-     -var='datadog_site=datadoghq.com'
+   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+   helm repo update
+   helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring --create-namespace
    ```
 
-   Use `datadoghq.eu`, `us3.datadoghq.com`, `us5.datadoghq.com`, or your Datadog site if your account is not on the default US site.
+2. Deploy the application via ArgoCD or Helm. The backend services expose metrics at:
 
-2. Terraform installs the Datadog Helm chart in the `datadog` namespace with OTLP gRPC/HTTP receivers enabled.
+   - `/metrics` on port `9464`
 
-3. Argo CD deploys `vhg-chart`. The backend pods use:
+3. Prometheus discovers the backend pods through PodMonitor resources created by the `vhg-chart` application.
 
-   - `OTEL_EXPORTER_OTLP_ENDPOINT=http://$(HOST_IP):4317`
-   - `OTEL_EXPORTER_OTLP_PROTOCOL=grpc`
-   - `OTEL_DEPLOYMENT_ENVIRONMENT=aks`
-   - `OTEL_RESOURCE_ATTRIBUTES=service.namespace=virtual-herbal-garden,...`
+4. Grafana is provided by the same `kube-prometheus-stack` install and can be accessed from the `monitoring` namespace.
 
-4. Generate traffic through the app or APIs. Datadog should show the services as:
+## Backend Service Configuration
 
-   - `vhg-auth-service`
-   - `vhg-plant-service`
-   - `vhg-ai-service`
+The backend deployments now expose a Prometheus metrics port using `OTEL_PROMETHEUS_PORT` and a `PrometheusMetricReader` from the OpenTelemetry SDK.
 
-## Frontend RUM
-
-The frontend is monitored at the Kubernetes/container layer by default. Browser-side Datadog RUM is wired in but disabled until a RUM application ID and client token are provided.
-
-Create a Datadog RUM browser application, then set these chart values:
+The backend pods also include Prometheus scrape annotations:
 
 ```yaml
-frontend:
-  rum:
-    enabled: true
-    applicationId: "<datadog-rum-application-id>"
-    clientToken: "<datadog-rum-client-token>"
+prometheus.io/scrape: "true"
+prometheus.io/port: "9464"
+prometheus.io/path: "/metrics"
 ```
-
-The frontend RUM service is `vhg-frontend`. Resource tracing is configured for `/api/plant`, `/api/auth`, and `/api/ai`.
 
 ## Validation Commands
 
 ```bash
-kubectl get pods -n datadog
-kubectl get pods -n vhg-1
-kubectl logs -n datadog -l app=datadog
-kubectl describe pod -n vhg-1 -l app=plant-service
+kubectl get pods -n monitoring
+kubectl get svc -n monitoring
+kubectl get podmonitor -n vhg-1
+kubectl port-forward svc/monitoring-grafana 3000:80 -n monitoring
 ```
 
-In Datadog, check APM Services for the three `vhg-*` services and Metrics Explorer for OTel runtime/request metrics.
+Then open `http://localhost:3000` and log into Grafana.
 
 ## Notes
 
-- Keep `observability.enabled=false` in `vhg-chart/values.yaml` for local deployments that do not run an OTLP collector.
-- Production sampling should be lowered from `1.0` after baseline validation if trace volume becomes noisy.
-- The current Helm secret contains live-looking credentials. Rotate those values and move them to a secret manager or sealed secret before treating this environment as production-grade.
+- Keep `observability.enabled=false` in `vhg-chart/values.yaml` for local deployments that do not require Prometheus scraping.
+- Grafana credentials are stored in the `monitoring` namespace secret created by the Helm release.
+- This setup uses OpenTelemetry metrics with Prometheus; frontend browser RUM has been removed from the current observability pipeline.
+
+If you want, I can also add a Grafana ingress and dashboard provisioning next.

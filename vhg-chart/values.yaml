@@ -3,14 +3,6 @@ frontend:
   image: dharshan3690/frontend
   tag: "1887"
   port: 80
-  rum:
-    enabled: true
-    applicationId: "6e70653f-5b87-4945-a9e8-3e5da4e5e583"
-    clientToken: "pubb693ad8f16f0580f6e609113ed67c985"
-    service: "vhg-frontend"
-    sessionSampleRate: "100"
-    replaySampleRate: "100"
-    replayEnabled: true
 plant:
   image: dharshan3690/plant-service
   tag: "1883"
@@ -28,11 +20,9 @@ ingress:
   className: nginx
 observability:
   enabled: true
-  otlpEndpoint: "http://$(HOST_IP):4317"
+  prometheusPort: "9464"
   environment: "aks"
-  datadogSite: "us5.datadoghq.com"
   serviceNamespace: "virtual-herbal-garden"
   tracesSampler: "parentbased_traceidratio"
   tracesSamplerArg: "1.0"
-  metricExportInterval: "30000"
   excludedUrls: "/docs,/openapi.json"

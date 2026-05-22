@@ -26,6 +26,12 @@ helm repo update
 helm install monitoring prometheus-community/kube-prometheus-stack \
   -n monitoring --create-namespace
 
+# After install, Grafana is available in the monitoring namespace.
+# To access Grafana locally:
+# kubectl port-forward svc/monitoring-grafana 3000:80 -n monitoring
+# Then open http://localhost:3000
+# The Grafana admin password is stored in the monitoring namespace secret.
+
 
 dharshankrishna@NAV-LT-0245 K8s % AKS_ID=$(az aks show --resource-group Darshan.k_lean_rg --name vhg-aks --query identity.principalId -o tsv)
 dharshankrishna@NAV-LT-0245 K8s % RG_ID=$(az group show --name Darshan.k_lean_rg --query id -o tsv)

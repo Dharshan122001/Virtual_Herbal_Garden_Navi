@@ -30,7 +30,7 @@ vhg-chart/templates/secret.yaml \
 K8s/aks.tf \
 K8s/helm-app.tf \
 K8s/helm-argocd.tf \
-K8s/helm-datadog.tf \
+K8s/helm-prometheus.tf \
 K8s/helm-nginx.tf \
 K8s/main.tf \
 K8s/outputs.tf \

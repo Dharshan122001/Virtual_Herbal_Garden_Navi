@@ -1,0 +1,24 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: vhg-services-metrics
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: vhg
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ .Values.namespace }}
+  selector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - plant-service
+          - auth-service
+          - ai-service
+  podMetricsEndpoints:
+    - port: prometheus-metrics
+      path: /metrics
+      interval: 30s
+      scheme: http

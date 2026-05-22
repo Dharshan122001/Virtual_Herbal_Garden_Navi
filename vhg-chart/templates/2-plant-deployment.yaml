@@ -21,6 +21,10 @@ spec:
     metadata:
       labels:
         app: plant-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.observability.prometheusPort }}"
+        prometheus.io/path: "/metrics"
 
     spec:
       containers:
@@ -30,7 +34,10 @@ spec:
         imagePullPolicy: Always
 
         ports:
-        - containerPort: 8005
+        - name: http
+          containerPort: 8005
+        - name: prometheus-metrics
+          containerPort: {{ .Values.observability.prometheusPort }}
 
         securityContext:
           runAsNonRoot: true
@@ -58,20 +65,14 @@ spec:
         - name: OTEL_DEPLOYMENT_ENVIRONMENT
           value: "{{ .Values.observability.environment }}"
 
-        - name: OTEL_EXPORTER_OTLP_ENDPOINT
-          value: "http://datadog.datadog.svc.cluster.local:4317"
-
-        - name: OTEL_EXPORTER_OTLP_PROTOCOL
-          value: "grpc"
+        - name: OTEL_PROMETHEUS_PORT
+          value: "{{ .Values.observability.prometheusPort }}"
 
         - name: OTEL_TRACES_SAMPLER
           value: "{{ .Values.observability.tracesSampler }}"
 
         - name: OTEL_TRACES_SAMPLER_ARG
           value: "{{ .Values.observability.tracesSamplerArg }}"
-
-        - name: OTEL_METRIC_EXPORT_INTERVAL
-          value: "{{ .Values.observability.metricExportInterval }}"
 
         - name: OTEL_PYTHON_FASTAPI_EXCLUDED_URLS
           value: "{{ .Values.observability.excludedUrls }}"

@@ -48,7 +48,7 @@ resource "helm_release" "argocd" {
   depends_on = [kubernetes_secret_v1.vhg_repo_creds]
 }
 
-# 4. The ArgoCD Application (Points to your 'DataDog' branch)
+# 4. The ArgoCD Application (Points to your branch)
 # Installed through a tiny Helm chart so Terraform does not need Kubernetes
 # API discovery for the Argo CD CRD during the first plan.
 resource "terraform_data" "adopt_existing_argocd_bootstrap_objects" {

@@ -1,3 +1,3 @@
 window.appConfig = {
-  DATADOG_RUM_ENABLED: "false"
+  OTEL_BROWSER_MONITORING_ENABLED: "false"
 };

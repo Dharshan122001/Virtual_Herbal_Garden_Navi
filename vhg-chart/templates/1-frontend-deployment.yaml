@@ -28,26 +28,6 @@ spec:
           value: "/api/auth"
         - name: VITE_AI_API_URL
           value: "/api/ai"
-        - name: DATADOG_RUM_ENABLED
-          value: {{ .Values.frontend.rum.enabled | quote }}
-        - name: DATADOG_RUM_APPLICATION_ID
-          value: {{ .Values.frontend.rum.applicationId | quote }}
-        - name: DATADOG_RUM_CLIENT_TOKEN
-          value: {{ .Values.frontend.rum.clientToken | quote }}
-        - name: DATADOG_SITE
-          value: {{ .Values.observability.datadogSite | quote }}
-        - name: DATADOG_ENV
-          value: {{ .Values.observability.environment | quote }}
-        - name: DATADOG_VERSION
-          value: {{ .Values.frontend.tag | quote }}
-        - name: DATADOG_RUM_SERVICE
-          value: {{ .Values.frontend.rum.service | quote }}
-        - name: DATADOG_RUM_SESSION_SAMPLE_RATE
-          value: {{ .Values.frontend.rum.sessionSampleRate | quote }}
-        - name: DATADOG_RUM_REPLAY_SAMPLE_RATE
-          value: {{ .Values.frontend.rum.replaySampleRate | quote }}
-        - name: DATADOG_RUM_REPLAY_ENABLED
-          value: {{ .Values.frontend.rum.replayEnabled | quote }}
         startupProbe:
           httpGet:
             path: /
