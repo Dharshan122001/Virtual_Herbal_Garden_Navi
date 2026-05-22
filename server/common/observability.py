@@ -1,12 +1,13 @@
 import os
 
 from prometheus_client import start_http_server
-from opentelemetry import metrics, trace
+
+from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.exporter.prometheus import PrometheusMetricReader
+
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
-from opentelemetry.sdk.metrics import MeterProvider
+
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -26,7 +27,10 @@ def configure_observability(app, service_name: str) -> None:
     resource = Resource.create(
         {
             "service.name": service_name,
-            "service.version": os.getenv("OTEL_SERVICE_VERSION", "local"),
+            "service.version": os.getenv(
+                "OTEL_SERVICE_VERSION",
+                "local",
+            ),
             "deployment.environment": os.getenv(
                 "OTEL_DEPLOYMENT_ENVIRONMENT",
                 "local",
@@ -34,7 +38,9 @@ def configure_observability(app, service_name: str) -> None:
         }
     )
 
-    # ---------------- TRACING ---------------- #
+    # =========================
+    # TRACING
+    # =========================
 
     tracer_provider = TracerProvider(resource=resource)
 
@@ -54,26 +60,22 @@ def configure_observability(app, service_name: str) -> None:
 
     trace.set_tracer_provider(tracer_provider)
 
-    # ---------------- METRICS ---------------- #
+    # =========================
+    # PROMETHEUS METRICS
+    # =========================
 
-    prometheus_port = int(os.getenv("OTEL_PROMETHEUS_PORT", "9464"))
-
-    metric_reader = PrometheusMetricReader()
-
-    meter_provider = MeterProvider(
-        resource=resource,
-        metric_readers=[metric_reader],
+    metrics_port = int(
+        os.getenv("OTEL_PROMETHEUS_PORT", "9464")
     )
 
-    metrics.set_meter_provider(meter_provider)
+    start_http_server(metrics_port)
 
-    # THIS IS THE IMPORTANT FIX
-    start_http_server(port=prometheus_port)
-
-    # ---------------- INSTRUMENTATION ---------------- #
-
-    RequestsInstrumentor().instrument()
+    # =========================
+    # INSTRUMENTATION
+    # =========================
 
     FastAPIInstrumentor.instrument_app(app)
+
+    RequestsInstrumentor().instrument()
 
     _configured = True
