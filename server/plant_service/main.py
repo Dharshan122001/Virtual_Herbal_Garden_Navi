@@ -41,7 +41,7 @@ async def test_api():
         "version": "v1.0.1"
     }
 
-# try2
+# try1
 
 
 # --- Plant Catalog Endpoints ---
