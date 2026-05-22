@@ -1,4 +1,5 @@
 import os
+import traceback
 
 from prometheus_client import start_http_server
 
@@ -21,61 +22,74 @@ def configure_observability(app, service_name: str) -> None:
     if _configured:
         return
 
-    if os.getenv("OTEL_SDK_DISABLED", "false").lower() == "true":
-        return
+    try:
+        if os.getenv("OTEL_SDK_DISABLED", "false").lower() == "true":
+            print("OTEL DISABLED")
+            return
 
-    resource = Resource.create(
-        {
-            "service.name": service_name,
-            "service.version": os.getenv(
-                "OTEL_SERVICE_VERSION",
-                "local",
-            ),
-            "deployment.environment": os.getenv(
-                "OTEL_DEPLOYMENT_ENVIRONMENT",
-                "local",
-            ),
-        }
-    )
-
-    # =========================
-    # TRACING
-    # =========================
-
-    tracer_provider = TracerProvider(resource=resource)
-
-    otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
-
-    if otlp_endpoint:
-        insecure = otlp_endpoint.startswith("http://")
-
-        tracer_provider.add_span_processor(
-            BatchSpanProcessor(
-                OTLPSpanExporter(
-                    endpoint=otlp_endpoint,
-                    insecure=insecure,
-                )
-            )
+        resource = Resource.create(
+            {
+                "service.name": service_name,
+                "service.version": os.getenv(
+                    "OTEL_SERVICE_VERSION",
+                    "local",
+                ),
+                "deployment.environment": os.getenv(
+                    "OTEL_DEPLOYMENT_ENVIRONMENT",
+                    "local",
+                ),
+            }
         )
 
-    trace.set_tracer_provider(tracer_provider)
+        # =========================
+        # TRACING
+        # =========================
 
-    # =========================
-    # PROMETHEUS METRICS
-    # =========================
+        tracer_provider = TracerProvider(resource=resource)
 
-    metrics_port = int(
-        os.getenv("OTEL_PROMETHEUS_PORT", "9464")
-    )
+        otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
 
-    start_http_server(metrics_port)
+        if otlp_endpoint:
+            insecure = otlp_endpoint.startswith("http://")
 
-    # =========================
-    # INSTRUMENTATION
-    # =========================
+            tracer_provider.add_span_processor(
+                BatchSpanProcessor(
+                    OTLPSpanExporter(
+                        endpoint=otlp_endpoint,
+                        insecure=insecure,
+                    )
+                )
+            )
 
-    FastAPIInstrumentor.instrument_app(app)
+        trace.set_tracer_provider(tracer_provider)
 
-    RequestsInstrumentor().instrument()
+        # =========================
+        # PROMETHEUS
+        # =========================
 
-    _configured = True
+        metrics_port = int(
+            os.getenv("OTEL_PROMETHEUS_PORT", "9464")
+        )
+
+        print(f"STARTING PROMETHEUS SERVER ON PORT {metrics_port}")
+
+        start_http_server(addr="0.0.0.0", port=metrics_port)
+
+        print("PROMETHEUS SERVER STARTED")
+
+        # =========================
+        # INSTRUMENTATION
+        # =========================
+
+        FastAPIInstrumentor.instrument_app(app)
+
+        RequestsInstrumentor().instrument()
+
+        _configured = True
+
+        print("OBSERVABILITY CONFIGURED")
+
+    except Exception as e:
+        print("OBSERVABILITY ERROR")
+        print(str(e))
+        traceback.print_exc()
