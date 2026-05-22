@@ -52,14 +52,12 @@ def configure_observability(
         ).lower()
         == "true"
     ):
-        logger.warning(
-            "OTEL SDK disabled"
-        )
+        logger.warning("OTEL SDK disabled")
         return
 
-    # =====================================
+    # =========================
     # RESOURCE
-    # =====================================
+    # =========================
 
     resource = Resource.create(
         {
@@ -75,9 +73,9 @@ def configure_observability(
         }
     )
 
-    # =====================================
-    # TRACER PROVIDER
-    # =====================================
+    # =========================
+    # TRACING
+    # =========================
 
     tracer_provider = TracerProvider(
         resource=resource
@@ -88,6 +86,7 @@ def configure_observability(
     )
 
     if otlp_endpoint:
+
         try:
 
             insecure = otlp_endpoint.startswith(
@@ -110,6 +109,7 @@ def configure_observability(
             )
 
         except Exception as e:
+
             logger.exception(
                 f"Failed to configure OTLP exporter: {e}"
             )
@@ -118,9 +118,9 @@ def configure_observability(
         tracer_provider
     )
 
-    # =====================================
-    # PROMETHEUS METRICS SERVER
-    # =====================================
+    # =========================
+    # PROMETHEUS METRICS
+    # =========================
 
     try:
 
@@ -156,31 +156,29 @@ def configure_observability(
             f"Failed to start metrics server: {e}"
         )
 
-    # =====================================
-    # FASTAPI
-    # =====================================
+    # =========================
+    # FASTAPI INSTRUMENTATION
+    # =========================
 
-    if app:
+    try:
 
-        try:
+        FastAPIInstrumentor.instrument_app(
+            app
+        )
 
-            FastAPIInstrumentor.instrument_app(
-                app
-            )
+        logger.warning(
+            "FastAPI instrumentation enabled"
+        )
 
-            logger.warning(
-                "FastAPI instrumentation enabled"
-            )
+    except Exception as e:
 
-        except Exception as e:
+        logger.exception(
+            f"FastAPI instrumentation failed: {e}"
+        )
 
-            logger.exception(
-                f"FastAPI instrumentation failed: {e}"
-            )
-
-    # =====================================
-    # REQUESTS
-    # =====================================
+    # =========================
+    # REQUESTS INSTRUMENTATION
+    # =========================
 
     try:
 
@@ -196,9 +194,9 @@ def configure_observability(
             f"Requests instrumentation failed: {e}"
         )
 
-    # =====================================
-    # SQLALCHEMY
-    # =====================================
+    # =========================
+    # SQLALCHEMY INSTRUMENTATION
+    # =========================
 
     if engine:
 

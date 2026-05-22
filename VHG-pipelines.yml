@@ -2,11 +2,11 @@ trigger:
   branches:
     include:
       - genai
-  paths:
-    include:
-      - client/*
-      - server/*
-      - vhg-chart/*
+paths:
+  include:
+    - client/**
+    - server/**
+    - vhg-chart/**
 
 variables:
   - group: vhg-secrets
@@ -33,13 +33,25 @@ stages:
            f=true; p=true; au=true; ai=true;
         else
            for file in $CHANGED_FILES; do
-             case "$file" in
-               client/*) f=true ;;
-               server/plant_service/*|server/common/*|server/requirements.txt) p=true ;;
-               server/auth_service/*|server/common/*|server/requirements.txt) au=true ;;
-               server/ai_service/*|server/common/*|server/requirements.txt) ai=true ;;
+            case "$file" in
+              client/*)
+                f=true
+                ;;
+
+              server/plant_service/*|server/plantmain.py|server/common/*|server/requirements.txt)
+                p=true
+                ;;
+              
+              server/auth_service/*|server/authmain.py|server/common/*|server/requirements.txt)
+                au=true
+                ;;
+
+              server/ai_service/*|server/aimain.py|server/common/*|server/requirements.txt)
+                 ai=true
+                 ;;
+
              esac
-           done
+          done
         fi
         echo "##vso[task.setvariable variable=f_changed;isOutput=true]$f"
         echo "##vso[task.setvariable variable=p_changed;isOutput=true]$p"
