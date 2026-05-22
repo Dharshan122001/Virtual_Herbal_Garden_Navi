@@ -17,6 +17,10 @@ from opentelemetry.instrumentation.requests import (
     RequestsInstrumentor,
 )
 
+from opentelemetry.instrumentation.sqlalchemy import (
+    SQLAlchemyInstrumentor,
+)
+
 from opentelemetry.sdk.resources import Resource
 
 from opentelemetry.sdk.trace import TracerProvider
@@ -30,15 +34,32 @@ _configured = False
 logger = logging.getLogger(__name__)
 
 
-def configure_observability(app, service_name: str) -> None:
+def configure_observability(
+    app,
+    service_name: str,
+    engine=None,
+) -> None:
+
     global _configured
 
     if _configured:
         return
 
-    if os.getenv("OTEL_SDK_DISABLED", "false").lower() == "true":
-        logger.warning("OTEL SDK disabled")
+    if (
+        os.getenv(
+            "OTEL_SDK_DISABLED",
+            "false",
+        ).lower()
+        == "true"
+    ):
+        logger.warning(
+            "OTEL SDK disabled"
+        )
         return
+
+    # =====================================
+    # RESOURCE
+    # =====================================
 
     resource = Resource.create(
         {
@@ -54,9 +75,9 @@ def configure_observability(app, service_name: str) -> None:
         }
     )
 
-    # =========================
-    # TRACING
-    # =========================
+    # =====================================
+    # TRACER PROVIDER
+    # =====================================
 
     tracer_provider = TracerProvider(
         resource=resource
@@ -67,28 +88,42 @@ def configure_observability(app, service_name: str) -> None:
     )
 
     if otlp_endpoint:
-        insecure = otlp_endpoint.startswith(
-            "http://"
-        )
+        try:
 
-        tracer_provider.add_span_processor(
-            BatchSpanProcessor(
-                OTLPSpanExporter(
-                    endpoint=otlp_endpoint,
-                    insecure=insecure,
+            insecure = otlp_endpoint.startswith(
+                "http://"
+            )
+
+            span_exporter = OTLPSpanExporter(
+                endpoint=otlp_endpoint,
+                insecure=insecure,
+            )
+
+            tracer_provider.add_span_processor(
+                BatchSpanProcessor(
+                    span_exporter
                 )
             )
-        )
+
+            logger.warning(
+                f"OTLP exporter enabled: {otlp_endpoint}"
+            )
+
+        except Exception as e:
+            logger.exception(
+                f"Failed to configure OTLP exporter: {e}"
+            )
 
     trace.set_tracer_provider(
         tracer_provider
     )
 
-    # =========================
-    # PROMETHEUS METRICS
-    # =========================
+    # =====================================
+    # PROMETHEUS METRICS SERVER
+    # =====================================
 
     try:
+
         metrics_port = int(
             os.getenv(
                 "OTEL_PROMETHEUS_PORT",
@@ -109,19 +144,78 @@ def configure_observability(app, service_name: str) -> None:
             "Prometheus metrics server started successfully"
         )
 
+    except OSError:
+
+        logger.warning(
+            "Prometheus metrics server already running"
+        )
+
     except Exception as e:
+
         logger.exception(
             f"Failed to start metrics server: {e}"
         )
 
-    # =========================
-    # INSTRUMENTATION
-    # =========================
+    # =====================================
+    # FASTAPI
+    # =====================================
 
-    FastAPIInstrumentor.instrument_app(
-        app
-    )
+    if app:
 
-    RequestsInstrumentor().instrument()
+        try:
+
+            FastAPIInstrumentor.instrument_app(
+                app
+            )
+
+            logger.warning(
+                "FastAPI instrumentation enabled"
+            )
+
+        except Exception as e:
+
+            logger.exception(
+                f"FastAPI instrumentation failed: {e}"
+            )
+
+    # =====================================
+    # REQUESTS
+    # =====================================
+
+    try:
+
+        RequestsInstrumentor().instrument()
+
+        logger.warning(
+            "Requests instrumentation enabled"
+        )
+
+    except Exception as e:
+
+        logger.exception(
+            f"Requests instrumentation failed: {e}"
+        )
+
+    # =====================================
+    # SQLALCHEMY
+    # =====================================
+
+    if engine:
+
+        try:
+
+            SQLAlchemyInstrumentor().instrument(
+                engine=engine
+            )
+
+            logger.warning(
+                "SQLAlchemy instrumentation enabled"
+            )
+
+        except Exception as e:
+
+            logger.exception(
+                f"SQLAlchemy instrumentation failed: {e}"
+            )
 
     _configured = True

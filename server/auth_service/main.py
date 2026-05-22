@@ -8,7 +8,7 @@ from passlib.context import CryptContext
 from dotenv import load_dotenv
 from jose import jwt
 #Try1
-from common.database import get_db
+from common.database import get_db, engine
 from common.observability import configure_observability
 from common import schemas
 from common.utils import setup_cors
@@ -18,7 +18,11 @@ load_dotenv()
 
 app = FastAPI(title="Herbal Garden - Auth Service")
 setup_cors(app)
-configure_observability(app, "vhg-auth-service")
+configure_observability(
+    app,
+    "vhg-auth-service",
+    engine,
+)
 
 # =======================
 # SECURITY CONFIG
