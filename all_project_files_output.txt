@@ -889,7 +889,7 @@ spec:
         ports:
         - name: http
           containerPort: 8005
-        - name: prometheus-metrics
+        - name: metrics
           containerPort: {{ .Values.observability.prometheusPort }}
 
         securityContext:
@@ -1003,7 +1003,7 @@ spec:
         ports:
         - name: http
           containerPort: 8007
-        - name: prometheus-metrics
+        - name: metrics
           containerPort: {{ .Values.observability.prometheusPort }}
 
         securityContext:
@@ -1117,7 +1117,7 @@ spec:
         ports:
         - name: http
           containerPort: 8006
-        - name: prometheus-metrics
+        - name: metrics
           containerPort: {{ .Values.observability.prometheusPort }}
 
         securityContext:
