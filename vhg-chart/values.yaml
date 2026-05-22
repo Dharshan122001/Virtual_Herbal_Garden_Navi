@@ -5,7 +5,7 @@ frontend:
   port: 80
 plant:
   image: dharshan3690/plant-service
-  tag: "1891"
+  tag: "1883"
   port: 8005
 auth:
   image: dharshan3690/auth-service
@@ -20,9 +20,16 @@ ingress:
   className: nginx
 observability:
   enabled: true
-  prometheusPort: "9464"
+  prometheusPort: 9464
+
   environment: "aks"
+
   serviceNamespace: "virtual-herbal-garden"
+
   tracesSampler: "parentbased_traceidratio"
+
   tracesSamplerArg: "1.0"
+
   excludedUrls: "/docs,/openapi.json"
+
+  otlpEndpoint: "otel-collector.monitoring.svc.cluster.local:4317"

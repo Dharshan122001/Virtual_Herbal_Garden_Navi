@@ -1,7 +1,5 @@
 import os
 
-from prometheus_client import start_http_server
-
 from opentelemetry import metrics, trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
     OTLPSpanExporter,
@@ -68,24 +66,17 @@ def configure_observability(app, service_name: str) -> None:
         # METRICS
         # =========================
 
-        prometheus_port = int(
-            os.getenv("OTEL_PROMETHEUS_PORT", "9464")
-        )
-
-        metric_reader = PrometheusMetricReader()
+        prometheus_reader = PrometheusMetricReader()
 
         meter_provider = MeterProvider(
             resource=resource,
-            metric_readers=[metric_reader],
+            metric_readers=[prometheus_reader],
         )
 
         metrics.set_meter_provider(meter_provider)
 
-        # Expose /metrics
-        start_http_server(prometheus_port)
-
         # =========================
-        # INSTRUMENTATIONS
+        # INSTRUMENTATION
         # =========================
 
         RequestsInstrumentor().instrument()
