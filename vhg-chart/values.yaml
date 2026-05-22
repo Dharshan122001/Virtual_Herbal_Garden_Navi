@@ -5,15 +5,15 @@ frontend:
   port: 80
 plant:
   image: dharshan3690/plant-service
-  tag: "1899"
+  tag: "1901"
   port: 8005
 auth:
   image: dharshan3690/auth-service
-  tag: "1899"
+  tag: "1901"
   port: 8006
 ai:
   image: dharshan3690/ai-service
-  tag: "1893"
+  tag: "1901"
   port: 8007
 ingress:
   enabled: true
