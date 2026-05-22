@@ -117,3 +117,12 @@ terraform import -var-file="secrets.tfvars" kubernetes_manifest.argocd_ingress "
 kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 --decode; echo
 
 finally Done
+
+terraform destroy -var-file="secrets.tfvars"
+kubectl get pods -n vhg-1 -o=jsonpath='{range .items[*]}{.metadata.name}{" => "}{.spec.containers[0].image}{"\n"}{end}'
+
+kubectl port-forward -n monitoring svc/prometheus-operated 9090:9090
+kubectl port-forward svc/kube-prometheus-stack-grafana 3000:80 -n monitoring
+
+ubectl get secret -n monitoring monitoring-grafana \
+-o jsonpath="{.data.admin-password}" | base64 --decode

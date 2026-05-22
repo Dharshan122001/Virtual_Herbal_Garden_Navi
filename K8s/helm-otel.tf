@@ -9,27 +9,33 @@ resource "helm_release" "otel_collector" {
 
   values = [
     <<-EOF
-    mode: deployment
+mode: deployment
 
-    config:
-      receivers:
-        otlp:
-          protocols:
-            grpc:
-            http:
+image:
+  repository: otel/opentelemetry-collector-k8s
 
-      processors:
-        batch:
+config:
+  receivers:
+    otlp:
+      protocols:
+        grpc: {}
+        http: {}
 
-      exporters:
-        debug:
+  processors:
+    batch: {}
 
-      service:
-        pipelines:
-          traces:
-            receivers: [otlp]
-            processors: [batch]
-            exporters: [debug]
-    EOF
+  exporters:
+    debug: {}
+
+  service:
+    pipelines:
+      traces:
+        receivers:
+          - otlp
+        processors:
+          - batch
+        exporters:
+          - debug
+EOF
   ]
 }
