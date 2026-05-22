@@ -1,19 +1,19 @@
 namespace: vhg-1
 frontend:
   image: dharshan3690/frontend
-  tag: "1891"
+  tag: "1892"
   port: 80
 plant:
   image: dharshan3690/plant-service
-  tag: "1883"
+  tag: "1892"
   port: 8005
 auth:
   image: dharshan3690/auth-service
-  tag: "1891"
+  tag: "1892"
   port: 8006
 ai:
   image: dharshan3690/ai-service
-  tag: "1891"
+  tag: "1892"
   port: 8007
 ingress:
   enabled: true
@@ -21,15 +21,9 @@ ingress:
 observability:
   enabled: true
   prometheusPort: 9464
-
   environment: "aks"
-
   serviceNamespace: "virtual-herbal-garden"
-
   tracesSampler: "parentbased_traceidratio"
-
   tracesSamplerArg: "1.0"
-
   excludedUrls: "/docs,/openapi.json"
-
   otlpEndpoint: "otel-collector.monitoring.svc.cluster.local:4317"
