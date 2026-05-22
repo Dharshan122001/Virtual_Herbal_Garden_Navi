@@ -68,6 +68,9 @@ spec:
         - name: OTEL_PROMETHEUS_PORT
           value: "{{ .Values.observability.prometheusPort }}"
 
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "{{ .Values.observability.otlpEndpoint }}"
+
         - name: OTEL_TRACES_SAMPLER
           value: "{{ .Values.observability.tracesSampler }}"
 

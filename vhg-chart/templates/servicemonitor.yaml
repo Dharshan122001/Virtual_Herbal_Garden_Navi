@@ -1,0 +1,26 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: vhg-services-monitor
+  namespace: monitoring
+  labels:
+    release: monitoring
+
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ .Values.namespace }}
+
+  selector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - plant-service
+          - auth-service
+          - ai-service
+
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 15s

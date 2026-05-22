@@ -1,38 +1,39 @@
 \n\n==================== client/Dockerfile ====================\n
-# -----------------------------
-# Stage 1 - Build React/Vite App
-# -----------------------------
+# =========================================
+# Stage 1 - Build React App
+# =========================================
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+RUN npm ci
 
-# Copy full source code
 COPY . .
 
-# Build Vite app
 RUN npm run build
 
-# -----------------------------
-# Stage 2 - Nginx Production Server
-# -----------------------------
-FROM nginx:alpine
 
-# Remove default nginx content
+# =========================================
+# Stage 2 - Nginx Production
+# =========================================
+FROM nginx:1.31-alpine
+
 RUN rm -rf /usr/share/nginx/html/*
 
-# Copy built app from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Expose nginx port
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+COPY entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 80
 
-# Start nginx
+ENTRYPOINT ["/entrypoint.sh"]
+
 CMD ["nginx", "-g", "daemon off;"]\n\n==================== client/entrypoint.sh ====================\n
 #!/bin/sh
 set -e
@@ -47,17 +48,7 @@ cat <<EOF > $CONFIG_FILE
 window.appConfig = {
   VITE_PLANT_API_URL: "$VITE_PLANT_API_URL",
   VITE_AUTH_API_URL: "$VITE_AUTH_API_URL",
-  VITE_AI_API_URL: "$VITE_AI_API_URL",
-  DATADOG_RUM_ENABLED: "$DATADOG_RUM_ENABLED",
-  DATADOG_RUM_APPLICATION_ID: "$DATADOG_RUM_APPLICATION_ID",
-  DATADOG_RUM_CLIENT_TOKEN: "$DATADOG_RUM_CLIENT_TOKEN",
-  DATADOG_SITE: "$DATADOG_SITE",
-  DATADOG_ENV: "$DATADOG_ENV",
-  DATADOG_VERSION: "$DATADOG_VERSION",
-  DATADOG_RUM_SERVICE: "$DATADOG_RUM_SERVICE",
-  DATADOG_RUM_SESSION_SAMPLE_RATE: "$DATADOG_RUM_SESSION_SAMPLE_RATE",
-  DATADOG_RUM_REPLAY_SAMPLE_RATE: "$DATADOG_RUM_REPLAY_SAMPLE_RATE",
-  DATADOG_RUM_REPLAY_ENABLED: "$DATADOG_RUM_REPLAY_ENABLED"
+  VITE_AI_API_URL: "$VITE_AI_API_URL"
 };
 EOF
 
@@ -73,19 +64,32 @@ exec "$@"
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Virtual Herbal Garden</title>
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+
+    <!-- Runtime environment config -->
+    <script src="/config.js"></script>
   </head>
 
   <body>
     <div id="root"></div>
 
-    <!-- IMPORTANT: This loads your React app -->
+    <!-- Vite injects built assets automatically -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>\n\n==================== client/src/apiConfig.js ====================\n
-export const PLANT_SERVICE_URL = window.appConfig?.VITE_PLANT_API_URL || "http://localhost:8005";
-export const AUTH_SERVICE_URL  = window.appConfig?.VITE_AUTH_API_URL  || "http://localhost:8006";
-export const AI_SERVICE_URL    = window.appConfig?.VITE_AI_API_URL    || "http://localhost:8007";\n\n==================== client/src/main.jsx ====================\n
+export const PLANT_SERVICE_URL =
+  window.appConfig?.VITE_PLANT_API_URL || "/api/plant";
+
+export const AUTH_SERVICE_URL =
+  window.appConfig?.VITE_AUTH_API_URL || "/api/auth";
+
+export const AI_SERVICE_URL =
+  window.appConfig?.VITE_AI_API_URL || "/api/ai";
+
+console.log("window.appConfig:", window.appConfig);
+
+console.log("PLANT_SERVICE_URL:", PLANT_SERVICE_URL);
+console.log("AUTH_SERVICE_URL:", AUTH_SERVICE_URL);
+console.log("AI_SERVICE_URL:", AI_SERVICE_URL);\n\n==================== client/src/main.jsx ====================\n
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
@@ -103,39 +107,17 @@ createRoot(document.getElementById("root")).render(
   </StrictMode>
 );
 \n\n==================== client/src/observability.js ====================\n
-import { datadogRum } from "@datadog/browser-rum";
-
 const config = window.appConfig || {};
 
 export function initBrowserMonitoring() {
-  if (config.DATADOG_RUM_ENABLED !== "true") {
+  // Browser-side monitoring is currently disabled in favor of
+  // Prometheus + Grafana backend observability.
+  if (config.OTEL_BROWSER_MONITORING_ENABLED !== "true") {
     return;
   }
 
-  if (!config.DATADOG_RUM_APPLICATION_ID || !config.DATADOG_RUM_CLIENT_TOKEN) {
-    console.warn("Datadog RUM is enabled but application ID or client token is missing.");
-    return;
-  }
-
-  datadogRum.init({
-    applicationId: config.DATADOG_RUM_APPLICATION_ID,
-    clientToken: config.DATADOG_RUM_CLIENT_TOKEN,
-    site: config.DATADOG_SITE || "datadoghq.com",
-    service: config.DATADOG_RUM_SERVICE || "vhg-frontend",
-    env: config.DATADOG_ENV || "aks",
-    version: config.DATADOG_VERSION || "local",
-    sessionSampleRate: Number(config.DATADOG_RUM_SESSION_SAMPLE_RATE || 100),
-    sessionReplaySampleRate: Number(config.DATADOG_RUM_REPLAY_SAMPLE_RATE || 0),
-    defaultPrivacyLevel: "mask-user-input",
-    trackResources: true,
-    trackLongTasks: true,
-    trackUserInteractions: true,
-    allowedTracingUrls: [/\/api\/plant/, /\/api\/auth/, /\/api\/ai/],
-  });
-
-  if (config.DATADOG_RUM_REPLAY_ENABLED === "true") {
-    datadogRum.startSessionReplayRecording();
-  }
+  // If frontend browser instrumentation is added later, implement
+  // the OpenTelemetry JS browser SDK here.
 }
 \n\n==================== server/requirements.txt ====================\n
 fastapi==0.115.12
@@ -167,6 +149,8 @@ google-auth-httplib2
 opentelemetry-api==1.31.1
 opentelemetry-sdk==1.31.1
 opentelemetry-exporter-otlp-proto-grpc==1.31.1
+opentelemetry-exporter-prometheus==0.52b1
+prometheus-client==0.16.0
 opentelemetry-instrumentation-fastapi==0.52b1
 opentelemetry-instrumentation-requests==0.52b1
 opentelemetry-instrumentation-sqlalchemy==0.52b1
@@ -786,16 +770,8 @@ metadata:
 namespace: vhg-1
 frontend:
   image: dharshan3690/frontend
-  tag: "1884"
+  tag: "1887"
   port: 80
-  rum:
-    enabled: true
-    applicationId: "6e70653f-5b87-4945-a9e8-3e5da4e5e583"
-    clientToken: "pubb693ad8f16f0580f6e609113ed67c985"
-    service: "vhg-frontend"
-    sessionSampleRate: "100"
-    replaySampleRate: "100"
-    replayEnabled: true
 plant:
   image: dharshan3690/plant-service
   tag: "1883"
@@ -813,13 +789,11 @@ ingress:
   className: nginx
 observability:
   enabled: true
-  otlpEndpoint: "http://$(HOST_IP):4317"
+  prometheusPort: "9464"
   environment: "aks"
-  datadogSite: "us5.datadoghq.com"
   serviceNamespace: "virtual-herbal-garden"
   tracesSampler: "parentbased_traceidratio"
   tracesSamplerArg: "1.0"
-  metricExportInterval: "30000"
   excludedUrls: "/docs,/openapi.json"
 \n\n==================== vhg-chart/templates/1-frontend-deployment.yaml ====================\n
 apiVersion: apps/v1
@@ -852,26 +826,6 @@ spec:
           value: "/api/auth"
         - name: VITE_AI_API_URL
           value: "/api/ai"
-        - name: DATADOG_RUM_ENABLED
-          value: {{ .Values.frontend.rum.enabled | quote }}
-        - name: DATADOG_RUM_APPLICATION_ID
-          value: {{ .Values.frontend.rum.applicationId | quote }}
-        - name: DATADOG_RUM_CLIENT_TOKEN
-          value: {{ .Values.frontend.rum.clientToken | quote }}
-        - name: DATADOG_SITE
-          value: {{ .Values.observability.datadogSite | quote }}
-        - name: DATADOG_ENV
-          value: {{ .Values.observability.environment | quote }}
-        - name: DATADOG_VERSION
-          value: {{ .Values.frontend.tag | quote }}
-        - name: DATADOG_RUM_SERVICE
-          value: {{ .Values.frontend.rum.service | quote }}
-        - name: DATADOG_RUM_SESSION_SAMPLE_RATE
-          value: {{ .Values.frontend.rum.sessionSampleRate | quote }}
-        - name: DATADOG_RUM_REPLAY_SAMPLE_RATE
-          value: {{ .Values.frontend.rum.replaySampleRate | quote }}
-        - name: DATADOG_RUM_REPLAY_ENABLED
-          value: {{ .Values.frontend.rum.replayEnabled | quote }}
         startupProbe:
           httpGet:
             path: /
@@ -920,6 +874,10 @@ spec:
     metadata:
       labels:
         app: plant-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.observability.prometheusPort }}"
+        prometheus.io/path: "/metrics"
 
     spec:
       containers:
@@ -929,7 +887,10 @@ spec:
         imagePullPolicy: Always
 
         ports:
-        - containerPort: 8005
+        - name: http
+          containerPort: 8005
+        - name: prometheus-metrics
+          containerPort: {{ .Values.observability.prometheusPort }}
 
         securityContext:
           runAsNonRoot: true
@@ -957,20 +918,14 @@ spec:
         - name: OTEL_DEPLOYMENT_ENVIRONMENT
           value: "{{ .Values.observability.environment }}"
 
-        - name: OTEL_EXPORTER_OTLP_ENDPOINT
-          value: "http://datadog.datadog.svc.cluster.local:4317"
-
-        - name: OTEL_EXPORTER_OTLP_PROTOCOL
-          value: "grpc"
+        - name: OTEL_PROMETHEUS_PORT
+          value: "{{ .Values.observability.prometheusPort }}"
 
         - name: OTEL_TRACES_SAMPLER
           value: "{{ .Values.observability.tracesSampler }}"
 
         - name: OTEL_TRACES_SAMPLER_ARG
           value: "{{ .Values.observability.tracesSamplerArg }}"
-
-        - name: OTEL_METRIC_EXPORT_INTERVAL
-          value: "{{ .Values.observability.metricExportInterval }}"
 
         - name: OTEL_PYTHON_FASTAPI_EXCLUDED_URLS
           value: "{{ .Values.observability.excludedUrls }}"
@@ -1033,6 +988,10 @@ spec:
     metadata:
       labels:
         app: ai-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.observability.prometheusPort }}"
+        prometheus.io/path: "/metrics"
 
     spec:
       containers:
@@ -1042,7 +1001,10 @@ spec:
         imagePullPolicy: Always
 
         ports:
-        - containerPort: 8007
+        - name: http
+          containerPort: 8007
+        - name: prometheus-metrics
+          containerPort: {{ .Values.observability.prometheusPort }}
 
         securityContext:
           runAsNonRoot: true
@@ -1070,20 +1032,14 @@ spec:
         - name: OTEL_DEPLOYMENT_ENVIRONMENT
           value: "{{ .Values.observability.environment }}"
 
-        - name: OTEL_EXPORTER_OTLP_ENDPOINT
-          value: "http://datadog.datadog.svc.cluster.local:4317"
-
-        - name: OTEL_EXPORTER_OTLP_PROTOCOL
-          value: "grpc"
+        - name: OTEL_PROMETHEUS_PORT
+          value: "{{ .Values.observability.prometheusPort }}"
 
         - name: OTEL_TRACES_SAMPLER
           value: "{{ .Values.observability.tracesSampler }}"
 
         - name: OTEL_TRACES_SAMPLER_ARG
           value: "{{ .Values.observability.tracesSamplerArg }}"
-
-        - name: OTEL_METRIC_EXPORT_INTERVAL
-          value: "{{ .Values.observability.metricExportInterval }}"
 
         - name: OTEL_PYTHON_FASTAPI_EXCLUDED_URLS
           value: "{{ .Values.observability.excludedUrls }}"
@@ -1146,6 +1102,10 @@ spec:
     metadata:
       labels:
         app: auth-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.observability.prometheusPort }}"
+        prometheus.io/path: "/metrics"
 
     spec:
       containers:
@@ -1155,7 +1115,10 @@ spec:
         imagePullPolicy: Always
 
         ports:
-        - containerPort: 8006
+        - name: http
+          containerPort: 8006
+        - name: prometheus-metrics
+          containerPort: {{ .Values.observability.prometheusPort }}
 
         securityContext:
           runAsNonRoot: true
@@ -1183,20 +1146,14 @@ spec:
         - name: OTEL_DEPLOYMENT_ENVIRONMENT
           value: "{{ .Values.observability.environment }}"
 
-        - name: OTEL_EXPORTER_OTLP_ENDPOINT
-          value: "http://datadog.datadog.svc.cluster.local:4317"
-
-        - name: OTEL_EXPORTER_OTLP_PROTOCOL
-          value: "grpc"
+        - name: OTEL_PROMETHEUS_PORT
+          value: "{{ .Values.observability.prometheusPort }}"
 
         - name: OTEL_TRACES_SAMPLER
           value: "{{ .Values.observability.tracesSampler }}"
 
         - name: OTEL_TRACES_SAMPLER_ARG
           value: "{{ .Values.observability.tracesSamplerArg }}"
-
-        - name: OTEL_METRIC_EXPORT_INTERVAL
-          value: "{{ .Values.observability.metricExportInterval }}"
 
         - name: OTEL_PYTHON_FASTAPI_EXCLUDED_URLS
           value: "{{ .Values.observability.excludedUrls }}"
@@ -1540,7 +1497,7 @@ resource "helm_release" "argocd" {
   depends_on = [kubernetes_secret_v1.vhg_repo_creds]
 }
 
-# 4. The ArgoCD Application (Points to your 'DataDog' branch)
+# 4. The ArgoCD Application (Points to your branch)
 # Installed through a tiny Helm chart so Terraform does not need Kubernetes
 # API discovery for the Argo CD CRD during the first plan.
 resource "terraform_data" "adopt_existing_argocd_bootstrap_objects" {
@@ -1583,12 +1540,12 @@ resource "helm_release" "vhg_app_gitops" {
     helm_release.ingress_nginx
   ]
 }
-\n\n==================== K8s/helm-datadog.tf ====================\n
-resource "helm_release" "datadog" {
-  name             = "datadog"
-  repository       = "https://helm.datadoghq.com"
-  chart            = "datadog"
-  namespace        = "datadog"
+\n\n==================== K8s/helm-prometheus.tf ====================\n
+resource "helm_release" "monitoring" {
+  name             = "monitoring"
+  repository       = "https://prometheus-community.github.io/helm-charts"
+  chart            = "kube-prometheus-stack"
+  namespace        = "monitoring"
   create_namespace = true
 
   timeout = 900
@@ -1596,33 +1553,24 @@ resource "helm_release" "datadog" {
 
   values = [
     <<-EOF
-    datadog:
-      apiKey: "${var.datadog_api_key}"
-      site: "${var.datadog_site}"
-      apm:
-        portEnabled: true
-      logs:
-         enabled: true
-      tags:
-        - "env:aks"
-        - "service_namespace:virtual-herbal-garden"
-        - "project:vhg-aks"
-      logs:
-        enabled: true
-        containerCollectAll: true
-      otlp:
-        receiver:
-          protocols:
-            grpc:
-              enabled: true
-            http:
-              enabled: true
-        logs:
-          enabled: false
-    clusterAgent:
+    grafana:
       enabled: true
-    kubeStateMetricsCore:
+      service:
+        type: ClusterIP
+      ingress:
+        enabled: false
+    prometheus:
+      prometheusSpec:
+        serviceMonitorSelectorNilUsesHelmValues: false
+        podMonitorSelectorNilUsesHelmValues: false
+        podMonitorSelector: {}
+        serviceMonitorSelector: {}
+    kubeStateMetrics:
       enabled: true
+    nodeExporter:
+      enabled: true
+    alertmanager:
+      enabled: false
     EOF
   ]
 
@@ -1768,9 +1716,7 @@ provider "helm" {
   }
 }\n\n==================== K8s/secrets.tfvars ====================\n
 azure_devops_pat = "DSIV8yq8uz5G5hxdYDu2T3EYPLItyxwlPPiUpC9tDArsf4IaoxEBJQQJ99CEACAAAAAu9fM3AAASAZDO4dVK"
-db_password      = "Vinu9945385205"
-datadog_api_key="653d5e9ce09b11393cc0c86ec6421d40"
-datadog_site="us5.datadoghq.com"\n\n==================== K8s/variables.tf ====================\n
+db_password      = "Vinu9945385205"\n\n==================== K8s/variables.tf ====================\n
 variable "db_password" {
   type      = string
   sensitive = true
@@ -1778,16 +1724,6 @@ variable "db_password" {
 variable "azure_devops_pat" {
   type      = string
   sensitive = true
-}
-
-variable "datadog_api_key" {
-  type      = string
-  sensitive = true
-}
-
-variable "datadog_site" {
-  type    = string
-  default = "datadoghq.com"
 }
 \n\n==================== K8s/argocd-app-chart/templates/application.yaml ====================\n
 apiVersion: argoproj.io/v1alpha1
