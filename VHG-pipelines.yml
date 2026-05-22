@@ -2,175 +2,309 @@ trigger:
   branches:
     include:
       - genai
-paths:
-  include:
-    - client/**
-    - server/**
-    - vhg-chart/**
+
+  paths:
+    include:
+      - client/**
+      - server/**
+      - vhg-chart/**
 
 variables:
   - group: vhg-secrets
+
   - name: dockerRegistryConn
-    value: 'DockerHubConn' 
+    value: 'DockerHubConn'
+
   - name: dockerUser
     value: 'dharshan3690'
 
 stages:
-# --- STAGE 0: Identify Changes ---
+
+# =========================================================
+# STAGE 0 - DETECT CHANGES
+# =========================================================
 - stage: Detect_and_Resolve
   displayName: "0. Smart Detect"
+
   jobs:
-  - job: ResolveTags
-    pool: { vmImage: 'ubuntu-latest' }
-    steps:
-    - checkout: self
-      fetchDepth: 0 
-    - script: |
-        CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "ALL")
-        f=false; p=false; au=false; ai=false;
+    - job: ResolveTags
 
-        if [ "$CHANGED_FILES" == "ALL" ]; then
-           f=true; p=true; au=true; ai=true;
-        else
-           for file in $CHANGED_FILES; do
-            case "$file" in
-              client/*)
-                f=true
-                ;;
+      pool:
+        vmImage: 'ubuntu-latest'
 
-              server/plant_service/*|server/plantmain.py|server/common/*|server/requirements.txt)
-                p=true
-                ;;
-              
-              server/auth_service/*|server/authmain.py|server/common/*|server/requirements.txt)
-                au=true
-                ;;
+      steps:
+        - checkout: self
+          fetchDepth: 0
 
-              server/ai_service/*|server/aimain.py|server/common/*|server/requirements.txt)
-                 ai=true
-                 ;;
+        - script: |
+            echo "Detecting changed files..."
 
-             esac
-          done
-        fi
-        echo "##vso[task.setvariable variable=f_changed;isOutput=true]$f"
-        echo "##vso[task.setvariable variable=p_changed;isOutput=true]$p"
-        echo "##vso[task.setvariable variable=au_changed;isOutput=true]$au"
-        echo "##vso[task.setvariable variable=ai_changed;isOutput=true]$ai"
-      name: TagLogic
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "ALL")
 
-# --- STAGE 1: Build and Push Images ---
+            echo "$CHANGED_FILES"
+
+            f=false
+            p=false
+            au=false
+            ai=false
+
+            if [ "$CHANGED_FILES" = "ALL" ]; then
+              f=true
+              p=true
+              au=true
+              ai=true
+
+            else
+
+              for file in $CHANGED_FILES; do
+
+                case "$file" in
+
+                  client/*)
+                    f=true
+                    ;;
+
+                  server/plant_service/*|server/plantmain.py|server/common/*|server/requirements.txt)
+                    p=true
+                    ;;
+
+                  server/auth_service/*|server/authmain.py|server/common/*|server/requirements.txt)
+                    au=true
+                    ;;
+
+                  server/ai_service/*|server/aimain.py|server/common/*|server/requirements.txt)
+                    ai=true
+                    ;;
+
+                esac
+
+              done
+
+            fi
+
+            echo "Frontend Changed: $f"
+            echo "Plant Changed: $p"
+            echo "Auth Changed: $au"
+            echo "AI Changed: $ai"
+
+            echo "##vso[task.setvariable variable=f_changed;isOutput=true]$f"
+            echo "##vso[task.setvariable variable=p_changed;isOutput=true]$p"
+            echo "##vso[task.setvariable variable=au_changed;isOutput=true]$au"
+            echo "##vso[task.setvariable variable=ai_changed;isOutput=true]$ai"
+
+          name: TagLogic
+          displayName: "Detect Modified Services"
+
+# =========================================================
+# STAGE 1 - BUILD & PUSH IMAGES
+# =========================================================
 - stage: Build_and_Push
   displayName: "1. Build and Push"
+
   dependsOn: Detect_and_Resolve
+
   jobs:
-  - job: DockerBuild
-    pool: { vmImage: 'ubuntu-latest' }
-    variables:
-      p_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.p_changed'] ]
-      au_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.au_changed'] ]
-      ai_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.ai_changed'] ]
-      f_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.f_changed'] ]
-    steps:
-    - task: Docker@2
-      displayName: "Login to DockerHub"
-      inputs:
-        containerRegistry: '$(dockerRegistryConn)'
-        command: 'login'
+    - job: DockerBuild
 
-    - script: |
-        set -e
+      pool:
+        vmImage: 'ubuntu-latest'
 
-        # Reusable function to build isolated contexts preserving monorepo layout
-        build_backend_service() {
-          local service_dir=$1    # e.g., "plant_service"
-          local image_name=$2     # e.g., "plant-service"
-          
-          echo "========================================="
-          echo "Preparing context & building: ${image_name}"
-          echo "========================================="
-          
-          # 1. Create an isolated transient workspace for this service's context
-          local WORKSPACE="server/build_${service_dir}"
-          mkdir -p "${WORKSPACE}"
-          
-          # 2. Sync global components into workspace root
-          cp server/requirements.txt "${WORKSPACE}/"
-          cp server/Dockerfile "${WORKSPACE}/"
-          cp -r server/common "${WORKSPACE}/common"
-          
-          # 3. Preserve the folder nesting structure so Python resolves module paths natively
-          mkdir -p "${WORKSPACE}/${service_dir}"
-          cp -r server/${service_dir}/* "${WORKSPACE}/${service_dir}/"
-          
-          # 4. Build using the workspace as context
-          cd "${WORKSPACE}"
-          docker build --no-cache -t $(dockerUser)/${image_name}:$(Build.BuildId) .
-          docker push $(dockerUser)/${image_name}:$(Build.BuildId)
-          
-          # 5. Clean up workspace and return safely
-          cd ../..
-          rm -rf "${WORKSPACE}"
-        }
+      variables:
+        p_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.p_changed'] ]
+        au_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.au_changed'] ]
+        ai_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.ai_changed'] ]
+        f_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.f_changed'] ]
 
-        # 1. Build Plant Service
-        if [ "$(p_upd)" == "true" ]; then
-          build_backend_service "plant_service" "plant-service"
-        fi
+      steps:
 
-        # 2. Build Auth Service
-        if [ "$(au_upd)" == "true" ]; then
-          build_backend_service "auth_service" "auth-service"
-        fi
+        - task: Docker@2
+          displayName: "DockerHub Login"
 
-        # 3. Build AI Service
-        if [ "$(ai_upd)" == "true" ]; then
-          build_backend_service "ai_service" "ai-service"
-        fi
-      displayName: "Build Backend Services"
+          inputs:
+            containerRegistry: '$(dockerRegistryConn)'
+            command: 'login'
 
-    - script: |
-        set -e
-        if [ "$(f_upd)" == "true" ]; then
-          cd client
-          # Aligned image name to frontend to match Helm chart standards
-          docker build -t $(dockerUser)/frontend:$(Build.BuildId) .
-          docker push $(dockerUser)/frontend:$(Build.BuildId)
-        fi
-      displayName: "Build Frontend"
+        - script: |
 
-# --- STAGE 2: GitOps Sync ---
+            set -e
+
+            build_backend_service() {
+
+              SERVICE_DIR=$1
+              IMAGE_NAME=$2
+
+              echo "=================================="
+              echo "Building ${IMAGE_NAME}"
+              echo "=================================="
+
+              WORKSPACE="server/build_${SERVICE_DIR}"
+
+              rm -rf ${WORKSPACE}
+
+              mkdir -p ${WORKSPACE}
+
+              cp server/requirements.txt ${WORKSPACE}/
+              cp server/Dockerfile ${WORKSPACE}/
+
+              cp -r server/common ${WORKSPACE}/common
+
+              mkdir -p ${WORKSPACE}/${SERVICE_DIR}
+
+              cp -r server/${SERVICE_DIR}/* ${WORKSPACE}/${SERVICE_DIR}/
+
+              cd ${WORKSPACE}
+
+              docker build \
+                --no-cache \
+                -t $(dockerUser)/${IMAGE_NAME}:$(Build.BuildId) .
+
+              docker push $(dockerUser)/${IMAGE_NAME}:$(Build.BuildId)
+
+              cd ../..
+
+              rm -rf ${WORKSPACE}
+
+            }
+
+            # =============================
+            # BUILD PLANT SERVICE
+            # =============================
+
+            if [ "$(p_upd)" = "true" ]; then
+
+              build_backend_service \
+                "plant_service" \
+                "plant-service"
+
+            fi
+
+            # =============================
+            # BUILD AUTH SERVICE
+            # =============================
+
+            if [ "$(au_upd)" = "true" ]; then
+
+              build_backend_service \
+                "auth_service" \
+                "auth-service"
+
+            fi
+
+            # =============================
+            # BUILD AI SERVICE
+            # =============================
+
+            if [ "$(ai_upd)" = "true" ]; then
+
+              build_backend_service \
+                "ai_service" \
+                "ai-service"
+
+            fi
+
+          displayName: "Build Backend Services"
+
+        - script: |
+
+            set -e
+
+            if [ "$(f_upd)" = "true" ]; then
+
+              echo "Building Frontend..."
+
+              cd client
+
+              docker build \
+                --no-cache \
+                -t $(dockerUser)/frontend:$(Build.BuildId) .
+
+              docker push $(dockerUser)/frontend:$(Build.BuildId)
+
+            fi
+
+          displayName: "Build Frontend"
+
+# =========================================================
+# STAGE 2 - GITOPS UPDATE
+# =========================================================
 - stage: GitOps_Update
   displayName: "2. GitOps Sync"
-  dependsOn: [Detect_and_Resolve, Build_and_Push]
+
+  dependsOn:
+    - Detect_and_Resolve
+    - Build_and_Push
+
   condition: succeeded()
+
   jobs:
-  - job: UpdateManifest
-    pool: { vmImage: 'ubuntu-latest' }
-    variables:
-      f_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.f_changed'] ]
-      p_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.p_changed'] ]
-      au_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.au_changed'] ]
-      ai_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.ai_changed'] ]
-    steps:
-    - checkout: self
-      persistCredentials: true 
-    - script: |
-        sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
-        
-        [ "$(f_upd)" == "true" ] && yq -i ".frontend.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
-        [ "$(p_upd)" == "true" ] && yq -i ".plant.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
-        [ "$(au_upd)" == "true" ] && yq -i ".auth.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
-        [ "$(ai_upd)" == "true" ] && yq -i ".ai.tag = \"$(Build.BuildId)\"" vhg-chart/values.yaml
-        
-        git config --global user.email "pipeline@navikenz.com"
-        git config --global user.name "GitOps Bot"
-        
-        if ! git diff --exit-code vhg-chart/values.yaml; then
-          git add vhg-chart/values.yaml
-          git commit -m "GitOps: deploy build $(Build.BuildId) [skip ci]"
-          git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" push origin HEAD:genai
-        else
-          echo "No manifest changes needed."
-        fi
-      displayName: "Sync Manifest"
+    - job: UpdateManifest
+
+      pool:
+        vmImage: 'ubuntu-latest'
+
+      variables:
+        f_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.f_changed'] ]
+        p_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.p_changed'] ]
+        au_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.au_changed'] ]
+        ai_upd: $[ stageDependencies.Detect_and_Resolve.ResolveTags.outputs['TagLogic.ai_changed'] ]
+
+      steps:
+
+        - checkout: self
+          persistCredentials: true
+
+        - script: |
+
+            sudo wget \
+              https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 \
+              -O /usr/bin/yq
+
+            sudo chmod +x /usr/bin/yq
+
+            # =====================================
+            # UPDATE IMAGE TAGS
+            # =====================================
+
+            if [ "$(f_upd)" = "true" ]; then
+              yq -i '.frontend.tag = "$(Build.BuildId)"' vhg-chart/values.yaml
+            fi
+
+            if [ "$(p_upd)" = "true" ]; then
+              yq -i '.plant.tag = "$(Build.BuildId)"' vhg-chart/values.yaml
+            fi
+
+            if [ "$(au_upd)" = "true" ]; then
+              yq -i '.auth.tag = "$(Build.BuildId)"' vhg-chart/values.yaml
+            fi
+
+            if [ "$(ai_upd)" = "true" ]; then
+              yq -i '.ai.tag = "$(Build.BuildId)"' vhg-chart/values.yaml
+            fi
+
+            echo "Updated values.yaml"
+
+            cat vhg-chart/values.yaml
+
+            # =====================================
+            # GIT COMMIT
+            # =====================================
+
+            git config --global user.email "pipeline@navikenz.com"
+            git config --global user.name "GitOps Bot"
+
+            if ! git diff --quiet vhg-chart/values.yaml; then
+
+              git add vhg-chart/values.yaml
+
+              git commit -m "GitOps: deploy build $(Build.BuildId) [skip ci]"
+
+              git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" \
+                push origin HEAD:genai
+
+            else
+
+              echo "No manifest changes detected."
+
+            fi
+
+          displayName: "Update Helm Tags"
