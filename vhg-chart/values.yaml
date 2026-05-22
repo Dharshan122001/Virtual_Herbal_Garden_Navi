@@ -5,7 +5,7 @@ frontend:
   port: 80
 plant:
   image: dharshan3690/plant-service
-  tag: "1893"
+  tag: "1894"
   port: 8005
 auth:
   image: dharshan3690/auth-service
