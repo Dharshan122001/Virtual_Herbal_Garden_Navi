@@ -1,5 +1,5 @@
 {{- if .Values.ingress.enabled }}
-# BLOCK 1: API (Handles /api/* and REWRITES them)
+# BLOCK 1: API & DEV-TOOLS (Handles routing and path rewrites cleanly)
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -34,6 +34,31 @@ spec:
                 name: ai-service
                 port:
                   number: 8007
+          
+          # ==========================================
+          # INFRASTRUCTURE DEVOPS TOOLS MAPPINGS
+          # ==========================================
+          - path: /argocd(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80
+          - path: /prometheus(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: monitoring-kube-prometheus-prometheus
+                port:
+                  number: 9090
+          - path: /grafana(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: monitoring-grafana
+                port:
+                  number: 80
 ---
 # BLOCK 2: FRONTEND (Handles / and static files with NO REWRITE)
 apiVersion: networking.k8s.io/v1
@@ -41,7 +66,6 @@ kind: Ingress
 metadata:
   name: vhg-frontend-ingress
   namespace: {{ .Values.namespace }}
-  # IMPORTANT: No rewrite-target annotation here!
 spec:
   ingressClassName: {{ .Values.ingress.className }}
   rules:
@@ -54,6 +78,4 @@ spec:
                 name: frontend
                 port:
                   number: 80
-
-
 {{- end }}

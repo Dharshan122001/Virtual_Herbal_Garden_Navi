@@ -43,7 +43,7 @@ resource "helm_release" "argocd" {
         - --rootpath=/argocd
         - --basehref=/argocd
       ingress:
-        enabled: true
+        enabled: false
         ingressClassName: "nginx"
         annotations:
           nginx.ingress.kubernetes.io/backend-protocol: "HTTP"

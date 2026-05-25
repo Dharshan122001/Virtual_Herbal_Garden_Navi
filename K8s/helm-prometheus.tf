@@ -20,7 +20,7 @@ resource "helm_release" "monitoring" {
           root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana/"
           serve_from_sub_path: true
       ingress:
-        enabled: true
+        enabled: false
         ingressClassName: "nginx"
         annotations:
           nginx.ingress.kubernetes.io/ssl-redirect: "false"
@@ -36,7 +36,7 @@ resource "helm_release" "monitoring" {
         routePrefix: /prometheus
         externalUrl: /prometheus
       ingress:
-        enabled: true
+        enabled: false
         ingressClassName: "nginx"
         annotations:
           nginx.ingress.kubernetes.io/ssl-redirect: "false"
