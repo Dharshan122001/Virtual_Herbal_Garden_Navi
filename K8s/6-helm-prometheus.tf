@@ -5,7 +5,7 @@ resource "helm_release" "monitoring" {
   namespace        = "monitoring"
   create_namespace = true
 
-  timeout = 900
+  timeout = 1200 # 20 minutes to comfortably avoid OpenAPI download connection drops
   wait    = true
 
   values = [
@@ -19,14 +19,7 @@ resource "helm_release" "monitoring" {
           root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana/"
           serve_from_sub_path: true
       ingress:
-        enabled: true
-        ingressClassName: "nginx"
-        annotations:
-          nginx.ingress.kubernetes.io/ssl-redirect: "false"
-          nginx.ingress.kubernetes.io/use-regex: "true"
-        hosts:
-          - "*"
-        path: /grafana(/|$)(.*)
+        enabled: false # Disabled: Routing centralized in ingress-tools.tf
 
     prometheus:
       prometheusSpec:
@@ -37,15 +30,7 @@ resource "helm_release" "monitoring" {
         routePrefix: /prometheus
         externalUrl: /prometheus
       ingress:
-        enabled: true
-        ingressClassName: "nginx"
-        annotations:
-          nginx.ingress.kubernetes.io/ssl-redirect: "false"
-          nginx.ingress.kubernetes.io/use-regex: "true"
-        hosts:
-          - "*"
-        paths:
-          - /prometheus(/|$)(.*)
+        enabled: false # Disabled: Routing centralized in ingress-tools.tf
 
     kubeStateMetrics:
       enabled: true

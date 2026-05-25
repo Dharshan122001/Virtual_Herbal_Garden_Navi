@@ -43,17 +43,7 @@ resource "helm_release" "argocd" {
         - --rootpath=/argocd
         - --basehref=/argocd
       ingress:
-        enabled: true
-        ingressClassName: "nginx"
-        annotations:
-          nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-          nginx.ingress.kubernetes.io/ssl-redirect: "false"
-          nginx.ingress.kubernetes.io/use-regex: "true"
-        # Forces the ingress rule to match any incoming host name on /argocd
-        hosts:
-          - "*"
-        paths:
-          - /argocd(/|$)(.*)
+        enabled: false # Disabled: Routing centralized in ingress-tools.tf
     EOF
   ]
 
@@ -70,10 +60,6 @@ resource "terraform_data" "adopt_existing_argocd_bootstrap_objects" {
       if kubectl get application vhg-app -n argocd >/dev/null 2>&1; then
         kubectl label application vhg-app -n argocd app.kubernetes.io/managed-by=Helm --overwrite
         kubectl annotate application vhg-app -n argocd meta.helm.sh/release-name=vhg-app meta.helm.sh/release-namespace=argocd --overwrite
-      fi
-      if kubectl get ingress argocd-server-ingress -n argocd >/dev/null 2>&1; then
-        kubectl label ingress argocd-server-ingress -n argocd app.kubernetes.io/managed-by=Helm --overwrite
-        kubectl annotate ingress argocd-server-ingress -n argocd meta.helm.sh/release-name=vhg-app meta.helm.sh/release-namespace=argocd --overwrite
       fi
     EOT
   }
