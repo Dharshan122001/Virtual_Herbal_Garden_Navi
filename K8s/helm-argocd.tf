@@ -1,4 +1,4 @@
-# 1. Create the ArgoCD Namespace (v1 used to remove warnings)
+# 1. Create the ArgoCD Namespace
 resource "kubernetes_namespace_v1" "argocd" {
   metadata {
     name = "argocd"
@@ -25,7 +25,7 @@ resource "kubernetes_secret_v1" "vhg_repo_creds" {
   depends_on = [kubernetes_namespace_v1.argocd]
 }
 
-# 3. Install Argo CD with Ingress Configured
+# 3. Install Argo CD
 resource "helm_release" "argocd" {
   name       = "argocd"
   repository = "https://argoproj.github.io/argo-helm"
@@ -43,13 +43,17 @@ resource "helm_release" "argocd" {
         - --rootpath=/argocd
         - --basehref=/argocd
       ingress:
-        enabled: false
+        enabled: true
         ingressClassName: "nginx"
         annotations:
           nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
           nginx.ingress.kubernetes.io/ssl-redirect: "false"
+          nginx.ingress.kubernetes.io/use-regex: "true"
+        # Forces the ingress rule to match any incoming host name on /argocd
+        hosts:
+          - "*"
         paths:
-          - /argocd
+          - /argocd(/|$)(.*)
     EOF
   ]
 
