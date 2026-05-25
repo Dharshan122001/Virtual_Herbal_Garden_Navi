@@ -25,7 +25,7 @@ resource "kubernetes_secret_v1" "vhg_repo_creds" {
   depends_on = [kubernetes_namespace_v1.argocd]
 }
 
-# 3. Install Argo CD
+# 3. Install Argo CD with Ingress Configured
 resource "helm_release" "argocd" {
   name       = "argocd"
   repository = "https://argoproj.github.io/argo-helm"
@@ -42,15 +42,24 @@ resource "helm_release" "argocd" {
       extraArgs:
         - --rootpath=/argocd
         - --basehref=/argocd
+      ingress:
+        enabled: true
+        ingressClassName: "nginx"
+        annotations:
+          nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+          nginx.ingress.kubernetes.io/ssl-redirect: "false"
+        paths:
+          - /argocd
     EOF
   ]
 
-  depends_on = [kubernetes_secret_v1.vhg_repo_creds]
+  depends_on = [
+    kubernetes_secret_v1.vhg_repo_creds,
+    helm_release.ingress_nginx
+  ]
 }
 
-# 4. The ArgoCD Application (Points to your branch)
-# Installed through a tiny Helm chart so Terraform does not need Kubernetes
-# API discovery for the Argo CD CRD during the first plan.
+# 4. The ArgoCD Application
 resource "terraform_data" "adopt_existing_argocd_bootstrap_objects" {
   provisioner "local-exec" {
     command = <<-EOT
