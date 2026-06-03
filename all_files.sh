@@ -8,6 +8,12 @@ client/src/apiConfig.js \
 client/src/main.jsx \
 client/src/observability.js \
 server/requirements.txt \
+server/pyproject.toml \
+server/common/database.py \
+server/common/gmail_service.py \
+server/common/observability.py \
+server/common/schemas.py \
+server/common/utils.py \
 server/Dockerfile \
 server/ai_service/main.py \
 server/auth_service/main.py \
@@ -19,28 +25,33 @@ vhg-chart/templates/1-frontend-deployment.yaml \
 vhg-chart/templates/2-plant-deployment.yaml \
 vhg-chart/templates/3-ai-deployment.yaml \
 vhg-chart/templates/4-auth-deployment.yaml \
-vhg-chart/templates/backend-service.yaml \
-vhg-chart/templates/frontend-service.yaml \
-vhg-chart/templates/hpa-ai.yaml \
-vhg-chart/templates/hpa-auth.yaml \
-vhg-chart/templates/hpa-frontend.yaml \
-vhg-chart/templates/hpa-plant.yaml \
-vhg-chart/templates/ingress.yaml \
+vhg-chart/templates/5-backend-service.yaml \
+vhg-chart/templates/6-frontend-service.yaml \
+vhg-chart/templates/7-ingress.yaml \
+vhg-chart/templates/8-servicemonitor.yaml \
+vhg-chart/templates/9-hpa-ai.yaml \
+vhg-chart/templates/10-hpa-auth.yaml \
+vhg-chart/templates/11-hpa-frontend.yaml \
+vhg-chart/templates/12-hpa-plant.yaml \
+vhg-chart/templates/_helpers.tpl \
+vhg-chart/templates/NOTES.txt \
 vhg-chart/templates/secret.yaml \
-K8s/aks.tf \
-K8s/helm-app.tf \
-K8s/helm-argocd.tf \
-K8s/helm-prometheus.tf \
-K8s/helm-nginx.tf \
-K8s/main.tf \
+K8s/1-aks.tf \
+K8s/1a-main.tf \
+K8s/2-helm-app.tf \
+K8s/3-helm-argocd.tf \
+K8s/4-helm-nginx.tf \
+K8s/5-helm-otel.tf \
+K8s/6-helm-prometheus.tf \
+K8s/7-ingress-tools.tf \
 K8s/outputs.tf \
 K8s/providers.tf \
 K8s/secrets.tfvars \
 K8s/variables.tf \
 K8s/argocd-app-chart/templates/application.yaml \
-K8s/argocd-app-chart/templates/ingress.yaml \
 K8s/argocd-app-chart/Chart.yaml \
-VHG-pipelines.yml
+VHG-pipelines.yml \
+README.md
 
 do
   echo "\n\n==================== $f ====================\n"
