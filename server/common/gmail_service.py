@@ -1,8 +1,8 @@
+import os
 import base64
 from email.mime.text import MIMEText
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-import os
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 
@@ -15,7 +15,6 @@ def get_gmail_service():
         client_secret=os.getenv("GMAIL_CLIENT_SECRET"),
         scopes=SCOPES,
     )
-
     return build("gmail", "v1", credentials=creds)
 
 def send_email(to: str, subject: str, html: str):

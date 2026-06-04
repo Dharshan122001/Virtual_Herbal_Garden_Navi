@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - genai
+      - extend
 
   paths:
     include:
@@ -299,7 +299,7 @@ stages:
               git commit -m "GitOps: deploy build $(Build.BuildId) [skip ci]"
 
               git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" \
-                push origin HEAD:genai
+                push origin HEAD:extend
 
             else
 

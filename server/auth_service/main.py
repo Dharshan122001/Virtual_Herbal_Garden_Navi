@@ -7,7 +7,7 @@ from sqlalchemy import text
 from passlib.context import CryptContext
 from dotenv import load_dotenv
 from jose import jwt
-#Try1
+
 from common.database import get_db, engine
 from common.observability import configure_observability
 from common import schemas
@@ -33,7 +33,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 BASE_URL = os.getenv("BASE_URL", "https://virtual-herbal-garden-r1uw.onrender.com")
 
 # =======================
-# HELPERS # try3
+# HELPERS
 # =======================
 def create_access_token(data: dict):
     payload = data.copy()
@@ -62,12 +62,13 @@ async def health():
 # =======================
 @app.post("/auth/register")
 async def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+    # Safely look for a matching scalar value (1 or None)
     exists = db.execute(
         text("SELECT 1 FROM public.users WHERE email = :e"),
         {"e": user_data.email}
-    ).first()
+    ).scalar()
 
-    if exists:
+    if exists is not None:
         raise HTTPException(status_code=400, detail="Email already exists")
 
     hashed = hash_password(user_data.password)
@@ -87,7 +88,6 @@ async def register(user_data: schemas.UserCreate, db: Session = Depends(get_db))
     ).mappings().first()
 
     db.commit()
-    
 
     # Send welcome email (non-blocking)
     try:
@@ -157,7 +157,6 @@ async def forgot_password(data: schemas.ResetCodeCreate, db: Session = Depends(g
         )
         db.commit()
         
-        reset_link = f"{BASE_URL}/reset-password?code={reset_id}"
         try:
             send_email(
                to=data.email,
@@ -166,13 +165,12 @@ async def forgot_password(data: schemas.ResetCodeCreate, db: Session = Depends(g
                    <h3>Password Reset</h3>
                    <p>Use the reset code below to set a new password:</p>
                    <h2 style="letter-spacing:2px">{reset_id}</h2>
-                   <p>This code expires in 3 Minutes.</p>
+                   <p>This code expires in 1 hour.</p>
                    <p>If you didn’t request this, you can safely ignore this email.</p> """
             )
         except Exception as e:
             print("Email failed:", e)
 
-    # Always return success (security best practice)
     return {"message": "If the account exists, a reset email has been sent."}
 
 # =======================
