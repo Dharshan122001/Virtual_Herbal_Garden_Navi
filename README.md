@@ -45,7 +45,7 @@ Then make sure the Jenkins agent has:
 
 The pipeline now lives in a Jenkins shared-library style file:
 
-- [jenkins/shared-library/vars/vhgPipeline.groovy](./jenkins/shared-library/vars/vhgPipeline.groovy)
+- [vars/vhgPipeline.groovy](./vars/vhgPipeline.groovy)
 
 To use it in Jenkins, register a global pipeline library named `vhg-shared-library` and point it at this repository.
 

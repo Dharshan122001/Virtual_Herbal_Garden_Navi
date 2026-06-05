@@ -56,6 +56,7 @@ jenkins/controller/plugins.txt \
 jenkins/controller/casc/jenkins.yaml \
 jenkins/controller/entrypoint.sh \
 jenkins/shared-library/vars/vhgPipeline.groovy \
+vars/vhgPipeline.groovy \
 README.md
 
 do
