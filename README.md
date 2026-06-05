@@ -89,7 +89,7 @@ The Jenkins controller automatically builds the local build-agent image from:
 
 - [jenkins/agent/Dockerfile](./jenkins/agent/Dockerfile)
 
-Jenkins then provisions that agent from the Docker cloud with the `vhg` label, so the pipeline runs on the agent without you manually creating a node or copying a secret.
+For now the pipeline runs on the built-in Jenkins executor so you can get moving immediately. The Docker cloud and agent image are still in the repo if you want to switch to a dedicated build node later.
 
 The agent image includes:
 

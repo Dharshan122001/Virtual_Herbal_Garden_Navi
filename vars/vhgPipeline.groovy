@@ -1,6 +1,6 @@
 def call() {
   pipeline {
-    agent { label 'vhg' }
+    agent any
 
     options {
       timestamps()
