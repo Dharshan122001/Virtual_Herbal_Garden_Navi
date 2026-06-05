@@ -172,11 +172,14 @@ def call() {
           }
         }
         steps {
-          withCredentials([file(credentialsId: 'aks-kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+          withCredentials([string(credentialsId: 'aks-kubeconfig', variable: 'KUBECONFIG_CONTENT')]) {
             sh '''#!/usr/bin/env bash
               set -euo pipefail
 
-              export KUBECONFIG="$KUBECONFIG_FILE"
+              KUBECONFIG_PATH="$WORKSPACE/.kubeconfig"
+              umask 077
+              printf '%s' "$KUBECONFIG_CONTENT" > "$KUBECONFIG_PATH"
+              export KUBECONFIG="$KUBECONFIG_PATH"
 
               RELEASE_EXISTS=false
               if helm list -n "$KUBE_NAMESPACE" -q | grep -qx "$HELM_RELEASE"; then
@@ -215,6 +218,8 @@ def call() {
               kubectl rollout status deployment/plant-service -n "$KUBE_NAMESPACE" --timeout=300s
               kubectl rollout status deployment/auth-service -n "$KUBE_NAMESPACE" --timeout=300s
               kubectl rollout status deployment/ai-service -n "$KUBE_NAMESPACE" --timeout=300s
+
+              rm -f "$KUBECONFIG_PATH"
             '''
           }
         }

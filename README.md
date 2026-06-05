@@ -33,7 +33,7 @@ The new flow is:
 Before running the pipeline, create these Jenkins credentials:
 
 - `dockerhub-creds` for Docker Hub username/password
-- `aks-kubeconfig` for the Kubernetes kubeconfig file
+- `aks-kubeconfig` for the Kubernetes kubeconfig text
 
 Then make sure the Jenkins agent has:
 
@@ -102,6 +102,7 @@ The agent image includes:
 - The controller still uses the normal Jenkins first-login password flow.
 - The Docker socket from the host is mounted into the controller so Jenkins can create agents and the agent can build and push images.
 - If you need to rebuild everything from scratch, just remove the Jenkins volume and run `docker compose up -d` again.
+- For `aks-kubeconfig`, use `Kind: Secret text` and paste the full contents of your `~/.kube/config` file into the credential value.
 
 ## How The Pipeline Deploys
 
