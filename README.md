@@ -1,128 +1,127 @@
-# 🌿 Virtual Herbal Garden
+# Virtual Herbal Garden
 
-Virtual Herbal Garden is a full-stack web application that helps users explore medicinal plants, identify plant name from images, and learn about herbal uses with the help of AI.  
-The project uses **React (Vite)** on the frontend and **FastAPI microservices** on the backend, with AI integrations for plant identification and herbal guidance.
+Virtual Herbal Garden is a full-stack application for exploring medicinal plants, identifying plants from images, and chatting with an AI herbal assistant.
 
----
+## What This Repo Uses
 
-## 🚀 Features
+- Frontend: React + Vite
+- Backend: FastAPI microservices
+- Database: PostgreSQL
+- Deployment: Jenkins + Kubernetes + Helm
+- Infrastructure: Terraform for AKS, ingress, and monitoring
 
-### 🌱 Plant Explorer                                                                    
-- Browse a curated list of medicinal plants
-- Search plants by name
-- View plant details using **Groq API** (description, uses, scientific name)
-- Bookmark favorite plants (authenticated users)
+## Deployment Model
 
-### 🔍 Plant Identification (AI)
- - Upload an image of a plant
- - Plant identified using **PlantNet API**
- - AI (Groq LLM) generates: Plant Name
+The old Argo CD flow has been removed from the active path.
 
-### 🤖 AI Herbal Assistant
-- Chat with an AI assistant
-- Ask about: Plant Name which gives
-  - Herbal remedies
-  - Medicinal uses
-  - Allergies & precautions
-- Powered by **Groq LLM (LLaMA 3.1)**
+The new flow is:
 
-### 🔐 Authentication
-- User Registration
-- Login / Logout
-- Forgot Password (email reset code)
-- Reset Password flow
-- JWT-based authentication
-- EMail setup is done using Gmail API through Google cloud
----
+1. Jenkins checks out the repo.
+2. Jenkins detects which service paths changed.
+3. Jenkins builds and pushes only the changed Docker images.
+4. Jenkins deploys the Helm chart directly to Kubernetes with `helm upgrade --install`.
+5. Kubernetes serves the frontend and backend through Nginx ingress.
 
-## 🏗️ Tech Stack
+## Main Files
 
-### Frontend
-- React (Vite)
-- Tailwind CSS
+- [Jenkinsfile](./Jenkinsfile)
+- [Helm chart](./vhg-chart)
+- [Terraform K8s setup](./K8s)
 
-### Backend
-- FastAPI
-- Python
-- Neon DB - Postgresql
-  
-### AI & External APIs
-- Groq API (AI chat & herbal descriptions)
-- PlantNet API (Plant identification from images)
-- Gmail API (Email password reset)
+## Jenkins Setup
 
-### Deployment
-- Render (Frontend & Backend services)
+Before running the pipeline, create these Jenkins credentials:
 
----
-## 🧩 Architecture
+- `dockerhub-creds` for Docker Hub username/password
+- `aks-kubeconfig` for the Kubernetes kubeconfig file
 
-![ChatGPT Image Jan 2, 2026, 03_48_21 PM](https://github.com/user-attachments/assets/e34af147-1512-4829-8a5a-f6b2d91c5d16)
+Then make sure the Jenkins agent has:
 
+- Docker
+- Helm
+- kubectl
 
-DBPASSWORD
-psql "host=vhg-db-server-darshan-terraform-v1.postgres.database.azure.com user=vhgadmin_terraform dbname=postgres sslmode=require" -f herbal_garden_dump.sql
+## Shared Library
 
-this is updating perfectly
+The pipeline now lives in a Jenkins shared-library style file:
 
+- [jenkins/shared-library/vars/vhgPipeline.groovy](./jenkins/shared-library/vars/vhgPipeline.groovy)
 
-# 1. Recreate the Storage Account
-az storage account create \
-  --name vhgstate123 \
-  --resource-group Darshan.k_lean_rg \
-  --location canadacentral \
-  --sku Standard_LRS \
-  --kind StorageV2 \
-  --allow-blob-public-access false
+To use it in Jenkins, register a global pipeline library named `vhg-shared-library` and point it at this repository.
 
-# 2. Recreate the Container inside the storage account
-az storage container create \
-  --name tfstate \
-  --account-name vhgstate123
+Then the top-level [Jenkinsfile](./Jenkinsfile) can stay tiny and simply call `vhgPipeline()`.
 
+## Installing Jenkins
 
+If you do not already have Jenkins, the quickest POC setup is Docker Compose:
 
-  terraform init \
-  -backend-config="resource_group_name=Darshan.k_lean_rg" \
-  -backend-config="storage_account_name=vhgstate123" \
-  -backend-config="container_name=tfstate" \
-  -backend-config="key=terraform.tfstate"
+```bash
+docker compose up -d --build
+```
 
+The controller will start, bootstrap the local agent image, and configure the Docker cloud automatically. The first run can take a little longer because Jenkins is building its own agent image locally.
 
-terraform destroy -var="db_password=Vinu9945385205" -var="frontend_tag=1764" -var="plant_tag=1743" -var="auth_tag=1743" -var="ai_tag=1743" -var="my_ip=$(curl -s ifconfig.me)"
+Open:
 
+```text
+http://localhost:8080
+```
 
-terraform destory -var-file="secrets.tfvars" -lock=false
-terraform apply -var-file="secrets.tfvars" -lock=false \                                          
-  -target=helm_release.ingress_nginx \
-  -target=kubernetes_secret_v1.vhg_db_config \
-  -target=azurerm_postgresql_flexible_server_firewall_rule.allow_azure
+To get the first admin password:
 
-terraform destory -var-file="secrets.tfvars" -lock=false \                                          
-  -target=kubernetes_namespace_v1.argocd \    
-  -target=kubernetes_namespace_v1.vhg_namespace \                     
-  -target=kubernetes_secret_v1.vhg_repo_creds \
-  -target=helm_release.argocd
+```bash
+docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+```
 
+After login, install these Jenkins plugins:
 
-terraform apply -var-file="secrets.tfvars" -target=azurerm_kubernetes_cluster.aks -target=azurerm_public_ip.ingress_ip -target=azurerm_postgresql_flexible_server.db
+- Pipeline
+- Git
+- Credentials Binding
+- Docker Pipeline
+- Workspace Cleanup
 
-terraform apply -var-file="secrets.tfvars" -target=helm_release.argocd -target=helm_release.ingress_nginx -target=kubernetes_secret_v1.vhg_repo_creds -target=kubernetes_secret_v1.vhg_db_configyes
+The controller image already preinstalls those plugins, so this section is mostly a sanity check if you change the image later.
 
+## How The Agent Works
 
-python3 -c "import bcrypt; print(bcrypt.hashpw(b'Vinu@9945385205', bcrypt.gensalt(10)).decode('utf-8'))"
-terraform import -var-file="secrets.tfvars" kubernetes_manifest.argocd_ingress "apiVersion=networking.k8s.io/v1,kind=Ingress,namespace=argocd,name=argocd-server-ingress"
+The Jenkins controller automatically builds the local build-agent image from:
 
+- [jenkins/agent/Dockerfile](./jenkins/agent/Dockerfile)
 
-kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 --decode; echo
+Jenkins then provisions that agent from the Docker cloud with the `vhg` label, so the pipeline runs on the agent without you manually creating a node or copying a secret.
 
-finally Done
+The agent image includes:
 
-terraform destroy -var-file="secrets.tfvars"
-kubectl get pods -n vhg-1 -o=jsonpath='{range .items[*]}{.metadata.name}{" => "}{.spec.containers[0].image}{"\n"}{end}'
+- Docker
+- Helm
+- kubectl
 
-kubectl port-forward -n monitoring svc/prometheus-operated 9090:9090
-kubectl port-forward svc/kube-prometheus-stack-grafana 3000:80 -n monitoring
+## First-Time Setup Notes
 
-ubectl get secret -n monitoring monitoring-grafana \
--o jsonpath="{.data.admin-password}" | base64 --decode
+- The controller still uses the normal Jenkins first-login password flow.
+- The Docker socket from the host is mounted into the controller so Jenkins can create agents and the agent can build and push images.
+- If you need to rebuild everything from scratch, just remove the Jenkins volume and run `docker compose up -d` again.
+
+## How The Pipeline Deploys
+
+The pipeline uses the existing Helm chart in `vhg-chart/` and sets a build tag only for the services that changed:
+
+- `frontend`
+- `plant-service`
+- `auth-service`
+- `ai-service`
+
+The chart already defines the Kubernetes deployments, services, ingress, and secret required by the app.
+
+If only chart files change, Jenkins still re-runs `helm upgrade --install` so Kubernetes picks up the chart updates even when no image rebuild is needed.
+
+## Local Notes
+
+If you want to inspect the app locally, the frontend is in `client/` and the backend services are in `server/`.
+
+If you want, I can also help you with:
+
+1. A Jenkins job configuration step-by-step.
+2. Moving the hardcoded secrets in the Helm chart into safer Kubernetes secrets.
+3. Creating a `values-jenkins.yaml` file for cleaner image overrides.

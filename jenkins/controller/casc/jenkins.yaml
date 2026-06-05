@@ -1,0 +1,24 @@
+jenkins:
+  numExecutors: 0
+  systemMessage: "Virtual Herbal Garden Jenkins controller"
+  clouds:
+    - docker:
+        name: "docker-cloud"
+        dockerApi:
+          dockerHost:
+            uri: "unix:///var/run/docker.sock"
+        containerCap: 3
+        templates:
+          - name: "vhg-agent"
+            labelString: "vhg"
+            mode: EXCLUSIVE
+            remoteFs: "/home/jenkins/agent"
+            pullTimeout: 300
+            connector:
+              jnlp:
+                jenkinsUrl: "http://jenkins:8080/"
+                user: "0"
+            dockerTemplateBase:
+              image: "vhg-jenkins-agent:latest"
+              volumesString: "/var/run/docker.sock:/var/run/docker.sock"
+              pullStrategy: "PULL_NEVER"

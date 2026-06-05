@@ -32,3 +32,4 @@ herbal_garden_dump.sql
 *.tfvars
 *.tfvars.json
 .terraform.lock.hcl
+all_project_files_output.txt

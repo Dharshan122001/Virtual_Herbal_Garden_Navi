@@ -37,7 +37,7 @@ flowchart LR
    helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring --create-namespace
    ```
 
-2. Deploy the application via ArgoCD or Helm. The backend services expose metrics at:
+2. Deploy the application via Helm. The backend services expose metrics at:
 
    - `/metrics` on port `9464`
 

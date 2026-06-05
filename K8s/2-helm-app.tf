@@ -7,7 +7,7 @@ resource "kubernetes_namespace_v1" "vhg_namespace" {
 }
 
 # 2. Database Connectivity Secret
-# Argo CD will deploy the pods, but they will pull DB details from this secret
+# Jenkins/Helm deploys the pods, and they pull DB details from this secret
 resource "kubernetes_secret_v1" "vhg_db_config" {
   metadata {
     name      = "vhg-db-config"

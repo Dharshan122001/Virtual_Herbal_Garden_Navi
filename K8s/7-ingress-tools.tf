@@ -4,21 +4,6 @@
 # 1. CROSS-NAMESPACE SERVICE POINTERS (EXTERNAL NAME BRIDGES)
 # -----------------------------------------------------------------
 
-resource "kubernetes_service_v1" "argo_bridge" {
-  metadata {
-    name      = "argo-bridge"
-    namespace = "vhg-1"
-  }
-  spec {
-    type          = "ExternalName"
-    external_name = "argocd-server.argocd.svc.cluster.local"
-    port {
-      port        = 80
-      target_port = 80
-    }
-  }
-}
-
 resource "kubernetes_service_v1" "prometheus_bridge" {
   metadata {
     name      = "prometheus-bridge"
@@ -70,21 +55,7 @@ resource "kubernetes_ingress_v1" "devops_tools_ingress" {
 
     rule {
       http {
-        # 1. Argo CD Mapping
-        path {
-          path      = "/argocd(/|$)(.*)"
-          path_type = "ImplementationSpecific"
-          backend {
-            service {
-              name = kubernetes_service_v1.argo_bridge.metadata[0].name
-              port {
-                number = 80
-              }
-            }
-          }
-        }
-
-        # 2. Prometheus Mapping
+        # 1. Prometheus Mapping
         path {
           path      = "/prometheus(/|$)(.*)"
           path_type = "ImplementationSpecific"
@@ -98,7 +69,7 @@ resource "kubernetes_ingress_v1" "devops_tools_ingress" {
           }
         }
 
-        # 3. Grafana Mapping
+        # 2. Grafana Mapping
         path {
           path      = "/grafana(/|$)(.*)"
           path_type = "ImplementationSpecific"
@@ -117,7 +88,6 @@ resource "kubernetes_ingress_v1" "devops_tools_ingress" {
 
   depends_on = [
     helm_release.ingress_nginx,
-    helm_release.argocd,
     helm_release.monitoring
   ]
 }

@@ -39,7 +39,6 @@ vhg-chart/templates/secret.yaml \
 K8s/1-aks.tf \
 K8s/1a-main.tf \
 K8s/2-helm-app.tf \
-K8s/3-helm-argocd.tf \
 K8s/4-helm-nginx.tf \
 K8s/5-helm-otel.tf \
 K8s/6-helm-prometheus.tf \
@@ -48,9 +47,15 @@ K8s/outputs.tf \
 K8s/providers.tf \
 K8s/secrets.tfvars \
 K8s/variables.tf \
-K8s/argocd-app-chart/templates/application.yaml \
-K8s/argocd-app-chart/Chart.yaml \
 VHG-pipelines.yml \
+Jenkinsfile \
+docker-compose.yml \
+jenkins/agent/Dockerfile \
+jenkins/controller/Dockerfile \
+jenkins/controller/plugins.txt \
+jenkins/controller/casc/jenkins.yaml \
+jenkins/controller/entrypoint.sh \
+jenkins/shared-library/vars/vhgPipeline.groovy \
 README.md
 
 do
