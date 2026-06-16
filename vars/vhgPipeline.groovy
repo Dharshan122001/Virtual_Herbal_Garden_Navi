@@ -170,13 +170,22 @@ def call() {
 
               if [ "$FRONTEND_CHANGED" = "true" ]; then
                 echo "Building frontend:${IMAGE_TAG} with Buildx targeting linux/amd64"
-                # ✅ Fix: Pass GODEBUG to the build context to stop esbuild from crashing on Apple Silicon emulation
+                
+                # ✅ Ultimate Fix: Inject GODEBUG inline inside an entrypoint rewrite or container execute block
+                # This ensures the Go environment configuration hits the runtime layer instantly
+                pushd client >/dev/null
+                
+                # We dynamically inject the environment assignment into the Dockerfile for safety
+                if ! grep -q "GODEBUG" Dockerfile; then
+                  sed -i 's/RUN npm run build/ENV GODEBUG=asyncpreemptoff=1\nRUN npm run build/' Dockerfile
+                fi
+                
                 docker buildx build \
                   --platform linux/amd64 \
-                  --build-arg GODEBUG=asyncpreemptoff=1 \
                   -t "${DOCKERHUB_REPO}/frontend:${IMAGE_TAG}" \
                   --push \
-                  client
+                  .
+                popd >/dev/null
               fi
             '''
           }
