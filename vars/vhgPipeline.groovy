@@ -173,14 +173,16 @@ def call() {
           }
         }
         steps {
-          withCredentials([string(credentialsId: 'aks-kubeconfig', variable: 'KUBECONFIG_CONTENT')]) {
+          // Changed variable name here to reflect expected Base64 credential input
+          withCredentials([string(credentialsId: 'aks-kubeconfig', variable: 'KUBECONFIG_BASE64')]) {
             sh '''#!/usr/bin/env bash
               set -euo pipefail
 
               KUBECONFIG_PATH="$WORKSPACE/.kubeconfig"
               umask 077
               
-              printf '%s\n' "$KUBECONFIG_CONTENT" > "$KUBECONFIG_PATH"
+              # Reconstruct YAML configuration securely from your Base64 dashboard string
+              echo "$KUBECONFIG_BASE64" | base64 -d > "$KUBECONFIG_PATH"
 
               export KUBECONFIG="$KUBECONFIG_PATH"
 
