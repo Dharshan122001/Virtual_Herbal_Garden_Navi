@@ -2,7 +2,7 @@ import os
 import requests
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from dotenv import load_dotenv
-#Try1
+#Try
 from common import schemas
 from common.observability import configure_observability
 from common.utils import setup_cors

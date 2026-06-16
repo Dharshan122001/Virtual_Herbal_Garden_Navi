@@ -24,7 +24,7 @@ configure_observability(
     engine,
 )
 
-# ======================= try2
+# ======================= try
 # SECURITY CONFIG
 # =======================
 SECRET_KEY = os.getenv("SECRET_KEY")

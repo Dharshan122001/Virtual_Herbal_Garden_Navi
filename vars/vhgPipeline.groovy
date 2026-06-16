@@ -114,9 +114,17 @@ def call() {
             sh '''#!/usr/bin/env bash
               set -euo pipefail
 
+              # Bootstrap the Buildx plugin binary if it's missing on the runner
+              if ! docker buildx version &>/dev/null; then
+                echo "Buildx not found. Installing CLI plugin dynamically..."
+                mkdir -p ~/.docker/cli-plugins
+                curl -SL "https://github.com/docker/buildx/releases/download/v0.14.1/buildx-v0.14.1.linux-arm64" -o ~/.docker/cli-plugins/docker-buildx
+                chmod +x ~/.docker/cli-plugins/docker-buildx
+                echo "Buildx plugin binary dropped successfully!"
+              fi
+
               echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
-              # ✅ Fix: Create and use an isolated Buildx multi-architecture builder instance
               echo "Initializing stable Buildx driver context..."
               docker buildx create --name vhg-builder --use --driver docker-container 2>/dev/null || docker buildx use vhg-builder
               docker buildx inspect --bootstrap
@@ -138,7 +146,6 @@ def call() {
                 cp -r "server/$service_dir"/* "$workspace/$service_dir/"
 
                 pushd "$workspace" >/dev/null
-                # ✅ Fix: Use buildx build with --push to handle cross-compilation safely
                 docker buildx build \
                   --platform linux/amd64 \
                   -t "${DOCKERHUB_REPO}/${image_name}:${IMAGE_TAG}" \
@@ -163,7 +170,6 @@ def call() {
 
               if [ "$FRONTEND_CHANGED" = "true" ]; then
                 echo "Building frontend:${IMAGE_TAG} with Buildx targeting linux/amd64"
-                # ✅ Fix: Use buildx build with --push to handle cross-compilation safely
                 docker buildx build \
                   --platform linux/amd64 \
                   -t "${DOCKERHUB_REPO}/frontend:${IMAGE_TAG}" \
