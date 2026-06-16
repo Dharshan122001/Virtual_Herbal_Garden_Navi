@@ -169,11 +169,12 @@ def call() {
               fi
 
               if [ "$FRONTEND_CHANGED" = "true" ]; then
-                echo "Building frontend:${IMAGE_TAG} utilizing native compilation targeting linux/amd64 distribution"
+                echo "Building frontend:${IMAGE_TAG} with Buildx targeting linux/amd64"
                 
                 pushd client >/dev/null
-                # Build natively on Mac via buildx, while exporting the final artifact to an amd64 distribution manifest
+                # ✅ Fixed: Explicitly declare target platform matching final image layout
                 docker buildx build \
+                  --platform linux/amd64 \
                   -t "${DOCKERHUB_REPO}/frontend:${IMAGE_TAG}" \
                   --push \
                   .
