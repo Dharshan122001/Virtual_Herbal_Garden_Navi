@@ -169,14 +169,11 @@ def call() {
               fi
 
               if [ "$FRONTEND_CHANGED" = "true" ]; then
-                echo "Building frontend:${IMAGE_TAG} with Buildx targeting linux/amd64"
+                echo "Building frontend:${IMAGE_TAG} utilizing native compilation targeting linux/amd64 distribution"
                 
                 pushd client >/dev/null
-                
-                # ✅ Fixed: Safely pass the stability variable down to esbuild via standard build args
+                # Build natively on Mac via buildx, while exporting the final artifact to an amd64 distribution manifest
                 docker buildx build \
-                  --platform linux/amd64 \
-                  --build-arg GODEBUG=asyncpreemptoff=1 \
                   -t "${DOCKERHUB_REPO}/frontend:${IMAGE_TAG}" \
                   --push \
                   .
