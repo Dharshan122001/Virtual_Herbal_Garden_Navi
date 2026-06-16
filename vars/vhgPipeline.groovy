@@ -121,7 +121,7 @@ def call() {
                 local image_name="$2"
                 local workspace="server/build_${service_dir}"
 
-                echo "Building ${image_name}:${IMAGE_TAG}"
+                echo "Building ${image_name}:${IMAGE_TAG} for linux/amd64"
 
                 rm -rf "$workspace"
                 mkdir -p "$workspace"
@@ -133,7 +133,9 @@ def call() {
                 cp -r "server/$service_dir"/* "$workspace/$service_dir/"
 
                 pushd "$workspace" >/dev/null
+                # Added cross-compilation platform target flag
                 docker build \
+                  --platform linux/amd64 \
                   -t "${DOCKERHUB_REPO}/${image_name}:${IMAGE_TAG}" \
                   .
                 popd >/dev/null
@@ -155,8 +157,10 @@ def call() {
               fi
 
               if [ "$FRONTEND_CHANGED" = "true" ]; then
-                echo "Building frontend:${IMAGE_TAG}"
+                echo "Building frontend:${IMAGE_TAG} for linux/amd64"
+                # Added cross-compilation platform target flag
                 docker build \
+                  --platform linux/amd64 \
                   -t "${DOCKERHUB_REPO}/frontend:${IMAGE_TAG}" \
                   client
                 docker push "${DOCKERHUB_REPO}/frontend:${IMAGE_TAG}"
@@ -173,7 +177,6 @@ def call() {
           }
         }
         steps {
-          // Changed variable name here to reflect expected Base64 credential input
           withCredentials([string(credentialsId: 'aks-kubeconfig', variable: 'KUBECONFIG_BASE64')]) {
             sh '''#!/usr/bin/env bash
               set -euo pipefail
@@ -181,7 +184,6 @@ def call() {
               KUBECONFIG_PATH="$WORKSPACE/.kubeconfig"
               umask 077
               
-              # Reconstruct YAML configuration securely from your Base64 dashboard string
               echo "$KUBECONFIG_BASE64" | base64 -d > "$KUBECONFIG_PATH"
 
               export KUBECONFIG="$KUBECONFIG_PATH"
