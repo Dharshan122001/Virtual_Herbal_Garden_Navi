@@ -173,7 +173,7 @@ def call() {
                 
                 pushd client >/dev/null
                 
-                # Safe cross-platform compilation without sed string breaks
+                # ✅ Fixed: Safely pass the stability variable down to esbuild via standard build args
                 docker buildx build \
                   --platform linux/amd64 \
                   --build-arg GODEBUG=asyncpreemptoff=1 \
