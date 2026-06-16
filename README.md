@@ -127,3 +127,11 @@ If you want, I can also help you with:
 1. A Jenkins job configuration step-by-step.
 2. Moving the hardcoded secrets in the Helm chart into safer Kubernetes secrets.
 3. Creating a `values-jenkins.yaml` file for cleaner image overrides.
+
+
+
+
+
+az aks get-credentials --resource-group Darshan.k_lean_rg --name vhg-aks --overwrite-existing
+
+az aks get-credentials --resource-group Darshan.k_lean_rg --name vhg-aks --file - | base64 | tr -d '\n'

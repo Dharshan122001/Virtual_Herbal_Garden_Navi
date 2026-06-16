@@ -32,7 +32,7 @@ locals {
   }
 }
 
-# ✅ AKS Cluster Configuration
+# ✅ AKS Cluster Resource
 resource "azurerm_kubernetes_cluster" "aks" {
   name                = "vhg-aks"
   location            = local.location
@@ -50,26 +50,13 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 
   tags = local.common_tags
-}
 
-# ✅ Dynamically wire Kubernetes provider straight into the new cluster
-provider "kubernetes" {
-  host                   = azurerm_kubernetes_cluster.aks.kube_config[0].host
-  client_certificate     = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].client_certificate)
-  client_key             = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].client_key)
-  cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].cluster_ca_certificate)
-}
-
-# ✅ Dynamically wire Helm provider straight into the new cluster
-provider "helm" {
-  kubernetes {
-    host                   = azurerm_kubernetes_cluster.aks.kube_config[0].host
-    client_certificate     = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].client_certificate)
-    client_key             = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].client_key)
-    cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].cluster_ca_certificate)
+  provisioner "local-exec" {
+    command = "sleep 30 && az aks get-credentials --resource-group ${self.resource_group_name} --name ${self.name} --overwrite-existing"
   }
 }
 
+# ✅ Identity Role Definition Mapping
 resource "azurerm_role_assignment" "aks_network_contributor" {
   scope                = data.azurerm_resource_group.existing_rg.id
   role_definition_name = "Network Contributor"
@@ -78,7 +65,7 @@ resource "azurerm_role_assignment" "aks_network_contributor" {
   depends_on = [azurerm_kubernetes_cluster.aks]
 }
 
-# ✅ PostgreSQL Flexible Server Setup
+# ✅ PostgreSQL Storage Instance
 resource "azurerm_postgresql_flexible_server" "db" {
   name                   = "vhg-db-can-final-v1"
   resource_group_name    = data.azurerm_resource_group.existing_rg.name
