@@ -60,6 +60,7 @@ docker compose up -d --build
 ```
 
 The controller will start, bootstrap the local agent image, and configure the Docker cloud automatically. The first run can take a little longer because Jenkins is building its own agent image locally.
+The controller will start Jenkins directly. It no longer tries to build an agent image during startup, which avoids the restart loop you hit.
 
 Open:
 
@@ -85,11 +86,11 @@ The controller image already preinstalls those plugins, so this section is mostl
 
 ## How The Agent Works
 
-The Jenkins controller automatically builds the local build-agent image from:
+The repo still includes a reusable agent image at:
 
 - [jenkins/agent/Dockerfile](./jenkins/agent/Dockerfile)
 
-For now the pipeline runs on the built-in Jenkins executor so you can get moving immediately. The Docker cloud and agent image are still in the repo if you want to switch to a dedicated build node later.
+For now the pipeline runs on the built-in Jenkins executor so you can get moving immediately. The agent image is still in the repo if you want to switch to a dedicated build node later.
 
 The agent image includes:
 
