@@ -133,8 +133,9 @@ def call() {
                 cp -r "server/$service_dir"/* "$workspace/$service_dir/"
 
                 pushd "$workspace" >/dev/null
-                # Added cross-compilation platform target flag
+                # Force an architecture-specific build ignoring local ARM64 cache layers
                 docker build \
+                  --no-cache \
                   --platform linux/amd64 \
                   -t "${DOCKERHUB_REPO}/${image_name}:${IMAGE_TAG}" \
                   .
@@ -158,8 +159,9 @@ def call() {
 
               if [ "$FRONTEND_CHANGED" = "true" ]; then
                 echo "Building frontend:${IMAGE_TAG} for linux/amd64"
-                # Added cross-compilation platform target flag
+                # Force an architecture-specific build ignoring local ARM64 cache layers
                 docker build \
+                  --no-cache \
                   --platform linux/amd64 \
                   -t "${DOCKERHUB_REPO}/frontend:${IMAGE_TAG}" \
                   client
