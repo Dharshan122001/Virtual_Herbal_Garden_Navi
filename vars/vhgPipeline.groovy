@@ -180,7 +180,6 @@ def call() {
               KUBECONFIG_PATH="$WORKSPACE/.kubeconfig"
               umask 077
               
-              # ✅ Fixed: Use printf '%s\n' to output the string cleanly without line compression
               printf '%s\n' "$KUBECONFIG_CONTENT" > "$KUBECONFIG_PATH"
 
               export KUBECONFIG="$KUBECONFIG_PATH"
