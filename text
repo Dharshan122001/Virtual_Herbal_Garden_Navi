@@ -1,0 +1,8 @@
+in the manager credentials 
+
+cd K8s && terraform output -raw cluster_name >/dev/null && az aks get-credentials --resource-group Darshan.k_lean_rg --name vhg-aks --file - | base64 | tr -d '\n'
+secret text : aks-kubeconfig : 
+
+dockerhub-creds
+
+useraname and password. : kdharshan3690@gmail.com : Vinu@9945385205

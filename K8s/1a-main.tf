@@ -5,6 +5,14 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.0"
     }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.0"
+    }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 2.0"
+    }
   }
 }
 
@@ -24,7 +32,7 @@ locals {
   }
 }
 
-# ✅ AKS Cluster
+# ✅ AKS Cluster Configuration
 resource "azurerm_kubernetes_cluster" "aks" {
   name                = "vhg-aks"
   location            = local.location
@@ -42,14 +50,26 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 
   tags = local.common_tags
+}
 
-  provisioner "local-exec" {
-    command = "sleep 30 && az aks get-credentials --resource-group ${self.resource_group_name} --name ${self.name} --overwrite-existing"
+# ✅ Dynamically wire Kubernetes provider straight into the new cluster
+provider "kubernetes" {
+  host                   = azurerm_kubernetes_cluster.aks.kube_config[0].host
+  client_certificate     = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].client_certificate)
+  client_key             = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].client_key)
+  cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].cluster_ca_certificate)
+}
+
+# ✅ Dynamically wire Helm provider straight into the new cluster
+provider "helm" {
+  kubernetes {
+    host                   = azurerm_kubernetes_cluster.aks.kube_config[0].host
+    client_certificate     = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].client_certificate)
+    client_key             = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].client_key)
+    cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].cluster_ca_certificate)
   }
 }
 
-# ✅ AUTOMATION: Assign Network Contributor role to AKS Managed Identity
-# This removes the need for manual CLI commands
 resource "azurerm_role_assignment" "aks_network_contributor" {
   scope                = data.azurerm_resource_group.existing_rg.id
   role_definition_name = "Network Contributor"
@@ -58,9 +78,9 @@ resource "azurerm_role_assignment" "aks_network_contributor" {
   depends_on = [azurerm_kubernetes_cluster.aks]
 }
 
-# ✅ PostgreSQL Flexible Server
+# ✅ PostgreSQL Flexible Server Setup
 resource "azurerm_postgresql_flexible_server" "db" {
-  name                   = "vhg-db-can-final-v1" # Fresh unique name
+  name                   = "vhg-db-can-final-v1"
   resource_group_name    = data.azurerm_resource_group.existing_rg.name
   location               = local.location
   administrator_login    = "vhgadmin"
