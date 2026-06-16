@@ -170,8 +170,10 @@ def call() {
 
               if [ "$FRONTEND_CHANGED" = "true" ]; then
                 echo "Building frontend:${IMAGE_TAG} with Buildx targeting linux/amd64"
+                # ✅ Fix: Pass GODEBUG to the build context to stop esbuild from crashing on Apple Silicon emulation
                 docker buildx build \
                   --platform linux/amd64 \
+                  --build-arg GODEBUG=asyncpreemptoff=1 \
                   -t "${DOCKERHUB_REPO}/frontend:${IMAGE_TAG}" \
                   --push \
                   client
