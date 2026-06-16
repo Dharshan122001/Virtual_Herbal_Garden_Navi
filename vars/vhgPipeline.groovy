@@ -116,12 +116,17 @@ def call() {
 
               echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
+              # ✅ Fix: Create and use an isolated Buildx multi-architecture builder instance
+              echo "Initializing stable Buildx driver context..."
+              docker buildx create --name vhg-builder --use --driver docker-container 2>/dev/null || docker buildx use vhg-builder
+              docker buildx inspect --bootstrap
+
               build_backend_service() {
                 local service_dir="$1"
                 local image_name="$2"
                 local workspace="server/build_${service_dir}"
 
-                echo "Building ${image_name}:${IMAGE_TAG} for linux/amd64"
+                echo "Building ${image_name}:${IMAGE_TAG} with Buildx targeting linux/amd64"
 
                 rm -rf "$workspace"
                 mkdir -p "$workspace"
@@ -133,15 +138,14 @@ def call() {
                 cp -r "server/$service_dir"/* "$workspace/$service_dir/"
 
                 pushd "$workspace" >/dev/null
-                # Force an architecture-specific build ignoring local ARM64 cache layers
-                docker build \
-                  --no-cache \
+                # ✅ Fix: Use buildx build with --push to handle cross-compilation safely
+                docker buildx build \
                   --platform linux/amd64 \
                   -t "${DOCKERHUB_REPO}/${image_name}:${IMAGE_TAG}" \
+                  --push \
                   .
                 popd >/dev/null
 
-                docker push "${DOCKERHUB_REPO}/${image_name}:${IMAGE_TAG}"
                 rm -rf "$workspace"
               }
 
@@ -158,14 +162,13 @@ def call() {
               fi
 
               if [ "$FRONTEND_CHANGED" = "true" ]; then
-                echo "Building frontend:${IMAGE_TAG} for linux/amd64"
-                # Force an architecture-specific build ignoring local ARM64 cache layers
-                docker build \
-                  --no-cache \
+                echo "Building frontend:${IMAGE_TAG} with Buildx targeting linux/amd64"
+                # ✅ Fix: Use buildx build with --push to handle cross-compilation safely
+                docker buildx build \
                   --platform linux/amd64 \
                   -t "${DOCKERHUB_REPO}/frontend:${IMAGE_TAG}" \
+                  --push \
                   client
-                docker push "${DOCKERHUB_REPO}/frontend:${IMAGE_TAG}"
               fi
             '''
           }
