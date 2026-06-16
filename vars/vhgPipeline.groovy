@@ -1,6 +1,7 @@
 def call() {
   pipeline {
-    agent any
+    // Target the custom binary-ready inbound agent node
+    agent { label 'vhg' }
 
     options {
       timestamps()
@@ -178,7 +179,12 @@ def call() {
 
               KUBECONFIG_PATH="$WORKSPACE/.kubeconfig"
               umask 077
-              printf '%s' "$KUBECONFIG_CONTENT" > "$KUBECONFIG_PATH"
+              
+              # Fixed: Use standard multi-line EOF block to preserve YAML formatting completely
+              cat << 'EOF' > "$KUBECONFIG_PATH"
+$KUBECONFIG_CONTENT
+EOF
+
               export KUBECONFIG="$KUBECONFIG_PATH"
 
               RELEASE_EXISTS=false
