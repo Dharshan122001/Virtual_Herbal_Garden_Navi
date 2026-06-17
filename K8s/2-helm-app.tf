@@ -19,7 +19,7 @@ resource "kubernetes_secret_v1" "vhg_db_config" {
     POSTGRES_USER     = azurerm_postgresql_flexible_server.db.administrator_login
     POSTGRES_PASSWORD = var.db_password
     POSTGRES_PORT     = "5432"
-    POSTGRES_DB       = "neondb"
+    POSTGRES_DB       = "vhg_prod" # Updated: Switched from neondb anchor to clean Azure DB schema context
   }
 
   depends_on = [
