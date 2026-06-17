@@ -1,41 +1,21 @@
-terraform {
-  required_version = ">= 1.5.0"
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 4.0"
-    }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.0"
-    }
-    helm = {
-      source  = "hashicorp/helm"
-      version = "~> 2.0"
-    }
-  }
-}
-
-provider "azurerm" {
-  features {}
-}
-
 data "azurerm_resource_group" "existing_rg" {
-  name = "Darshan.k_lean_rg"
+  name = var.resource_group_name
 }
 
-locals {
-  location = "canadacentral"
-  common_tags = {
-    owner   = "dharshan.k@navikenz.com"
-    project = "vhg-aks"
-  }
+# Static Public IP for Nginx Load Balancer Routing
+resource "azurerm_public_ip" "ingress_ip" {
+  name                = "vhg-ingress-ip"
+  location            = var.location
+  resource_group_name = data.azurerm_resource_group.existing_rg.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+  domain_name_label   = "vhg-garden-dharshan"
 }
 
-# ✅ AKS Cluster Resource
+# Managed Kubernetes Service (AKS) Pool Instance
 resource "azurerm_kubernetes_cluster" "aks" {
   name                = "vhg-aks"
-  location            = local.location
+  location            = var.location
   resource_group_name = data.azurerm_resource_group.existing_rg.name
   dns_prefix          = "vhg"
 
@@ -49,14 +29,14 @@ resource "azurerm_kubernetes_cluster" "aks" {
     type = "SystemAssigned"
   }
 
-  tags = local.common_tags
+  tags = var.common_tags
 
   provisioner "local-exec" {
     command = "sleep 30 && az aks get-credentials --resource-group ${self.resource_group_name} --name ${self.name} --overwrite-existing"
   }
 }
 
-# ✅ Identity Role Definition Mapping
+# Network Contributor Role Mapping for System Identity
 resource "azurerm_role_assignment" "aks_network_contributor" {
   scope                = data.azurerm_resource_group.existing_rg.id
   role_definition_name = "Network Contributor"
@@ -65,17 +45,17 @@ resource "azurerm_role_assignment" "aks_network_contributor" {
   depends_on = [azurerm_kubernetes_cluster.aks]
 }
 
-# ✅ PostgreSQL Storage Instance
+# PostgreSQL Database Flexible Instance Storage
 resource "azurerm_postgresql_flexible_server" "db" {
   name                   = "vhg-db-can-final-v1"
   resource_group_name    = data.azurerm_resource_group.existing_rg.name
-  location               = local.location
+  location               = var.location
   administrator_login    = "vhgadmin"
   administrator_password = var.db_password
   version                = "13"
   sku_name               = "B_Standard_B1ms"
   storage_mb             = 32768
-  tags                   = local.common_tags
+  tags                   = var.common_tags
 
   lifecycle {
     ignore_changes = [zone]
