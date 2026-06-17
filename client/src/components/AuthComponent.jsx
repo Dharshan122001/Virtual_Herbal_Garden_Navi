@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-// Try2
+// Try
 
 function AuthComponent() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
