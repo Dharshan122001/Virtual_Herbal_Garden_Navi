@@ -20,11 +20,11 @@ pipeline {
         stage('Initialize Stack') {
             steps {
                 // 1. Call custom checkout function
-                1vhgCheckout()
+                a_vhgCheckout()
                 
                 catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
                     // 2. Call change detection function (exits early if non-core files change)
-                    2vhgDetectChanges()
+                    b_vhgDetectChanges()
                 }
             }
         }
@@ -35,7 +35,7 @@ pipeline {
             }
             steps {
                 // 3. Call parameterized Docker Compilation step function
-                3vhgBuildImages(
+                c_vhgBuildImages(
                     repo: env.REPO_NAME,
                     tag: env.BUILD_TAG,
                     credentialsId: 'dockerhub-creds'
@@ -49,7 +49,7 @@ pipeline {
             }
             steps {
                 // 4. Call parameterized Kubernetes Deployment step function
-                4vhgDeployKubernetes(
+                d_vhgDeployKubernetes(
                     repo: env.REPO_NAME,
                     tag: env.BUILD_TAG,
                     namespace: env.NAMESPACE,
