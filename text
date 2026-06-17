@@ -6,3 +6,10 @@ secret text : aks-kubeconfig :
 dockerhub-creds
 
 useraname and password. : kdharshan3690@gmail.com : Vinu@9945385205
+
+
+
+
+whenever you do terraform destroy and then apply copy the code from this 
+az aks get-credentials --resource-group Darshan.k_lean_rg --name vhg-aks --file - | base64 | tr -d '\n' | pbcopy
+and paste it is aks-kubeconfig
