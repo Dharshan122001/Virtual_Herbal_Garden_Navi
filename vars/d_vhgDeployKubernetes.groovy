@@ -3,12 +3,12 @@ def call(String repo, String tag, String namespace, String release, String chart
         withCredentials([string(credentialsId: kubeconfigId, variable: 'KUBECONFIG_BASE64')]) {
             script {
                 def kubePath = "${WORKSPACE}/.kubeconfig"
-                
-                // Securely decode file stream purely on the agent's native system shell layer
                 sh 'umask 077 && echo "$KUBECONFIG_BASE64" | base64 -d > "' + kubePath + '"'
 
                 withEnv(["KUBECONFIG=${kubePath}"]) {
                     def releaseExists = sh(script: "helm list -n ${namespace} -q | grep -qx ${release} && echo true || echo false", returnStdout: true).trim()
+                    
+                    // 🎯 FIX: Prepend the precise environment relative directory context layer path
                     def helmCmd = "helm upgrade --install ${release} ./${chartDir} --namespace ${namespace} --create-namespace --wait --timeout 10m"
 
                     if (releaseExists == "true") helmCmd += " --reuse-values"
