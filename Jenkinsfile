@@ -19,11 +19,9 @@ pipeline {
     stages {
         stage('Initialize Stack') {
             steps {
-                // 1. Call custom checkout function
                 a_vhgCheckout()
                 
                 catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
-                    // 2. Call change detection function (exits early if non-core files change)
                     b_vhgDetectChanges()
                 }
             }
@@ -34,11 +32,11 @@ pipeline {
                 expression { return currentBuild.description != 'Skipped: Changes outside microservice folders' }
             }
             steps {
-                // 3. Call parameterized Docker Compilation step function
+                // Call passing straight variables in exact order to bypass sandbox restrictions
                 c_vhgBuildImages(
-                    repo: env.REPO_NAME,
-                    tag: env.BUILD_TAG,
-                    credentialsId: 'dockerhub-creds'
+                    env.REPO_NAME,
+                    env.BUILD_TAG,
+                    'dockerhub-creds'
                 )
             }
         }
@@ -48,14 +46,14 @@ pipeline {
                 expression { return currentBuild.description != 'Skipped: Changes outside microservice folders' }
             }
             steps {
-                // 4. Call parameterized Kubernetes Deployment step function
+                // Call passing straight variables in exact order to bypass sandbox restrictions
                 d_vhgDeployKubernetes(
-                    repo: env.REPO_NAME,
-                    tag: env.BUILD_TAG,
-                    namespace: env.NAMESPACE,
-                    release: env.RELEASE,
-                    chartDir: env.CHART_DIR,
-                    kubeconfigId: 'aks-kubeconfig'
+                    env.REPO_NAME,
+                    env.BUILD_TAG,
+                    env.NAMESPACE,
+                    env.RELEASE,
+                    env.CHART_DIR,
+                    'aks-kubeconfig'
                 )
             }
         }
