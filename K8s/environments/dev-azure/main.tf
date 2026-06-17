@@ -1,13 +1,15 @@
 terraform {
   required_version = ">= 1.5.0"
   required_providers {
-    azurerm    = { source = "hashicorp/azurerm";    version = "~> 4.0" }
-    kubernetes = { source = "hashicorp/kubernetes"; version = "~> 2.0" }
-    helm       = { source = "hashicorp/helm";       version = "~> 2.0" }
+    azurerm    = { source = "hashicorp/azurerm", version = "~> 4.0" }
+    kubernetes = { source = "hashicorp/kubernetes", version = "~> 2.0" }
+    helm       = { source = "hashicorp/helm", version = "~> 2.0" }
   }
 }
 
-provider "azurerm" { features {} }
+provider "azurerm" {
+  features {}
+}
 
 # 🏗️ TRIGGER CORE REUSABLE BLUEPRINT MODULE
 module "azure_infra" {
@@ -46,7 +48,7 @@ resource "helm_release" "ingress_nginx" {
   chart            = "ingress-nginx"
   namespace        = "ingress-nginx"
   create_namespace = true
-  timeout          = 900
+  timeout          = 1500
   wait             = true
 
   values = [
