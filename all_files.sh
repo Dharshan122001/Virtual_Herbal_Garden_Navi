@@ -33,21 +33,15 @@ vhg-chart/templates/9-hpa-ai.yaml \
 vhg-chart/templates/10-hpa-auth.yaml \
 vhg-chart/templates/11-hpa-frontend.yaml \
 vhg-chart/templates/12-hpa-plant.yaml \
-vhg-chart/templates/_helpers.tpl \
-vhg-chart/templates/NOTES.txt \
 vhg-chart/templates/secret.yaml \
-K8s/1-aks.tf \
-K8s/1a-main.tf \
-K8s/2-helm-app.tf \
-K8s/4-helm-nginx.tf \
-K8s/5-helm-otel.tf \
-K8s/6-helm-prometheus.tf \
-K8s/7-ingress-tools.tf \
-K8s/outputs.tf \
-K8s/providers.tf \
-K8s/secrets.tfvars \
+K8s/environments/dev-azure/main.tf \
+K8s/environments/dev-azure/outputs.tf \
+K8s/environments/dev-azure/providers.tf \
+K8s/environments/dev-azure/secrets.tfvars \
+K8s/modules/azure_infra/main.tf \
+K8s/modules/azure_infra/outputs.tf \
+K8s/modules/azure_infra/variables.tf \
 K8s/variables.tf \
-VHG-pipelines.yml \
 Jenkinsfile \
 docker-compose.yml \
 jenkins/agent/Dockerfile \
@@ -55,9 +49,11 @@ jenkins/controller/Dockerfile \
 jenkins/controller/plugins.txt \
 jenkins/controller/casc/jenkins.yaml \
 jenkins/controller/entrypoint.sh \
-jenkins/shared-library/vars/vhgPipeline.groovy \
-vars/vhgPipeline.groovy \
-README.md
+vars/a_vhgCheckout.groovy \
+vars/b_vhgDetectChanges.groovy \
+vars/c_vhgBuildImages.groovy \
+vars/d_vhgDeployKubernetes.groovy \
+all_files.sh \
 
 do
   echo "\n\n==================== $f ====================\n"

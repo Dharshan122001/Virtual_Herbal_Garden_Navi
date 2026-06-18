@@ -134,8 +134,14 @@ resource "helm_release" "monitoring" {
       enabled: true
     nodeExporter:
       enabled: true
+      
     alertmanager:
-      enabled: false
+      enabled: true
+      alertmanagerSpec:
+        routePrefix: /alertmanager
+        externalUrl: /alertmanager
+      ingress:
+        enabled: false
     EOF
   ]
 }
@@ -170,6 +176,21 @@ resource "kubernetes_service_v1" "grafana_bridge" {
     port {
       port        = 80
       target_port = 80
+    }
+  }
+}
+
+resource "kubernetes_service_v1" "alertmanager_bridge" {
+  metadata {
+    name      = "alertmanager-bridge"
+    namespace = kubernetes_namespace_v1.vhg_namespace.metadata[0].name
+  }
+  spec {
+    type          = "ExternalName"
+    external_name = "monitoring-kube-prometheus-alertmanager.monitoring.svc.cluster.local"
+    port {
+      port        = 9093
+      target_port = 9093
     }
   }
 }
@@ -212,6 +233,17 @@ resource "kubernetes_ingress_v1" "devops_tools_ingress" {
             service {
               name = kubernetes_service_v1.grafana_bridge.metadata[0].name
               port { number = 80 }
+            }
+          }
+        }
+
+        path {
+          path      = "/alertmanager(/|$)(.*)"
+          path_type = "ImplementationSpecific"
+          backend {
+            service {
+              name = kubernetes_service_v1.alertmanager_bridge.metadata[0].name
+              port { number = 9093 }
             }
           }
         }

@@ -20,9 +20,10 @@ output "ingress_public_ip" {
 
 output "access_urls" {
   value = {
-    application = "http://${module.azure_infra.ingress_ip}/"
-    prometheus  = "http://${module.azure_infra.ingress_ip}/prometheus/"
-    grafana     = "http://${module.azure_infra.ingress_ip}/grafana/"
+    application  = "http://${module.azure_infra.ingress_ip}/"
+    prometheus   = "http://\${module.azure_infra.ingress_ip}/prometheus/"
+    grafana      = "http://${module.azure_infra.ingress_ip}/grafana/"
+    alertmanager = "http://${module.azure_infra.ingress_ip}/alertmanager/"
   }
 }
 
