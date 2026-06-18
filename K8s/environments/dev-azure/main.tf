@@ -139,7 +139,7 @@ resource "helm_release" "monitoring" {
       enabled: true
       alertmanagerSpec:
         routePrefix: /alertmanager
-        externalUrl: /alertmanager
+        externalUrl: "http://${module.azure_infra.ingress_ip}/alertmanager/"
       ingress:
         enabled: false
     EOF
@@ -187,7 +187,8 @@ resource "kubernetes_service_v1" "alertmanager_bridge" {
   }
   spec {
     type          = "ExternalName"
-    external_name = "monitoring-kube-prometheus-alertmanager.monitoring.svc.cluster.local"
+    # 🎯 FIX: Removed the extra "-kube" from the service discovery string
+    external_name = "monitoring-prometheus-alertmanager.monitoring.svc.cluster.local"
     port {
       port        = 9093
       target_port = 9093
