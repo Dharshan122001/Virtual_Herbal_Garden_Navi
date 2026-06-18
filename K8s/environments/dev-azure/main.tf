@@ -187,8 +187,7 @@ resource "kubernetes_service_v1" "alertmanager_bridge" {
   }
   spec {
     type          = "ExternalName"
-    # 🎯 FIX: Removed the extra "-kube" from the service discovery string
-    external_name = "monitoring-prometheus-alertmanager.monitoring.svc.cluster.local"
+    external_name = "monitoring-kube-prometheus-alertmanager.monitoring.svc.cluster.local"
     port {
       port        = 9093
       target_port = 9093
