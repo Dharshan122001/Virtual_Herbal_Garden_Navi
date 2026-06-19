@@ -8,6 +8,10 @@ pipeline {
         disableConcurrentBuilds()
     }
 
+    triggers {
+        pollSCM('* * * * *')
+    }
+
     environment {
         REPO_NAME = 'dharshan3690'
         NAMESPACE = 'vhg-1'
