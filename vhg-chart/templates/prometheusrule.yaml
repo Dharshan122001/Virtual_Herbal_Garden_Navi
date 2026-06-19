@@ -54,10 +54,10 @@ spec:
       expr: |
         sum(rate(container_cpu_usage_seconds_total{namespace="{{ .Values.namespace }}", container!="", container!="POD"}[5m])) by (pod, container)
         / sum(kube_pod_container_resource_limits{namespace="{{ .Values.namespace }}", resource="cpu"}) by (pod, container)
-        > 0.8
-      for: 10m
+        > 0.6
+      for: 2m
       labels:
-        severity: warning
+        severity: critical
       annotations:
         summary: "High CPU usage in {{ "{{" }} $labels.pod {{ "}}" }}"
         description: "Container {{ "{{" }} $labels.container {{ "}}" }} is using over 80% of its CPU limit for more than 10 minutes."
@@ -75,10 +75,10 @@ spec:
         description: "Container {{ "{{" }} $labels.container {{ "}}" }} is using over 85% of its memory limit for more than 10 minutes."
 
     - alert: VHGHighNodeCPU
-      expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 75
-      for: 5m
+      expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 65
+      for: 1m
       labels:
-        severity: warning
+        severity: critical
       annotations:
         summary: "High CPU usage on node {{ "{{" }} $labels.instance {{ "}}" }}"
         description: "Node CPU usage is above 75% (current value: {{ "{{" }} $value {{ "}}" }}%). Check for runaway workloads."
@@ -87,7 +87,7 @@ spec:
     rules:
     - alert: VHGHighErrorRate
       expr: |
-        sum(rate(http_request_duration_seconds_count{status=~"5..", handler!~"/metrics|/docs|/openapi.json"}[5m])) by (handler, method) > 0.1
+        sum(rate(http_request_duration_seconds_count{status_code=~"5..", handler!~"/metrics|/docs|/openapi.json"}[5m])) by (handler, method) > 0.1
       for: 1m
       labels:
         severity: warning

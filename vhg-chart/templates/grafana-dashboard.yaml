@@ -188,6 +188,105 @@ data:
           ],
           "title": "Pod Ready Status",
           "type": "timeseries"
+        },
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+          "id": 13,
+          "title": "HTTP Traffic",
+          "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": { "lineWidth": 2, "fillOpacity": 8 },
+              "unit": "reqps"
+            }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+          "id": 14,
+          "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+          "targets": [
+            {
+              "expr": "sum(rate(http_request_duration_seconds_count{handler!~\"/metrics|/docs|/openapi.json\"}[5m])) by (handler, method)",
+              "legendFormat": "{{ "{{" }}method{{ "}}" }} {{ "{{" }}handler{{ "}}" }}"
+            }
+          ],
+          "title": "Request Rate per Endpoint (req/s)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "unit": "short",
+              "custom": { "displayMode": "gradient-gauge" }
+            }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+          "id": 15,
+          "options": { "displayMode": "gradient", "orientation": "horizontal", "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }, "showUnfilled": true },
+          "targets": [
+            {
+              "expr": "sum(increase(http_request_duration_seconds_count{handler!~\"/metrics|/docs|/openapi.json\"}[$__range])) by (handler, method)",
+              "legendFormat": "{{ "{{" }}method{{ "}}" }} {{ "{{" }}handler{{ "}}" }}"
+            }
+          ],
+          "title": "Total Hits per Endpoint (selected time range)",
+          "type": "bargauge"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": { "lineWidth": 2, "fillOpacity": 8 },
+              "unit": "reqps"
+            }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+          "id": 16,
+          "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+          "targets": [
+            {
+              "expr": "sum(rate(http_request_duration_seconds_count{handler!~\"/metrics|/docs|/openapi.json\"}[5m])) by (handler)",
+              "legendFormat": "{{ "{{" }}handler{{ "}}" }}"
+            }
+          ],
+          "title": "API Request Rate by Handler (req/s)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": { "lineWidth": 2, "fillOpacity": 8 },
+              "unit": "s",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 0.5 },
+                  { "color": "red", "value": 1 }
+                ]
+              }
+            }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+          "id": 17,
+          "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.9, sum(rate(http_request_duration_seconds_bucket{handler!~\"/metrics|/docs|/openapi.json\"}[5m])) by (handler, le))",
+              "legendFormat": "{{ "{{" }}handler{{ "}}" }}"
+            }
+          ],
+          "title": "P90 Latency per Endpoint (s)",
+          "type": "timeseries"
         }
       ],
       "refresh": "30s",
@@ -212,5 +311,5 @@ data:
       "timezone": "browser",
       "title": "VHG Application",
       "uid": "vhg-application",
-      "version": 1
+      "version": 4
     }
