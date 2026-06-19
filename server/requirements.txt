@@ -32,7 +32,7 @@ opentelemetry-instrumentation-logging
 opentelemetry-semantic-conventions
 
 prometheus-client==0.16.0
-prometheus-fastapi-instrumentator==0.6.1
+prometheus-fastapi-instrumentator==5.9.1
 opentelemetry-instrumentation-fastapi==0.52b1
 opentelemetry-instrumentation-requests==0.52b1
 opentelemetry-instrumentation-sqlalchemy==0.52b1
