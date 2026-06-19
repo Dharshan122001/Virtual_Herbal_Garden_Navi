@@ -2,7 +2,7 @@ import os
 import logging
 
 from prometheus_client import start_http_server
-from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_fastapi_instrumentator import Instrumentator  # v5.9.1
 
 from opentelemetry import trace
 

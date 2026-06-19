@@ -38,10 +38,14 @@ def call(String kubeconfigId = 'aks-kubeconfig', String namespace = 'vhg-1', Str
                 flags.frontend = true; flags.plant = true; flags.auth = true; flags.ai = true
             } else {
                 changedFiles.split('\n').each { file ->
-                    if (file.startsWith('client/'))                                         flags.frontend = true
-                    if (file.startsWith('server/plant_service/') || file.startsWith('server/common/')) flags.plant = true
-                    if (file.startsWith('server/auth_service/')  || file.startsWith('server/common/')) flags.auth  = true
-                    if (file.startsWith('server/ai_service/')    || file.startsWith('server/common/')) flags.ai    = true
+                    if (file.startsWith('client/'))                                                      flags.frontend = true
+                    if (file.startsWith('server/plant_service/') || file.startsWith('server/common/'))  flags.plant    = true
+                    if (file.startsWith('server/auth_service/')  || file.startsWith('server/common/'))  flags.auth     = true
+                    if (file.startsWith('server/ai_service/')    || file.startsWith('server/common/'))  flags.ai       = true
+                    // root server/ files (requirements.txt, Dockerfile) affect all services
+                    if (file == 'server/requirements.txt' || file == 'server/Dockerfile') {
+                        flags.plant = true; flags.auth = true; flags.ai = true; flags.frontend = true
+                    }
                 }
             }
 
