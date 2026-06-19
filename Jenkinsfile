@@ -22,7 +22,7 @@ pipeline {
                 a_vhgCheckout()
                 
                 catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
-                    b_vhgDetectChanges()
+                    b_vhgDetectChanges('aks-kubeconfig', env.NAMESPACE, env.RELEASE)
                 }
             }
         }

@@ -116,6 +116,13 @@ resource "helm_release" "monitoring" {
         server:
           root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana/"
           serve_from_sub_path: true
+      serviceMonitor:
+        enabled: true
+        path: /grafana/metrics
+      sidecar:
+        dashboards:
+          enabled: true
+          searchNamespace: ALL
       ingress:
         enabled: false
 
@@ -123,8 +130,11 @@ resource "helm_release" "monitoring" {
       prometheusSpec:
         serviceMonitorSelectorNilUsesHelmValues: false
         podMonitorSelectorNilUsesHelmValues: false
+        ruleSelectorNilUsesHelmValues: false
         podMonitorSelector: {}
         serviceMonitorSelector: {}
+        ruleSelector: {}
+        ruleNamespaceSelector: {}
         routePrefix: /prometheus
         externalUrl: /prometheus
       ingress:
@@ -142,6 +152,50 @@ resource "helm_release" "monitoring" {
         externalUrl: "http://${module.azure_infra.ingress_ip}/alertmanager/"
       ingress:
         enabled: false
+      config:
+        global:
+          smtp_smarthost: 'smtp.gmail.com:587'
+          smtp_from: 'dharshan122001@gmail.com'
+          smtp_auth_username: 'dharshan122001@gmail.com'
+          smtp_auth_password: 'nxwgqsnujhfkkhof'
+          smtp_require_tls: true
+        route:
+          group_by: ['alertname', 'namespace', 'severity']
+          group_wait: 30s
+          group_interval: 5m
+          repeat_interval: 12h
+          receiver: 'email-alerts'
+          routes:
+          - receiver: 'null'
+            matchers:
+            - alertname="Watchdog"
+          - receiver: 'null'
+            matchers:
+            - alertname=~"KubeProxyDown|KubeControllerManagerDown|KubeSchedulerDown"
+          - receiver: 'email-alerts'
+            matchers:
+            - severity=~"warning|critical"
+        receivers:
+        - name: 'null'
+        - name: 'email-alerts'
+          email_configs:
+          - to: 'dharshan122001@gmail.com'
+            send_resolved: true
+        inhibit_rules:
+        - source_matchers:
+          - severity="critical"
+          target_matchers:
+          - severity=~"warning|info"
+          equal:
+          - namespace
+          - alertname
+        - source_matchers:
+          - severity="warning"
+          target_matchers:
+          - severity="info"
+          equal:
+          - namespace
+          - alertname
     EOF
   ]
 }
