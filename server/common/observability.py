@@ -2,6 +2,7 @@ import os
 import logging
 
 from prometheus_client import start_http_server
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from opentelemetry import trace
 
@@ -165,6 +166,9 @@ def configure_observability(
         FastAPIInstrumentor.instrument_app(
             app
         )
+
+        # HTTP request metrics (count + duration) into the existing prometheus_client registry
+        Instrumentator().instrument(app)
 
         logger.warning(
             "FastAPI instrumentation enabled"

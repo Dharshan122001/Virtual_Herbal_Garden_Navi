@@ -39,6 +39,15 @@ spec:
         summary: "Pod {{ "{{" }} $labels.pod {{ "}}" }} is crash looping"
         description: "Container {{ "{{" }} $labels.container {{ "}}" }} in pod {{ "{{" }} $labels.pod {{ "}}" }} has restarted more than once in the last 5 minutes."
 
+    - alert: VHGPodRestart
+      expr: kube_pod_container_status_restarts_total{namespace="{{ .Values.namespace }}"} > 2
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Pod restart detected in namespace {{ "{{" }} $labels.namespace {{ "}}" }}"
+        description: "Pod {{ "{{" }} $labels.pod {{ "}}" }} in namespace {{ "{{" }} $labels.namespace {{ "}}" }} has restarted {{ "{{" }} $value {{ "}}" }} times."
+
   - name: vhg.resources
     rules:
     - alert: VHGHighCPU
@@ -51,7 +60,7 @@ spec:
         severity: warning
       annotations:
         summary: "High CPU usage in {{ "{{" }} $labels.pod {{ "}}" }}"
-        description: "Container {{ "{{" }} $labels.container {{ "}}" }} is using over 80% of its 150m CPU limit for more than 10 minutes."
+        description: "Container {{ "{{" }} $labels.container {{ "}}" }} is using over 80% of its CPU limit for more than 10 minutes."
 
     - alert: VHGHighMemory
       expr: |
@@ -63,4 +72,37 @@ spec:
         severity: warning
       annotations:
         summary: "High memory usage in {{ "{{" }} $labels.pod {{ "}}" }}"
-        description: "Container {{ "{{" }} $labels.container {{ "}}" }} is using over 85% of its 256Mi memory limit for more than 10 minutes."
+        description: "Container {{ "{{" }} $labels.container {{ "}}" }} is using over 85% of its memory limit for more than 10 minutes."
+
+    - alert: VHGHighNodeCPU
+      expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 75
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High CPU usage on node {{ "{{" }} $labels.instance {{ "}}" }}"
+        description: "Node CPU usage is above 75% (current value: {{ "{{" }} $value {{ "}}" }}%). Check for runaway workloads."
+
+  - name: vhg.http
+    rules:
+    - alert: VHGHighErrorRate
+      expr: |
+        sum(rate(http_request_duration_seconds_count{status=~"5..", handler!~"/metrics|/docs|/openapi.json"}[5m])) by (handler, method) > 0.1
+      for: 1m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High 5xx error rate on {{ "{{" }} $labels.handler {{ "}}" }}"
+        description: "Route {{ "{{" }} $labels.handler {{ "}}" }} [{{ "{{" }} $labels.method {{ "}}" }}] is returning more than 0.1 errors/sec over the last 5 minutes."
+
+    - alert: VHGHighLatency
+      expr: |
+        histogram_quantile(0.9,
+          sum(rate(http_request_duration_seconds_bucket{handler!~"/metrics|/docs|/openapi.json"}[5m])) by (handler, le)
+        ) > 1
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: "High latency on {{ "{{" }} $labels.handler {{ "}}" }}"
+        description: "The 90th percentile request duration for route {{ "{{" }} $labels.handler {{ "}}" }} has been above 1 second for more than 2 minutes."
