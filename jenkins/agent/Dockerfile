@@ -40,4 +40,37 @@ RUN arch="$(dpkg --print-architecture)" \
     && chmod +x /usr/local/bin/docker \
     && rm -rf /tmp/docker.tgz /tmp/docker
 
-USER root
+# ── Security Tooling ────────────────────────────────────────────────────────
+
+# Python 3 + pip → Bandit (SAST) + Safety (SCA)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-pip \
+    && pip3 install --no-cache-dir bandit safety \
+    && rm -rf /var/lib/apt/lists/*
+
+# Node.js 20 → npm audit (SCA)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Trivy → container + filesystem vulnerability scanning (arch-aware)
+RUN arch="$(dpkg --print-architecture)" \
+    && TRIVY_VERSION="0.58.1" \
+    && trivy_arch="$([ "$arch" = "amd64" ] && echo "64bit" || echo "ARM64")" \
+    && curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-${trivy_arch}.tar.gz" -o /tmp/trivy.tgz \
+    && tar -xzf /tmp/trivy.tgz -C /tmp trivy \
+    && mv /tmp/trivy /usr/local/bin/trivy \
+    && chmod +x /usr/local/bin/trivy \
+    && rm -f /tmp/trivy.tgz
+
+# Gitleaks → secret / credential detection (arch-aware)
+RUN arch="$(dpkg --print-architecture)" \
+    && GITLEAKS_VERSION="8.21.2" \
+    && gitleaks_arch="$([ "$arch" = "amd64" ] && echo "x64" || echo "arm64")" \
+    && curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_${gitleaks_arch}.tar.gz" -o /tmp/gitleaks.tgz \
+    && tar -xzf /tmp/gitleaks.tgz -C /tmp gitleaks \
+    && mv /tmp/gitleaks /usr/local/bin/gitleaks \
+    && chmod +x /usr/local/bin/gitleaks \
+    && rm -f /tmp/gitleaks.tgz
+
+USER jenkins

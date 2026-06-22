@@ -10,7 +10,8 @@ dockerhub-creds
 useraname and password. : kdharshan3690@gmail.com : Vinu@9945385205
 
 
-
+terraform apply -target=module.azure_infra -var-file="secrets.tfvars"
+terraform apply -var-file="secrets.tfvars"
 
 whenever you do terraform destroy and then apply copy the code from this 
 az aks get-credentials --resource-group Darshan.k_lean_rg --name vhg-aks --file - | base64 | tr -d '\n' | pbcopy

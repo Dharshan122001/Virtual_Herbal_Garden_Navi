@@ -31,6 +31,15 @@ pipeline {
             }
         }
 
+        stage('Security Scan') {
+            when {
+                expression { return currentBuild.description != 'Skipped: Changes outside microservice folders' }
+            }
+            steps {
+                e_vhgSecurityScan()
+            }
+        }
+
         stage('Compile Application') {
             when {
                 expression { return currentBuild.description != 'Skipped: Changes outside microservice folders' }

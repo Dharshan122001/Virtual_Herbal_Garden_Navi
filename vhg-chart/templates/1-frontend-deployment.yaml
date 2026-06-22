@@ -15,12 +15,21 @@ spec:
       labels:
         app: frontend
     spec:
+      serviceAccountName: vhg-frontend
+      automountServiceAccountToken: false
       containers:
       - name: frontend
         image: "{{ .Values.frontend.image }}:{{ .Values.frontend.tag }}"
         imagePullPolicy: Always
         ports:
         - containerPort: 80
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+            add: ["NET_BIND_SERVICE"]
+          seccompProfile:
+            type: RuntimeDefault
         env:
         - name: VITE_PLANT_API_URL
           value: "/api/plant"

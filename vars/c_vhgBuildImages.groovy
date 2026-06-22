@@ -26,16 +26,52 @@ def call(String repo, String tag, String credentialsId = 'dockerhub-creds') {
                         sh "docker buildx build --platform linux/amd64 -t ${repo}/${imageName}:${tag} --push ."
                     }
                     sh "rm -rf ${ws}"
+                    // ── Image vulnerability scan (Trivy) ─────────────────────
+                    def trivyExit = sh(
+                        script: """
+                            trivy image \
+                                --severity HIGH,CRITICAL \
+                                --exit-code 0 \
+                                --format json \
+                                --output trivy-image-${imageName}-${tag}.json \
+                                --no-progress \
+                                ${repo}/${imageName}:${tag}
+                        """,
+                        returnStatus: true
+                    )
+                    archiveArtifacts artifacts: "trivy-image-${imageName}-${tag}.json", allowEmptyArchive: true
+                    def imgReport     = readJSON file: "trivy-image-${imageName}-${tag}.json"
+                    def criticalCount = 0
+                    imgReport.Results?.each { r ->
+                        criticalCount += r.Vulnerabilities?.findAll { it.Severity == 'CRITICAL' }?.size() ?: 0
+                    }
+                    if (criticalCount > 0) {
+                        unstable("Trivy image [${imageName}]: ${criticalCount} CRITICAL CVE(s) — review trivy-image-${imageName}-${tag}.json")
+                    }
                 }
 
                 if (env.PLANT_CHANGED == 'true') buildBlock("plant_service", "plant-service")
                 if (env.AUTH_CHANGED == 'true')  buildBlock("auth_service", "auth-service")
                 if (env.AI_CHANGED == 'true')    buildBlock("ai_service", "ai-service")
-                
+
                 if (env.FRONTEND_CHANGED == 'true') {
                     dir('client') {
                         sh "docker buildx build --platform linux/amd64 -t ${repo}/frontend:${tag} --push ."
                     }
+                    // ── Frontend image scan ───────────────────────────────────
+                    def trivyExit = sh(
+                        script: """
+                            trivy image \
+                                --severity HIGH,CRITICAL \
+                                --exit-code 0 \
+                                --format json \
+                                --output trivy-image-frontend-${tag}.json \
+                                --no-progress \
+                                ${repo}/frontend:${tag}
+                        """,
+                        returnStatus: true
+                    )
+                    archiveArtifacts artifacts: "trivy-image-frontend-${tag}.json", allowEmptyArchive: true
                 }
             }
         }
